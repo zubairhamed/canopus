@@ -21,21 +21,21 @@ func handleGet(msg goap.Message) goap.Message {
     fmt.Println("Got GET Message:")
     fmt.Println(goap.PayloadAsString(msg.Payload()))
 
-    return nil
+    return msg
 }
 
 func handlePost(msg goap.Message) goap.Message {
     fmt.Println("Got POST Message:")
     fmt.Println(goap.PayloadAsString(msg.Payload()))
 
-    return nil
+    return msg
 }
 
 func handlePut(msg goap.Message) goap.Message {
     fmt.Println("Got PUT Message:")
     fmt.Println(goap.PayloadAsString(msg.Payload()))
 
-    return nil
+    return msg
 
 }
 
@@ -43,5 +43,5 @@ func handleDelete(msg goap.Message) goap.Message {
     fmt.Println("Got DELETE Message:")
     fmt.Println(goap.PayloadAsString(msg.Payload()))
 
-    return nil
+    return msg
 }

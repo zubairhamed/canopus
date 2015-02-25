@@ -91,5 +91,17 @@ func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 
 func SendPacket (msg Message, conn *net.UDPConn, addr *net.UDPAddr) error {
     fmt.Println("SendPacket", msg, conn, addr)
+    fmt.Println("Code ", msg.Code())
+    fmt.Println("Payload ",  msg.Payload())
+    fmt.Println("Code Class ", msg.CodeClass())
+    fmt.Println("Code Detail ",  msg.CodeDetail())
+    fmt.Println("Message ID ",  msg.MessageId())
+    fmt.Println("Method ", msg.Method())
+    fmt.Println("Path ", msg.Path())
+    fmt.Println("Token Length ",  msg.TokenLength())
+    fmt.Println("Token ", msg.Token())
+    fmt.Println("Type ",  msg.Type())
+    fmt.Println("Version ", msg.Version())
+
     return nil
 }
