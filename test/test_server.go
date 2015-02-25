@@ -14,6 +14,8 @@ func main() {
     server.Start()
 }
 
-func sampleHandler(msg goap.Message) {
+func sampleHandler(msg goap.Message) goap.Message {
     fmt.Println(msg)
+
+    return nil
 }

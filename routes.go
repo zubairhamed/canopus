@@ -1,3 +1,3 @@
 package goap
 
-type RouteHandler func(Message)
+type RouteHandler func(Message) Message

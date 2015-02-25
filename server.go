@@ -20,10 +20,10 @@ type Server interface {
 type GoApServer struct {
     net     string
     host    string
-    routes  map[string] map[Method] RouteHandler
+    routes  map[string] map[uint8] RouteHandler
 }
 
-func (s *GoApServer) matchingRoute(path string, method Method) (RouteHandler, error) {
+func (s *GoApServer) matchingRoute(path string, method uint8) (RouteHandler, error) {
     r := s.routes[path]
 
     if r != nil {
@@ -54,18 +54,37 @@ func (s *GoApServer) Start() error {
 
     readBuf := make([]byte, 1500)
     for {
-        len, _, err := conn.ReadFromUDP(readBuf)
+        len, addr, err := conn.ReadFromUDP(readBuf)
         if err == nil {
+
             msgBuf := make([]byte, len)
             copy(msgBuf, readBuf)
 
             // Look for route handler matching path and then dispatch
-            msg := ParseMessage(msgBuf)
-            handler, err := s.matchingRoute(msg.Path(), msg.Method())
-            if err != nil {
-                handler(msg)
-            }
+            go s.handleMessage(msgBuf, conn, addr)
         }
     }
 }
 
+func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+    fmt.Println (msgBuf)
+
+    msg, err := NewMessage(msgBuf)
+    if err != nil {
+        fmt.Println(err)
+
+        return
+    }
+
+    handler, err := s.matchingRoute(msg.Path(), msg.Method())
+    if err != nil {
+        resp := handler(msg)
+
+        SendPacket (resp, conn, addr)
+    }
+}
+
+func SendPacket (msg Message, conn *net.UDPConn, addr *net.UDPAddr) error {
+    fmt.Println("Send Packet")
+    return nil
+}
