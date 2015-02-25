@@ -3,17 +3,19 @@ package goap
 import (
     "fmt"
     "net"
+    "errors"
 )
 
 // Server
 func NewServer(net string, host string) Server {
     s := &GoApServer{ net: net, host: host }
+    s.routes = make(map[string] map[uint8] RouteHandler)
 
     return s
 }
 
 type Server interface {
-    Handle (path string, method string, fn RouteHandler)
+    Handle (path string, method uint8, fn RouteHandler)
     Start() error
 }
 
@@ -32,16 +34,20 @@ func (s *GoApServer) matchingRoute(path string, method uint8) (RouteHandler, err
             return h, nil
         }
     }
-    return nil, nil
+    return nil, errors.New("No matching route found")
 }
 
-func (s *GoApServer) Handle (path string, method string, fn RouteHandler) {
-    fmt.Println("Register Handler")
+func (s *GoApServer) Handle (path string, method uint8, fn RouteHandler) {
+    if s.routes[path] != nil {
+        s.routes[path][method] = fn
+    } else {
+        m := make(map[uint8] RouteHandler)
+        m[method] = fn
+        s.routes[path] = m
+    }
 }
 
 func (s *GoApServer) Start() error {
-    fmt.Println("GoAP Server Starting..")
-
     udpAddr, err := net.ResolveUDPAddr(s.net, s.host);
     if err != nil {
         return err
@@ -67,17 +73,14 @@ func (s *GoApServer) Start() error {
 }
 
 func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-    fmt.Println (msgBuf)
-
     msg, err := NewMessage(msgBuf)
     if err != nil {
         fmt.Println(err)
-
         return
     }
 
     handler, err := s.matchingRoute(msg.Path(), msg.Method())
-    if err != nil {
+    if err == nil {
         resp := handler(msg)
 
         SendPacket (resp, conn, addr)
@@ -85,6 +88,6 @@ func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 }
 
 func SendPacket (msg Message, conn *net.UDPConn, addr *net.UDPAddr) error {
-    fmt.Println("Send Packet")
+    fmt.Println("SendPacket", msg, conn, addr)
     return nil
 }

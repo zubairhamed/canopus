@@ -3,6 +3,7 @@ import (
     "errors"
     "encoding/binary"
     "fmt"
+    "strings"
 )
 
 const (
@@ -73,7 +74,6 @@ func NewMessage(data []byte) (Message, error) {
     msg.tokenLength = data[DATA_HEADER] & 0x0f
     msg.codeClass = data[DATA_CODE] >> 5
     msg.codeDetail = data[DATA_CODE] & 0x1f
-    fmt.Println(data[DATA_MSGID_START:DATA_MSGID_END])
 
     msg.messageId = binary.BigEndian.Uint16(data[DATA_MSGID_START:DATA_MSGID_END])
 
@@ -109,21 +109,17 @@ func NewMessage(data []byte) (Message, error) {
    \                               \
    +-------------------------------+
    */
-    fmt.Println("START ------------ ")
     tmp := data[DATA_TOKEN_START + msg.TokenLength():]
     lastOptionId := 0
     for len(tmp) > 0 {
         if tmp[0] == PAYLOAD_MARKER {
-            tmp = tmp[0:]
+            tmp = tmp[1:]
             break
         }
 
-        fmt.Println("------------")
-        fmt.Println("Last Option Id", lastOptionId)
         optionId := lastOptionId
 
         optionDelta := int(tmp[0] >> 4)
-        fmt.Println("optionDelta", optionDelta)
         optionLength := int(tmp[0] &0x0f)
 
         tmp = tmp[1:]
@@ -161,31 +157,30 @@ func NewMessage(data []byte) (Message, error) {
                 return msg, errors.New("Message Format Error. Option length has reserved value 15")
             }
         }
-        fmt.Println("optionLength", optionLength)
+
         if optionLength > 0 {
             optionValue := tmp[:optionLength]
 
             switch optionId {
                 case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1:
-                fmt.Println("Option Value", decodeInt(optionValue))
+                msg.AddOption(NewOption(optionId, decodeInt(optionValue)))
                 break;
 
                 case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
                      OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
-                fmt.Println("Option Value", string(optionValue))
+                msg.AddOption(NewOption(optionId, string(optionValue)))
+                break;
+
+                default:
+                fmt.Println("Ignoring unknown option id " + string(optionId))
                 break;
             }
             tmp = tmp[optionLength:]
         }
-        fmt.Println("Option ID = ", optionId)
         lastOptionId = optionId
     }
     msg.payload = tmp
 
-    fmt.Println("Payload:", msg.payload)
-
-
-    //
     err := ValidateMessage(msg)
 
     return msg, err
@@ -219,15 +214,16 @@ type Message interface {
     CodeDetail() uint8
     Code() string
     MessageId() uint16
-    Path() string
     Method() uint8
+    Path() string
     Payload() []byte
     TokenLength() uint8
     Token() []byte
+    Options(int) []Option
+    OptionsAsString(int) []string
 }
 
 type CoApMessage struct {
-    path        string
     method      uint8
     version     uint8
     messageType uint8
@@ -237,6 +233,7 @@ type CoApMessage struct {
     payload     []byte
     tokenLength uint8
     token       []byte
+    options     []Option
 }
 
 func (c *CoApMessage) Version() uint8 {
@@ -267,12 +264,8 @@ func (c *CoApMessage) MessageId() uint16 {
     return c.messageId
 }
 
-func (c *CoApMessage) Path() string {
-    return c.path
-}
-
 func (c *CoApMessage) Method() uint8 {
-    return c.method
+    return c.codeDetail
 }
 
 func (c *CoApMessage) Payload() []byte {
@@ -283,7 +276,56 @@ func (c *CoApMessage) TokenLength() uint8 {
     return c.tokenLength
 }
 
+func (c *CoApMessage) Options(id int) []Option {
+    var opts []Option
+    for _, val := range c.options {
+        if val.num == id {
+            opts = append(opts, val)
+        }
+    }
+    return opts
+}
 
+func (c *CoApMessage) OptionsAsString(id int) []string {
+    opts := c.Options(id)
+
+    var str []string
+    for _, o := range opts {
+        str = append(str, o.value.(string))
+    }
+    return str
+}
+
+func (c *CoApMessage) Path() string {
+    opts := c.OptionsAsString(OPTION_URI_PATH)
+
+    return strings.Join(opts, "/")
+}
+
+
+func (c *CoApMessage) AddOption(o Option) {
+    c.options = append(c.options, o)
+}
+
+func NewOption(optionNumber int, optionValue interface{}) Option{
+    return Option{
+        num: optionNumber,
+        value: optionValue,
+    }
+}
+
+/* Option */
+type Option struct {
+    num     int
+    value   interface{}
+}
+
+func (o *Option) Name() string {
+    return "Name of option"
+}
+
+
+/* Helpers */
 func decodeInt(b []byte) uint32 {
     tmp := []byte{0, 0, 0, 0}
     copy(tmp[4-len(b):], b)
