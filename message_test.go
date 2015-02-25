@@ -6,7 +6,6 @@ import (
 )
 
 func TestInvalidMessage(t *testing.T) {
-
 	_, err := BytesToMessage(make([]byte, 0));
 	if err == nil {
 		t.Error("Message should be invalid")
@@ -25,6 +24,8 @@ func TestMessageConversion(t *testing.T) {
 	msg.version = 1
 	msg.messageType = TYPE_CONFIRMABLE
 	msg.token = []byte("abcd1234")
+
+	// Byte 2
 	msg.codeClass = CODECLASS_REQUEST
 	msg.codeDetail = METHOD_GET
 	msg.messageId = 0xf0f0

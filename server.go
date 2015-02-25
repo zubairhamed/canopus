@@ -69,6 +69,7 @@ func (s *GoApServer) Start() error {
             copy(msgBuf, readBuf)
 
             // Look for route handler matching path and then dispatch
+			fmt.Println(msgBuf)
             go s.handleMessage(msgBuf, conn, addr)
         }
     }
@@ -81,7 +82,7 @@ func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
         return
     }
 
-    handler, err := s.matchingRoute(msg.Path(), msg.Method())
+    handler, err := s.matchingRoute(msg.GetPath(), msg.GetMethod())
     if err == nil {
         resp := handler(msg)
 
@@ -90,18 +91,8 @@ func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 }
 
 func SendPacket (msg Message, conn *net.UDPConn, addr *net.UDPAddr) error {
-    fmt.Println("SendPacket", msg, conn, addr)
-    fmt.Println("Code ", msg.Code())
-    fmt.Println("Payload ",  msg.Payload())
-    fmt.Println("Code Class ", msg.CodeClass())
-    fmt.Println("Code Detail ",  msg.CodeDetail())
-    fmt.Println("Message ID ",  msg.MessageId())
-    fmt.Println("Method ", msg.Method())
-    fmt.Println("Path ", msg.Path())
-    fmt.Println("Token Length ",  msg.TokenLength())
-    fmt.Println("Token ", msg.Token())
-    fmt.Println("Type ",  msg.Type())
-    fmt.Println("Version ", msg.Version())
+	b := MessageToBytes(msg)
+	_, err := conn.WriteTo(b, addr)
 
-    return nil
+    return err
 }

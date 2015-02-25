@@ -18,22 +18,24 @@ func main() {
 }
 
 func handleGet(msg goap.Message) goap.Message {
-    fmt.Println("Got GET Message:")
-    fmt.Println(goap.PayloadAsString(msg.Payload()))
+	ack := goap.DefaultMessage()
+	ack.MessageType = goap.TYPE_ACKNOWLEDGEMENT
+	ack.MessageId = msg.GetMessageId()
+	ack.Payload = []byte("Hello CoAP!")
+	ack.Token = msg.GetToken()
 
-    return msg
+    return ack
 }
 
 func handlePost(msg goap.Message) goap.Message {
-    fmt.Println("Got POST Message:")
-    fmt.Println(goap.PayloadAsString(msg.Payload()))
+    fmt.Println(goap.PayloadAsString(msg.GetPayload()))
 
     return msg
 }
 
 func handlePut(msg goap.Message) goap.Message {
     fmt.Println("Got PUT Message:")
-    fmt.Println(goap.PayloadAsString(msg.Payload()))
+    fmt.Println(goap.PayloadAsString(msg.GetPayload()))
 
     return msg
 
@@ -41,7 +43,7 @@ func handlePut(msg goap.Message) goap.Message {
 
 func handleDelete(msg goap.Message) goap.Message {
     fmt.Println("Got DELETE Message:")
-    fmt.Println(goap.PayloadAsString(msg.Payload()))
+    fmt.Println(goap.PayloadAsString(msg.GetPayload()))
 
     return msg
 }
