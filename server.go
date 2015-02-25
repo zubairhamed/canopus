@@ -6,6 +6,8 @@ import (
     "errors"
 )
 
+const BUF_SIZE = 1500
+
 // Server
 func NewServer(net string, host string) Server {
     s := &GoApServer{ net: net, host: host }
@@ -58,7 +60,7 @@ func (s *GoApServer) Start() error {
         return err
     }
 
-    readBuf := make([]byte, 1500)
+    readBuf := make([]byte, BUF_SIZE)
     for {
         len, addr, err := conn.ReadFromUDP(readBuf)
         if err == nil {

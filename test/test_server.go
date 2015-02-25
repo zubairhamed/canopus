@@ -19,21 +19,21 @@ func main() {
 
 func handleGet(msg goap.Message) goap.Message {
     fmt.Println("Got GET Message:")
-    fmt.Println(msg.Payload())
+    fmt.Println(goap.PayloadAsString(msg.Payload()))
 
     return nil
 }
 
 func handlePost(msg goap.Message) goap.Message {
     fmt.Println("Got POST Message:")
-    fmt.Println(msg.Payload())
+    fmt.Println(goap.PayloadAsString(msg.Payload()))
 
     return nil
 }
 
 func handlePut(msg goap.Message) goap.Message {
     fmt.Println("Got PUT Message:")
-    fmt.Println(msg.Payload())
+    fmt.Println(goap.PayloadAsString(msg.Payload()))
 
     return nil
 
@@ -41,7 +41,7 @@ func handlePut(msg goap.Message) goap.Message {
 
 func handleDelete(msg goap.Message) goap.Message {
     fmt.Println("Got DELETE Message:")
-    fmt.Println(msg.Payload())
+    fmt.Println(goap.PayloadAsString(msg.Payload()))
 
     return nil
 }

@@ -4,6 +4,7 @@ import (
     "encoding/binary"
     "fmt"
     "strings"
+    "bytes"
 )
 
 const (
@@ -44,6 +45,15 @@ const (
     OPTION_PROXY_URI        = 35
     OPTION_PROXY_SCHEME     = 39
     OPTION_SIZE1            = 60
+)
+
+const (
+    MEDIATYPE_TEXT_PLAIN                = 0
+    MEDIATYPE_APPLICATION_LINK_FORMAT   = 40
+    MEDIATYPE_APPLICATION_XML           = 41
+    MEDIATYPE_APPLICATION_OCTET_STREAM  = 42
+    MEDIATYPE_APPLICATION_EXI           = 47
+    MEDIATYPE_APPLICATION_JSON          = 50
 )
 
 const PAYLOAD_MARKER = 0xff
@@ -330,4 +340,10 @@ func decodeInt(b []byte) uint32 {
     tmp := []byte{0, 0, 0, 0}
     copy(tmp[4-len(b):], b)
     return binary.BigEndian.Uint32(tmp)
+}
+
+func PayloadAsString(b []byte) string {
+    buff := bytes.NewBuffer(b)
+
+    return buff.String()
 }
