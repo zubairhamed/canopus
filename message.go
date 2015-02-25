@@ -56,7 +56,18 @@ const (
     MEDIATYPE_APPLICATION_JSON          = 50
 )
 
+const (
+	CODECLASS_REQUEST 		= 0
+	CODECLASS_RESPONSE		= 2
+	CODECLASS_CLIENT_ERROR	= 4
+	CODECLASS_SERVER_ERROR	= 5
+)
+
 const PAYLOAD_MARKER = 0xff
+
+func DefaultMessage() *CoApMessage {
+	return &CoApMessage{}
+}
 
 /*
      0                   1                   2                   3
@@ -71,8 +82,8 @@ const PAYLOAD_MARKER = 0xff
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-func NewMessage(data []byte) (Message, error) {
-    msg := &CoApMessage{}
+func BytesToMessage(data []byte) (Message, error) {
+    msg := DefaultMessage()
 
     dataLen := len(data)
     if dataLen < 4 {
@@ -81,16 +92,18 @@ func NewMessage(data []byte) (Message, error) {
 
     msg.version = data[DATA_HEADER] >> 6
     msg.messageType = data[DATA_HEADER] >> 4 & 0x03
-    msg.tokenLength = data[DATA_HEADER] & 0x0f
-    msg.codeClass = data[DATA_CODE] >> 5
+
+	tokenLength := data[DATA_HEADER] & 0x0f
+
+	msg.codeClass = data[DATA_CODE] >> 5
     msg.codeDetail = data[DATA_CODE] & 0x1f
 
     msg.messageId = binary.BigEndian.Uint16(data[DATA_MSGID_START:DATA_MSGID_END])
 
     // Token
-    if (msg.TokenLength() > 0) {
-        msg.token = make([]byte, msg.TokenLength())
-        token := data[DATA_TOKEN_START:DATA_TOKEN_START + msg.TokenLength()]
+    if (tokenLength > 0) {
+        msg.token = make([]byte, tokenLength)
+        token := data[DATA_TOKEN_START:DATA_TOKEN_START + tokenLength]
         copy (msg.token, token)
     }
 
@@ -172,16 +185,16 @@ func NewMessage(data []byte) (Message, error) {
             optionValue := tmp[:optionLength]
 
             switch optionId {
-                case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1:
-                msg.AddOption(NewOption(optionId, decodeInt(optionValue)))
-                break;
+				case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1:
+				msg.options = append(msg.options, NewOption(optionId, decodeInt(optionValue)))
+				break;
 
-                case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
-                     OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
-                msg.AddOption(NewOption(optionId, string(optionValue)))
-                break;
+				case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
+				 	 OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
+				msg.options = append(msg.options, NewOption(optionId, string(optionValue)))
+				break;
 
-                default:
+				default:
                 fmt.Println("Ignoring unknown option id " + string(optionId))
                 break;
             }
@@ -194,6 +207,22 @@ func NewMessage(data []byte) (Message, error) {
     err := ValidateMessage(msg)
 
     return msg, err
+}
+
+func MessageToBytes(msg Message) []byte {
+	buf := bytes.NewBuffer([]byte{})
+
+	buf.Write([]byte{ (1 << 6) | (msg.Type() << 4) | 0x0f & msg.TokenLength()})
+	buf.Write([]byte{ msg.CodeClass() << 5 | 0x0f & msg.CodeDetail()})
+
+	messageId := []byte{0,0}
+	binary.BigEndian.PutUint16(messageId, msg.MessageId())
+	buf.Write([]byte{messageId[0]})
+	buf.Write([]byte{messageId[1]})
+
+	buf.Write(msg.Token())
+
+	return buf.Bytes()
 }
 
 func ValidateMessage(msg Message) error {
@@ -241,52 +270,51 @@ type CoApMessage struct {
     codeDetail  uint8
     messageId   uint16
     payload     []byte
-    tokenLength uint8
     token       []byte
     options     []Option
 }
 
-func (c *CoApMessage) Version() uint8 {
+func (c CoApMessage) Version() uint8 {
     return c.version
 }
 
-func (c *CoApMessage) Token() []byte {
+func (c CoApMessage) Token() []byte {
     return c.token
 }
 
-func (c *CoApMessage) Type() uint8 {
+func (c CoApMessage) Type() uint8 {
     return c.messageType
 }
 
-func (c *CoApMessage) CodeClass() uint8 {
+func (c CoApMessage) CodeClass() uint8 {
     return c.codeClass
 }
 
-func (c *CoApMessage) CodeDetail() uint8 {
+func (c CoApMessage) CodeDetail() uint8 {
     return c.codeDetail
 }
 
-func (c *CoApMessage) Code() string {
+func (c CoApMessage) Code() string {
     return string(c.codeClass) + "." + string(c.codeDetail)
 }
 
-func (c *CoApMessage) MessageId() uint16 {
+func (c CoApMessage) MessageId() uint16 {
     return c.messageId
 }
 
-func (c *CoApMessage) Method() uint8 {
+func (c CoApMessage) Method() uint8 {
     return c.codeDetail
 }
 
-func (c *CoApMessage) Payload() []byte {
+func (c CoApMessage) Payload() []byte {
     return c.payload
 }
 
-func (c *CoApMessage) TokenLength() uint8 {
-    return c.tokenLength
+func (c CoApMessage) TokenLength() uint8 {
+	return uint8(len(c.token))
 }
 
-func (c *CoApMessage) Options(id int) []Option {
+func (c CoApMessage) Options(id int) []Option {
     var opts []Option
     for _, val := range c.options {
         if val.num == id {
@@ -296,7 +324,7 @@ func (c *CoApMessage) Options(id int) []Option {
     return opts
 }
 
-func (c *CoApMessage) OptionsAsString(id int) []string {
+func (c CoApMessage) OptionsAsString(id int) []string {
     opts := c.Options(id)
 
     var str []string
@@ -306,15 +334,10 @@ func (c *CoApMessage) OptionsAsString(id int) []string {
     return str
 }
 
-func (c *CoApMessage) Path() string {
+func (c CoApMessage) Path() string {
     opts := c.OptionsAsString(OPTION_URI_PATH)
 
     return strings.Join(opts, "/")
-}
-
-
-func (c *CoApMessage) AddOption(o Option) {
-    c.options = append(c.options, o)
 }
 
 func NewOption(optionNumber int, optionValue interface{}) Option{
@@ -333,7 +356,6 @@ type Option struct {
 func (o *Option) Name() string {
     return "Name of option"
 }
-
 
 /* Helpers */
 func decodeInt(b []byte) uint32 {

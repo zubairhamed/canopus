@@ -75,7 +75,7 @@ func (s *GoApServer) Start() error {
 }
 
 func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-    msg, err := NewMessage(msgBuf)
+    msg, err := BytesToMessage(msgBuf)
     if err != nil {
         fmt.Println(err)
         return
