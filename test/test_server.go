@@ -9,10 +9,10 @@ func main() {
     fmt.Println("GoAP Server Test Started")
     server := goap.NewServer("udp", ":10001")
 
-    server.Handle("my/path", goap.METHOD_GET , handleGet)
-    server.Handle("my/path", goap.METHOD_DELETE , handleDelete)
-    server.Handle("my/path", goap.METHOD_POST , handlePost)
-    server.Handle("my/path", goap.METHOD_PUT , handlePut)
+    server.Handle("example", goap.METHOD_GET , handleGet)
+    server.Handle("example", goap.METHOD_DELETE , handleDelete)
+    server.Handle("example", goap.METHOD_POST , handlePost)
+    server.Handle("example", goap.METHOD_PUT , handlePut)
 
     server.Start()
 }
