@@ -90,7 +90,7 @@ func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
     }
 }
 
-func SendPacket (msg Message, conn *net.UDPConn, addr *net.UDPAddr) error {
+func SendPacket (msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
 	b := MessageToBytes(msg)
 	_, err := conn.WriteTo(b, addr)
 

@@ -57,16 +57,33 @@ const (
 )
 
 const (
-	CODECLASS_REQUEST 		= 0
-	CODECLASS_RESPONSE		= 2
-	CODECLASS_CLIENT_ERROR	= 4
-	CODECLASS_SERVER_ERROR	= 5
+	COAPCODE_201_CREATED 					= 65
+	COAPCODE_202_DELETED					= 66
+	COAPCODE_203_VALID						= 67
+	COAPCODE_204_CHANGED					= 68
+	COAPCODE_205_CONTENT					= 69
+	COAPCODE_400_BAD_REQUEST				= 128
+	COAPCODE_401_UNAUTHORIZED				= 129
+	COAPCODE_402_BAD_OPTION					= 130
+	COAPCODE_403_FORBIDDEN					= 131
+	COAPCODE_404_NOT_FOUND					= 132
+	COAPCODE_405_METHOD_NOT_ALLOWED			= 133
+	COAPCODE_406_NOT_ACCEPTABLE				= 134
+	COAPCODE_412_PRECONDITION_FAILED		= 140
+	COAPCODE_413_REQUEST_ENTITY_TOO_LARGE	= 141
+	COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT	= 143
+	COAPCODE_500_INTERNAL_SERVER_ERROR		= 160
+	COAPCODE_501_NOT_IMPLEMENTED			= 161
+	COAPCODE_502_BAD_GATEWAY				= 162
+	COAPCODE_503_SERVICE_UNAVAILABLE		= 163
+	COAPCODE_504_GATEWAY_TIMEOUT			= 164
+	COAPCODE_505_PROXYING_NOT_SUPPORTED		= 165
 )
 
 const PAYLOAD_MARKER = 0xff
 
-func DefaultMessage() *CoApMessage {
-	return &CoApMessage{}
+func NewMessage() *Message {
+	return &Message{}
 }
 
 /*
@@ -82,21 +99,24 @@ func DefaultMessage() *CoApMessage {
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-func BytesToMessage(data []byte) (Message, error) {
-    msg := DefaultMessage()
+func BytesToMessage(data []byte) (*Message, error) {
+    msg := NewMessage()
 
     dataLen := len(data)
     if dataLen < 4 {
         return msg, errors.New("Packet length less than 4 bytes")
     }
 
-    msg.Version = data[DATA_HEADER] >> 6
+    ver := data[DATA_HEADER] >> 6
+	if ver != 1 {
+		return nil, errors.New("Invalid version")
+	}
+
     msg.MessageType = data[DATA_HEADER] >> 4 & 0x03
 
 	tokenLength := data[DATA_HEADER] & 0x0f
 
-	msg.CodeClass = data[DATA_CODE] >> 5
-    msg.CodeDetail = data[DATA_CODE] & 0x1f
+	msg.Code = data[DATA_CODE]
 
     msg.MessageId = binary.BigEndian.Uint16(data[DATA_MSGID_START:DATA_MSGID_END])
 
@@ -209,26 +229,66 @@ func BytesToMessage(data []byte) (Message, error) {
     return msg, err
 }
 
-func MessageToBytes(msg Message) []byte {
+func MessageToBytes(msg *Message) []byte {
 	messageId := []byte{ 0, 0 }
-	binary.BigEndian.PutUint16(messageId, msg.GetMessageId())
+	binary.BigEndian.PutUint16(messageId, msg.MessageId)
 
 	buf := bytes.NewBuffer([]byte{})
-	buf.Write([]byte{ (1 << 6) | (msg.GetType() << 4) | 0x0f & msg.GetTokenLength()})
-	buf.Write([]byte{ msg.GetCodeClass() << 5 | 0x0f & msg.GetCodeDetail()})
+	buf.Write([]byte{ (1 << 6) | (msg.MessageType << 4) | 0x0f & msg.GetTokenLength()})
+	// buf.Write([]byte{ msg.GetCodeClass() << 5 | 0x0f & msg.GetCodeDetail()})
+	buf.Write([]byte{ msg.Code })
 	buf.Write([]byte{messageId[0]})
 	buf.Write([]byte{messageId[1]})
-	buf.Write(msg.GetToken())
+	buf.Write(msg.Token)
+
+
+	// sort.Sort(&msg.Options)
+
+	lastOptionId := 0
+	for _, opt := range msg.Options {
+		b := ValueToBytes(opt.Value)
+		optCode := opt.Code
+		if len(b) >= 15 {
+			buf.Write([]byte{ byte(int(optCode) - lastOptionId) << 4 | 15, byte(len(b) - 15), } )
+		} else {
+			buf.Write([]byte{ byte(int(optCode) - lastOptionId) << 4 | byte(len(b))} )
+		}
+	}
+
+	if (len(msg.Payload) > 0) {
+		buf.Write([]byte{ PAYLOAD_MARKER  })
+	}
+
+	buf.Write(msg.Payload)
 
 	return buf.Bytes()
 }
 
-func ValidateMessage(msg Message) error {
-    if msg.GetVersion() != 1 {
-        return errors.New("Invalid version")
-    }
+/*
+prev := 0
+	for _, o := range m.opts {
+		b := o.toBytes()
+		if len(b) >= 15 {
+			buf.Write([]byte{
+				byte(int(o.ID)-prev)<<4 | 15,
+				byte(len(b) - 15),
+			})
+		} else {
+			buf.Write([]byte{byte(int(o.ID)-prev)<<4 | byte(len(b))})
+		}
+		if int(o.ID)-prev > 15 {
+			return nil, ErrOptionGapTooLarge
+		}
 
-    if msg.GetType() > 3 {
+		buf.Write(b)
+		prev = int(o.ID)
+	}
+ */
+
+
+
+func ValidateMessage(msg *Message) error {
+    if msg.MessageType > 3 {
         return errors.New("Unknown message type")
     }
 
@@ -236,103 +296,63 @@ func ValidateMessage(msg Message) error {
         return errors.New("Invalid Token Length ( > 8)")
     }
 
+	/*
     codeClass := msg.GetCodeClass()
     if codeClass != 0 && codeClass != 2 && codeClass != 4 && codeClass != 5 {
         return errors.New("Unknown Code class")
     }
+    */
 
     return nil
 }
 
-type Message interface {
-	GetVersion() uint8
-	GetType() uint8
-	GetCodeClass() uint8
-	GetCodeDetail() uint8
-	GetCode() string
-	GetMessageId() uint16
-	GetMethod() uint8
-	GetPath() string
-	GetPayload() []byte
-	GetTokenLength() uint8
-	GetToken() []byte
-	GetOptions(int) []Option
-	GetOptionsAsString(int) []string
+type Message struct {
+	Method      uint8
+	MessageType uint8
+	Code		uint8
+	MessageId   uint16
+	Payload     []byte
+	Token       []byte
+	Options     []Option
 }
 
-type CoApMessage struct {
-    Method      uint8
-    Version     uint8
-    MessageType uint8
-    CodeClass   uint8
-    CodeDetail  uint8
-    MessageId   uint16
-    Payload     []byte
-    Token       []byte
-    Options     []Option
+func (c Message) GetCodeString() string {
+	codeClass := string(c.Code >> 5)
+	codeDetail := string(c.Code & 0x1f)
+
+	return codeClass + "." + codeDetail
 }
 
-func (c CoApMessage) GetVersion() uint8 {
-    return c.Version
+
+func (c Message) GetMethod() uint8 {
+    return (c.Code & 0x1f)
 }
 
-func (c CoApMessage) GetToken() []byte {
-    return c.Token
-}
-
-func (c CoApMessage) GetType() uint8 {
-    return c.MessageType
-}
-
-func (c CoApMessage) GetCodeClass() uint8 {
-    return c.CodeClass
-}
-
-func (c CoApMessage) GetCodeDetail() uint8 {
-    return c.CodeDetail
-}
-
-func (c CoApMessage) GetCode() string {
-    return string(c.CodeClass) + "." + string(c.CodeDetail)
-}
-
-func (c CoApMessage) GetMessageId() uint16 {
-    return c.MessageId
-}
-
-func (c CoApMessage) GetMethod() uint8 {
-    return c.CodeDetail
-}
-
-func (c CoApMessage) GetPayload() []byte {
-    return c.Payload
-}
-
-func (c CoApMessage) GetTokenLength() uint8 {
+func (c Message) GetTokenLength() uint8 {
 	return uint8(len(c.Token))
 }
 
-func (c CoApMessage) GetOptions(id int) []Option {
+func (c Message) GetOptions(id int) []Option {
     var opts []Option
     for _, val := range c.Options {
-        if val.num == id {
+        if val.Code == id {
             opts = append(opts, val)
         }
     }
     return opts
 }
 
-func (c CoApMessage) GetOptionsAsString(id int) []string {
+func (c Message) GetOptionsAsString(id int) []string {
     opts := c.GetOptions(id)
 
     var str []string
     for _, o := range opts {
-        str = append(str, o.value.(string))
+        str = append(str, o.Value.(string))
     }
     return str
 }
 
-func (c CoApMessage) GetPath() string {
+func (c Message) GetPath() string {
     opts := c.GetOptionsAsString(OPTION_URI_PATH)
 
     return strings.Join(opts, "/")
@@ -340,15 +360,15 @@ func (c CoApMessage) GetPath() string {
 
 func NewOption(optionNumber int, optionValue interface{}) Option{
     return Option{
-        num: optionNumber,
-        value: optionValue,
+        Code: optionNumber,
+        Value: optionValue,
     }
 }
 
 /* Option */
 type Option struct {
-    num     int
-    value   interface{}
+    Code     int
+    Value   interface{}
 }
 
 func (o *Option) Name() string {
@@ -360,6 +380,56 @@ func decodeInt(b []byte) uint32 {
     tmp := []byte{0, 0, 0, 0}
     copy(tmp[4-len(b):], b)
     return binary.BigEndian.Uint32(tmp)
+}
+
+func encodeInt(v uint32) []byte {
+	switch {
+	case v == 0:
+		return nil
+
+	case v < 256:
+		return []byte{ byte(v) }
+
+	case v < 65536:
+		rv := []byte{0, 0}
+		binary.BigEndian.PutUint16(rv, uint16(v))
+		return rv
+
+	case v < 16777216:
+		rv := []byte{0, 0, 0, 0}
+		binary.BigEndian.PutUint32(rv, uint32(v))
+		return rv[1:]
+
+	default:
+		rv := []byte{0, 0, 0, 0}
+		binary.BigEndian.PutUint32(rv, uint32(v))
+		return rv
+	}
+}
+
+func ValueToBytes(value interface {}) []byte {
+	var v uint32
+
+	switch i := value.(type) {
+	case string:
+		return []byte(i)
+	case []byte:
+		return i
+	case byte:
+		v = uint32(i)
+	case int:
+		v = uint32(i)
+	case int32:
+		v = uint32(i)
+	case uint:
+		v = uint32(i)
+	case uint32:
+		v = i
+	default:
+		break;
+	}
+
+	return encodeInt(v)
 }
 
 func PayloadAsString(b []byte) string {
