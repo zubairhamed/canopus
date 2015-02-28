@@ -9,47 +9,20 @@ import (
 const BUF_SIZE = 1500
 
 // Server
-func NewServer(net string, host string) Server {
-    s := &GoApServer{ net: net, host: host }
-    s.routes = make(map[string] map[uint8] RouteHandler)
+func NewServer(net string, host string) *Server {
+    s := &Server{ net: net, host: host }
+    // s.routes = make(map[string] *Route)
 
     return s
 }
 
-type Server interface {
-    Handle (path string, method uint8, fn RouteHandler)
-    Start() error
-}
-
-type GoApServer struct {
+type Server struct {
     net     string
     host    string
-    routes  map[string] map[uint8] RouteHandler
+	routes	[]*Route
 }
 
-func (s *GoApServer) matchingRoute(path string, method uint8) (RouteHandler, error) {
-    r := s.routes[path]
-
-    if r != nil {
-        h := r[method]
-        if h != nil {
-            return h, nil
-        }
-    }
-    return nil, errors.New("No matching route found")
-}
-
-func (s *GoApServer) Handle (path string, method uint8, fn RouteHandler) {
-    if s.routes[path] != nil {
-        s.routes[path][method] = fn
-    } else {
-        m := make(map[uint8] RouteHandler)
-        m[method] = fn
-        s.routes[path] = m
-    }
-}
-
-func (s *GoApServer) Start() error {
+func (s *Server) Start() error {
     udpAddr, err := net.ResolveUDPAddr(s.net, s.host);
     if err != nil {
         return err
@@ -69,25 +42,47 @@ func (s *GoApServer) Start() error {
             copy(msgBuf, readBuf)
 
             // Look for route handler matching path and then dispatch
-			fmt.Println(msgBuf)
             go s.handleMessage(msgBuf, conn, addr)
         }
     }
 }
 
-func (s *GoApServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
     msg, err := BytesToMessage(msgBuf)
     if err != nil {
         fmt.Println(err)
         return
     }
 
-    handler, err := s.matchingRoute(msg.GetPath(), msg.GetMethod())
+    route, err := s.matchingRoute(msg.GetPath(), msg.Code)
+
     if err == nil {
-        resp := handler(msg)
+		resp := route.Handler(msg)
 
         SendPacket (resp, conn, addr)
     }
+}
+
+func (s *Server) matchingRoute(path string, method uint8) (*Route, error) {
+	for _, route := range s.routes {
+		if route.Path == path && route.Method == method {
+			return route, nil
+		}
+	}
+	return &Route{}, errors.New("No matching route found")
+}
+
+func (s *Server) NewRoute(path string, fn RouteHandler, method uint8) (*Route) {
+	r := &Route{
+		AutoAck: true,
+		Path: path,
+		Method: method,
+		Handler: fn,
+	}
+
+	s.routes = append(s.routes, r)
+
+	return r
 }
 
 func SendPacket (msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {

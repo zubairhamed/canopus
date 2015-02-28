@@ -15,10 +15,10 @@ const (
 )
 
 const (
-    METHOD_GET      = 1
-    METHOD_POST     = 2
-    METHOD_PUT      = 3
-    METHOD_DELETE   = 4
+    GET      = 1
+    POST     = 2
+    PUT      = 3
+    DELETE   = 4
 )
 
 const (
@@ -84,6 +84,14 @@ const PAYLOAD_MARKER = 0xff
 
 func NewMessage() *Message {
 	return &Message{}
+}
+
+func NewAcknowledgementMessage(messageId uint16) *Message {
+	m := NewMessage()
+	m.MessageType = TYPE_ACKNOWLEDGEMENT
+	m.MessageId = messageId
+
+	return m
 }
 
 /*
@@ -264,29 +272,6 @@ func MessageToBytes(msg *Message) []byte {
 	return buf.Bytes()
 }
 
-/*
-prev := 0
-	for _, o := range m.opts {
-		b := o.toBytes()
-		if len(b) >= 15 {
-			buf.Write([]byte{
-				byte(int(o.ID)-prev)<<4 | 15,
-				byte(len(b) - 15),
-			})
-		} else {
-			buf.Write([]byte{byte(int(o.ID)-prev)<<4 | byte(len(b))})
-		}
-		if int(o.ID)-prev > 15 {
-			return nil, ErrOptionGapTooLarge
-		}
-
-		buf.Write(b)
-		prev = int(o.ID)
-	}
- */
-
-
-
 func ValidateMessage(msg *Message) error {
     if msg.MessageType > 3 {
         return errors.New("Unknown message type")
@@ -296,24 +281,16 @@ func ValidateMessage(msg *Message) error {
         return errors.New("Invalid Token Length ( > 8)")
     }
 
-	/*
-    codeClass := msg.GetCodeClass()
-    if codeClass != 0 && codeClass != 2 && codeClass != 4 && codeClass != 5 {
-        return errors.New("Unknown Code class")
-    }
-    */
-
     return nil
 }
 
 type Message struct {
-	Method      uint8
 	MessageType uint8
 	Code		uint8
 	MessageId   uint16
 	Payload     []byte
 	Token       []byte
-	Options     []Option
+	Options     []*Option
 }
 
 func (c Message) GetCodeString() string {
@@ -332,8 +309,8 @@ func (c Message) GetTokenLength() uint8 {
 	return uint8(len(c.Token))
 }
 
-func (c Message) GetOptions(id int) []Option {
-    var opts []Option
+func (c Message) GetOptions(id int) []*Option {
+    var opts []*Option
     for _, val := range c.Options {
         if val.Code == id {
             opts = append(opts, val)
@@ -358,8 +335,34 @@ func (c Message) GetPath() string {
     return strings.Join(opts, "/")
 }
 
-func NewOption(optionNumber int, optionValue interface{}) Option{
-    return Option{
+func (c *Message) MethodString() string {
+
+	switch c.Code {
+	case GET:
+		return "GET"
+		break
+
+	case DELETE:
+		return "DELETE"
+		break;
+
+	case POST:
+		return "POST"
+		break;
+
+	case PUT:
+		return "PUT"
+		break;
+	}
+	return ""
+}
+
+func (m *Message) AddOption (opt *Option) {
+	m.Options = append(m.Options, opt)
+}
+
+func NewOption(optionNumber int, optionValue interface{}) *Option{
+    return &Option{
         Code: optionNumber,
         Value: optionValue,
     }
@@ -376,37 +379,6 @@ func (o *Option) Name() string {
 }
 
 /* Helpers */
-func decodeInt(b []byte) uint32 {
-    tmp := []byte{0, 0, 0, 0}
-    copy(tmp[4-len(b):], b)
-    return binary.BigEndian.Uint32(tmp)
-}
-
-func encodeInt(v uint32) []byte {
-	switch {
-	case v == 0:
-		return nil
-
-	case v < 256:
-		return []byte{ byte(v) }
-
-	case v < 65536:
-		rv := []byte{0, 0}
-		binary.BigEndian.PutUint16(rv, uint16(v))
-		return rv
-
-	case v < 16777216:
-		rv := []byte{0, 0, 0, 0}
-		binary.BigEndian.PutUint32(rv, uint32(v))
-		return rv[1:]
-
-	default:
-		rv := []byte{0, 0, 0, 0}
-		binary.BigEndian.PutUint32(rv, uint32(v))
-		return rv
-	}
-}
-
 func ValueToBytes(value interface {}) []byte {
 	var v uint32
 
@@ -436,4 +408,35 @@ func PayloadAsString(b []byte) string {
     buff := bytes.NewBuffer(b)
 
     return buff.String()
+}
+
+func decodeInt(b []byte) uint32 {
+	tmp := []byte{0, 0, 0, 0}
+	copy(tmp[4-len(b):], b)
+	return binary.BigEndian.Uint32(tmp)
+}
+
+func encodeInt(v uint32) []byte {
+	switch {
+	case v == 0:
+		return nil
+
+	case v < 256:
+		return []byte{ byte(v) }
+
+	case v < 65536:
+		rv := []byte{0, 0}
+		binary.BigEndian.PutUint16(rv, uint16(v))
+		return rv
+
+	case v < 16777216:
+		rv := []byte{0, 0, 0, 0}
+		binary.BigEndian.PutUint32(rv, uint32(v))
+		return rv[1:]
+
+	default:
+		rv := []byte{0, 0, 0, 0}
+		binary.BigEndian.PutUint32(rv, uint32(v))
+		return rv
+	}
 }
