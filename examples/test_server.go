@@ -2,12 +2,10 @@ package main
 
 import (
     "github.com/zubairhamed/goap"
-    "fmt"
 )
 
 func main() {
-    fmt.Println("GoAP Server Test Started")
-    server := goap.NewServer("udp", ":10001")
+	server := goap.NewServer("udp", goap.COAP_DEFAULT_HOST)
 
 	server.NewRoute("example", handleGet, goap.GET)
 	server.NewRoute("example", handleDelete, goap.DELETE)

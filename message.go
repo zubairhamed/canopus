@@ -231,7 +231,6 @@ func BytesToMessage(data []byte) (*Message, error) {
         lastOptionId = optionId
     }
     msg.Payload = tmp
-
     err := ValidateMessage(msg)
 
     return msg, err
@@ -242,13 +241,11 @@ func MessageToBytes(msg *Message) []byte {
 	binary.BigEndian.PutUint16(messageId, msg.MessageId)
 
 	buf := bytes.NewBuffer([]byte{})
-	buf.Write([]byte{ (1 << 6) | (msg.MessageType << 4) | 0x0f & msg.GetTokenLength()})
-	// buf.Write([]byte{ msg.GetCodeClass() << 5 | 0x0f & msg.GetCodeDetail()})
-	buf.Write([]byte{ msg.Code })
-	buf.Write([]byte{messageId[0]})
-	buf.Write([]byte{messageId[1]})
+	buf.Write( []byte{ (1 << 6) | (msg.MessageType << 4) | 0x0f & msg.GetTokenLength()} )
+	buf.Write( []byte{ msg.Code } )
+	buf.Write( []byte{ messageId[0]} )
+	buf.Write( []byte{ messageId[1]} )
 	buf.Write(msg.Token)
-
 
 	// sort.Sort(&msg.Options)
 

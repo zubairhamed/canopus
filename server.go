@@ -4,9 +4,16 @@ import (
     "fmt"
     "net"
     "errors"
+	"log"
 )
 
 const BUF_SIZE = 1500
+
+const COAP_DEFAULT_HOST = ":5683"
+
+// ERRORS
+var ERR_NO_MATCHING_ROUTE = errors.New("No matching route found")
+
 
 // Server
 func NewServer(net string, host string) *Server {
@@ -55,6 +62,12 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
     }
 
     route, err := s.matchingRoute(msg.GetPath(), msg.Code)
+	if err == ERR_NO_MATCHING_ROUTE {
+		msg.MessageType = TYPE_ACKNOWLEDGEMENT
+		msg.Code = COAPCODE_404_NOT_FOUND
+		SendPacket(msg, conn, addr)
+		return
+	}
 
     if err == nil {
 		resp := route.Handler(msg)
@@ -69,23 +82,12 @@ func (s *Server) matchingRoute(path string, method uint8) (*Route, error) {
 			return route, nil
 		}
 	}
-	return &Route{}, errors.New("No matching route found")
-}
-
-func (s *Server) NewRoute(path string, fn RouteHandler, method uint8) (*Route) {
-	r := &Route{
-		AutoAck: true,
-		Path: path,
-		Method: method,
-		Handler: fn,
-	}
-
-	s.routes = append(s.routes, r)
-
-	return r
+	return &Route{}, ERR_NO_MATCHING_ROUTE
 }
 
 func SendPacket (msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
+	log.Printf("%#v", msg)
+
 	b := MessageToBytes(msg)
 	_, err := conn.WriteTo(b, addr)
 

@@ -1,16 +1,22 @@
 package main
 
 import (
-	"fmt"
+	"github.com/zubairhamed/goap"
 )
 
-type Abc struct {
-
-}
-
+/*
+	Simple example to test against real CC2530/CC2538 motes over 6LowPan.
+ */
 func main() {
-	mymap := make(map[string] Abc)
+	server := goap.NewServer("udp", goap.COAP_DEFAULT_HOST)
 
-	fmt.Println(mymap["abc"])
+	server.NewRoute("echo", doEcho, goap.POST)
+
+	server.Start()
 }
 
+func doEcho(msg *goap.Message) *goap.Message {
+	msg.MessageType = goap.TYPE_ACKNOWLEDGEMENT
+
+	return msg
+}
