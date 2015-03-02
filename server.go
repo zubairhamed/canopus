@@ -97,7 +97,13 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
     }
 
     if err == nil {
-        s.messageIds[msg.MessageId] = time.Now()
+		s.messageIds[msg.MessageId] = time.Now()
+		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
+			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+
+			SendPacket (ack, conn, addr)
+		}
+
 		resp := route.Handler(msg)
 
         SendPacket (resp, conn, addr)
