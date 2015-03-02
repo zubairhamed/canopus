@@ -31,6 +31,8 @@ type Server struct {
 }
 
 func (s *Server) Start() error {
+    s.messageIds = make(map[uint16] time.Time)
+
     udpAddr, err := net.ResolveUDPAddr(s.net, s.host);
     if err != nil {
         return err
@@ -40,6 +42,22 @@ func (s *Server) Start() error {
     if err != nil {
         return err
     }
+
+    // Routine for clearing up message IDs which has expired
+    ticker := time.NewTicker(1 * time.Minute)
+    go func() {
+        for {
+            select {
+                case <- ticker.C:
+                for k, v := range s.messageIds {
+                    elapsed := time.Since(v)
+                    if elapsed > 60 {
+                        delete(s.messageIds, k)
+                    }
+                }
+            }
+        }
+    }()
 
     readBuf := make([]byte, BUF_SIZE)
     for {
@@ -76,6 +94,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
     // Duplicate Message ID Check
     _, dupe := s.messageIds[msg.MessageId]
     if dupe {
+        log.Println("Duplicate Message ID ", msg.MessageId)
         if msg.MessageType == TYPE_CONFIRMABLE {
             ret := NewMessageOfType(TYPE_RESET, msg.MessageId)
             ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
