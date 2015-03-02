@@ -358,7 +358,9 @@ func (m *Message) AddOption (opt *Option) {
 }
 
 func (m *Message) AddOptions (opts []*Option) {
-    m.Options = append(m.Options, opts)
+    for _, opt := range opts {
+        m.Options = append(m.Options, opt)
+    }
 }
 
 func NewOption(optionNumber int, optionValue interface{}) *Option{

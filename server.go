@@ -87,6 +87,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
     }
 
     if err == nil {
+        s.messageIds[msg.MessageId] = time.Now()
 		resp := route.Handler(msg)
 
         SendPacket (resp, conn, addr)
