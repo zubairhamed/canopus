@@ -5,6 +5,7 @@ import (
     "net"
     "errors"
 	"log"
+    "time"
 )
 
 const BUF_SIZE = 1500
@@ -18,15 +19,15 @@ var ERR_NO_MATCHING_ROUTE = errors.New("No matching route found")
 // Server
 func NewServer(net string, host string) *Server {
     s := &Server{ net: net, host: host }
-    // s.routes = make(map[string] *Route)
 
     return s
 }
 
 type Server struct {
-    net     string
-    host    string
-	routes	[]*Route
+    net         string
+    host        string
+    messageIds  map[uint16] time.Time
+	routes	    []*Route
 }
 
 func (s *Server) Start() error {
@@ -63,11 +64,27 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
     route, err := s.matchingRoute(msg.GetPath(), msg.Code)
 	if err == ERR_NO_MATCHING_ROUTE {
-		msg.MessageType = TYPE_ACKNOWLEDGEMENT
-		msg.Code = COAPCODE_404_NOT_FOUND
-		SendPacket(msg, conn, addr)
+        ret := NewMessageOfType(TYPE_RESET, msg.MessageId)
+        ret.Code = COAPCODE_404_NOT_FOUND
+        ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
+        ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+
+		SendPacket(ret, conn, addr)
 		return
 	}
+
+    // Duplicate Message ID Check
+    _, dupe := s.messageIds[msg.MessageId]
+    if dupe {
+        if msg.MessageType == TYPE_CONFIRMABLE {
+            ret := NewMessageOfType(TYPE_RESET, msg.MessageId)
+            ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
+            ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+
+            SendPacket(ret, conn, addr)
+        }
+        return
+    }
 
     if err == nil {
 		resp := route.Handler(msg)

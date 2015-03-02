@@ -83,15 +83,14 @@ const (
 const PAYLOAD_MARKER = 0xff
 
 func NewMessage() *Message {
-	return &Message{}
+    return &Message{}
 }
 
-func NewAcknowledgementMessage(messageId uint16) *Message {
-	m := NewMessage()
-	m.MessageType = TYPE_ACKNOWLEDGEMENT
-	m.MessageId = messageId
-
-	return m
+func NewMessageOfType(t uint8, id uint16) *Message {
+	return &Message{
+        MessageType: t,
+        MessageId: id,
+    }
 }
 
 /*
@@ -356,6 +355,10 @@ func (c *Message) MethodString() string {
 
 func (m *Message) AddOption (opt *Option) {
 	m.Options = append(m.Options, opt)
+}
+
+func (m *Message) AddOptions (opts []*Option) {
+    m.Options = append(m.Options, opts)
 }
 
 func NewOption(optionNumber int, optionValue interface{}) *Option{

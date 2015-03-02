@@ -3,7 +3,7 @@ package goap
 type RouteHandler func(*Message) *Message
 
 
-func (s *Server) NewRoute(path string, fn RouteHandler, method uint8) (*Route) {
+func (s *Server) NewRoute(path string, method uint8, fn RouteHandler,) (*Route) {
 	r := &Route{
 		AutoAck: true,
 		Path: path,

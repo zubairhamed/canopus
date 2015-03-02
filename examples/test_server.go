@@ -7,32 +7,27 @@ import (
 func main() {
 	server := goap.NewServer("udp", goap.COAP_DEFAULT_HOST)
 
-	server.NewRoute("example", handleGet, goap.GET)
-	server.NewRoute("example", handleDelete, goap.DELETE)
-	server.NewRoute("example", handlePost, goap.POST)
-	server.NewRoute("example", handlePut, goap.PUT)
+	server.NewRoute("example", goap.GET, func(msg *goap.Message) *goap.Message {
+        return createStandardResponse(msg)
+    })
+
+	server.NewRoute("example", goap.DELETE, func(msg *goap.Message) *goap.Message {
+        return createStandardResponse(msg)
+    })
+
+	server.NewRoute("example", goap.POST, func(msg *goap.Message) *goap.Message {
+        return createStandardResponse(msg)
+    })
+
+	server.NewRoute("example", goap.PUT, func(msg *goap.Message) *goap.Message  {
+        return createStandardResponse(msg)
+    })
 
     server.Start()
 }
 
-func handleGet(msg *goap.Message) *goap.Message {
-    return createStandardResponse(msg)
-}
-
-func handlePost(msg *goap.Message) *goap.Message {
-	return createStandardResponse(msg)
-}
-
-func handlePut(msg *goap.Message) *goap.Message {
-	return createStandardResponse(msg)
-}
-
-func handleDelete(msg *goap.Message) *goap.Message {
-	return createStandardResponse(msg)
-}
-
 func createStandardResponse(msg *goap.Message) *goap.Message {
-	ack := goap.NewAcknowledgementMessage(msg.MessageId)
+    ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 	ack.Payload = []byte("Hello GoAP")
 	ack.Token = msg.Token
 	ack.Code = goap.COAPCODE_205_CONTENT
