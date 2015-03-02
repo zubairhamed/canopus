@@ -3,18 +3,9 @@ package goap
 import (
     "fmt"
     "net"
-    "errors"
 	"log"
     "time"
 )
-
-const BUF_SIZE = 1500
-
-const COAP_DEFAULT_HOST = ":5683"
-
-// ERRORS
-var ERR_NO_MATCHING_ROUTE = errors.New("No matching route found")
-
 
 // Server
 func NewServer(net string, host string) *Server {
