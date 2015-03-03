@@ -13,3 +13,5 @@ Run examples/test_server.go
 In FireFox, point to coap://localhost:10001/example
 
 [CuExt]: https://addons.mozilla.org/en-US/firefox/addon/copper-270430/
+
+# Licensed under The MIT License (MIT)

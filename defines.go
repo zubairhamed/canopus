@@ -55,40 +55,56 @@ const (
 )
 
 const (
-    COAPCODE_201_CREATED 					CoapCode = 65
-    COAPCODE_202_DELETED					CoapCode = 66
-    COAPCODE_203_VALID						CoapCode = 67
-    COAPCODE_204_CHANGED					CoapCode = 68
-    COAPCODE_205_CONTENT					CoapCode = 69
-    COAPCODE_400_BAD_REQUEST				CoapCode = 128
-    COAPCODE_401_UNAUTHORIZED				CoapCode = 129
-    COAPCODE_402_BAD_OPTION					CoapCode = 130
-    COAPCODE_403_FORBIDDEN					CoapCode = 131
-    COAPCODE_404_NOT_FOUND					CoapCode = 132
-    COAPCODE_405_METHOD_NOT_ALLOWED			CoapCode = 133
-    COAPCODE_406_NOT_ACCEPTABLE				CoapCode = 134
-    COAPCODE_412_PRECONDITION_FAILED		CoapCode = 140
-    COAPCODE_413_REQUEST_ENTITY_TOO_LARGE	CoapCode = 141
-    COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT	CoapCode = 143
-    COAPCODE_500_INTERNAL_SERVER_ERROR		CoapCode = 160
-    COAPCODE_501_NOT_IMPLEMENTED			CoapCode = 161
-    COAPCODE_502_BAD_GATEWAY				CoapCode = 162
-    COAPCODE_503_SERVICE_UNAVAILABLE		CoapCode = 163
-    COAPCODE_504_GATEWAY_TIMEOUT			CoapCode = 164
-    COAPCODE_505_PROXYING_NOT_SUPPORTED		CoapCode = 165
+	COAPCODE_0_EMPTY						= 0
+    COAPCODE_201_CREATED 					= 65
+    COAPCODE_202_DELETED					= 66
+    COAPCODE_203_VALID						= 67
+    COAPCODE_204_CHANGED					= 68
+    COAPCODE_205_CONTENT					= 69
+    COAPCODE_400_BAD_REQUEST				= 128
+    COAPCODE_401_UNAUTHORIZED				= 129
+    COAPCODE_402_BAD_OPTION					= 130
+    COAPCODE_403_FORBIDDEN					= 131
+    COAPCODE_404_NOT_FOUND					= 132
+    COAPCODE_405_METHOD_NOT_ALLOWED			= 133
+    COAPCODE_406_NOT_ACCEPTABLE				= 134
+    COAPCODE_412_PRECONDITION_FAILED		= 140
+    COAPCODE_413_REQUEST_ENTITY_TOO_LARGE	= 141
+    COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT	= 143
+    COAPCODE_500_INTERNAL_SERVER_ERROR		= 160
+    COAPCODE_501_NOT_IMPLEMENTED			= 161
+    COAPCODE_502_BAD_GATEWAY				= 162
+    COAPCODE_503_SERVICE_UNAVAILABLE		= 163
+    COAPCODE_504_GATEWAY_TIMEOUT			= 164
+    COAPCODE_505_PROXYING_NOT_SUPPORTED		= 165
 )
 
-const PAYLOAD_MARKER = 0xff
+const DEFAULT_ACK_TIMEOUT 			= 2
+const DEFAULT_ACK_RANDOM_FACTOR 	= 1.5
+const DEFAULT_MAX_RETRANSMIT 		= 4
+const DEFAULT_NSTART 				= 1
+const DEFAULT_LEISURE 				= 5
+const DEFAULT_PROBING_RATE 			= 1
 
-const BUF_SIZE = 1500
+/*
+func MaxTransmitSpan() {
+	return  ACK_TIMEOUT * ((2 ** MAX_RETRANSMIT) - 1) * ACK_RANDOM_FACTOR
+}
+
+func MaxTransmitWait() {
+	return ACK_TIMEOUT * ((2 ** (MAX_RETRANSMIT + 1)) - 1) * ACK_RANDOM_FACTOR
+*/
 
 const COAP_DEFAULT_HOST     = ":5683"
 const COAPS_DEFAULT_HOST    = ":5684"
 
+const PAYLOAD_MARKER = 0xff
+const BUF_SIZE = 1500
+
 // ERRORS
 var ERR_NO_MATCHING_ROUTE = errors.New("No matching route found")
-// return msg, errors.New("Packet length less than 4 bytes")
-// return nil, errors.New("Invalid version")
-// return msg, errors.New("Message Format Error. Option length has reserved value 15")
-// return errors.New("Unknown message type")
-// return errors.New("Invalid Token Length ( > 8)")
+var ERR_PACKET_LENGTH_LESS_THAN_4 = errors.New("Packet length less than 4 bytes")
+var ERR_INVALID_VERSION = errors.New("Invalid CoAP version. Should be 1.")
+var ERR_OPTION_LENGTH_USES_VALUE_15 = errors.New(("Message format error. Option length has reserved value of 15"))
+var ERR_UNKNOWN_MESSAGE_TYPE = errors.New("Unknown message type")
+var ERR_INVALID_TOKEN_LENGTH = errors.New("Invalid Token Length ( > 8)")

@@ -1,6 +1,6 @@
 package goap
+
 import (
-    "errors"
     "encoding/binary"
     "fmt"
     "strings"
@@ -36,12 +36,12 @@ func BytesToMessage(data []byte) (*Message, error) {
 
     dataLen := len(data)
     if dataLen < 4 {
-        return msg, errors.New("Packet length less than 4 bytes")
+		return msg, ERR_PACKET_LENGTH_LESS_THAN_4
     }
 
     ver := data[DATA_HEADER] >> 6
 	if ver != 1 {
-		return nil, errors.New("Invalid version")
+		return nil, ERR_INVALID_VERSION
 	}
 
     msg.MessageType = data[DATA_HEADER] >> 4 & 0x03
@@ -115,18 +115,19 @@ func BytesToMessage(data []byte) (*Message, error) {
 
         if optionLength >= 13 {
             switch optionLength {
-                case 13:
+
+			case 13:
                 optionLength = int(tmp[0] - 13)
                 tmp = tmp[1:]
                 break
 
-                case 14:
+			case 14:
                 optionLength = int(decodeInt(tmp[:1]) - uint32(269))
                 tmp = tmp[2:]
                 break
 
-                case 15:
-                return msg, errors.New("Message Format Error. Option length has reserved value 15")
+			case 15:
+				return msg, ERR_OPTION_LENGTH_USES_VALUE_15
             }
         }
 
@@ -199,11 +200,11 @@ func MessageToBytes(msg *Message) []byte {
 
 func ValidateMessage(msg *Message) error {
     if msg.MessageType > 3 {
-        return errors.New("Unknown message type")
+		return ERR_UNKNOWN_MESSAGE_TYPE
     }
 
     if msg.GetTokenLength() > 8 {
-        return errors.New("Invalid Token Length ( > 8)")
+		return ERR_INVALID_TOKEN_LENGTH
     }
 
     return nil

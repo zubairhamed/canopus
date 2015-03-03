@@ -3,6 +3,7 @@ import (
     "regexp"
     "strings"
     "github.com/zubairhamed/goap"
+	"fmt"
 )
 
 func main() {
@@ -27,6 +28,16 @@ func main() {
             resource.AddAttribute(pair[0], strings.Replace(pair[1], "\"", "", -1))
         }
 
+		fmt.Println (resource)
+
         resources = append(resources, resource)
     }
 }
+
+/*
+	ct		Content-Format
+	rt		Resource Type
+	if		Interface Description
+	sz		Maximum Size
+
+ */

@@ -4,7 +4,7 @@ type RouteHandler func(*Message) *Message
 
 func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler,) (*Route) {
 	r := &Route{
-		AutoAck: true,
+		AutoAck: false,
 		Path: path,
 		Method: method,
 		Handler: fn,

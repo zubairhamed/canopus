@@ -5,14 +5,32 @@ import (
     "net"
 	"log"
     "time"
+	"bytes"
 )
 
 // Server
 func NewServer(net string, host string) *Server {
     s := &Server{ net: net, host: host }
 
+	s.NewRoute(".well-known/core", GET, func(msg *Message) *Message {
+		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+		ack.Code = COAPCODE_205_CONTENT
+		ack.AddOption(NewOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT))
+
+		var buf bytes.Buffer
+		for _, r := range s.routes {
+			if r.Path != ".well-known/core" {
+				buf.WriteString("</" + r.Path + ">;ct=0,")
+			}
+		}
+		ack.Payload = []byte(buf.String())
+
+		return ack
+	}).AutoAcknowledge(false)
+
     return s
 }
+
 
 type Server struct {
     net         string
@@ -43,6 +61,7 @@ func (s *Server) Start() error {
                 for k, v := range s.messageIds {
                     elapsed := time.Since(v)
                     if elapsed > 60 {
+						log.Println("Deleting Message ID after elapsed %d", k)
                         delete(s.messageIds, k)
                     }
                 }
@@ -96,6 +115,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
         log.Println("Duplicate Message ID ", msg.MessageId)
         if msg.MessageType == TYPE_CONFIRMABLE {
             ret := NewMessageOfType(TYPE_RESET, msg.MessageId)
+			ret.Code = COAPCODE_0_EMPTY
             ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
             ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
@@ -106,12 +126,14 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
     if err == nil {
 		s.messageIds[msg.MessageId] = time.Now()
+
+		// Auto acknowledge
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
 			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+			ack.MessageId = msg.MessageId
 
 			SendPacket (ack, conn, addr)
 		}
-
 		resp := route.Handler(msg)
 
         SendPacket (resp, conn, addr)
@@ -132,6 +154,8 @@ func SendPacket (msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
 
 	b := MessageToBytes(msg)
 	_, err := conn.WriteTo(b, addr)
+
+	fmt.Println(b)
 
     return err
 }

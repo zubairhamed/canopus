@@ -2,6 +2,7 @@ package main
 
 import (
     "github.com/zubairhamed/goap"
+	// "encoding/binary"
 )
 
 func main() {
@@ -28,11 +29,12 @@ func main() {
 
 func createStandardResponse(msg *goap.Message) *goap.Message {
     ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-	ack.Payload = []byte("Hello GoAP")
-	ack.Token = msg.Token
+	// ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, binary.BigEndian.Uint16([]byte{10, 20}))
 	ack.Code = goap.COAPCODE_205_CONTENT
+	ack.Token = msg.Token
+	ack.Payload = []byte("Hello GoAP")
 
-	ack.AddOption(goap.NewOption(goap.OPTION_CONTENT_FORMAT, goap.MEDIATYPE_TEXT_PLAIN))
+	ack.AddOption(goap.NewOption(goap.OPTION_CONTENT_FORMAT, goap.MEDIATYPE_APPLICATION_XML))
 
 	return ack
 }
