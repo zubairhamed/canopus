@@ -72,8 +72,14 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
     }
 
     route, err := s.matchingRoute(msg.GetPath(), msg.Code)
+
+    // TODO: Has matching path but not method: HTTP 405 "Method Not Allowed"
 	if err == ERR_NO_MATCHING_ROUTE {
-        ret := NewMessageOfType(TYPE_RESET, msg.MessageId)
+        ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+        if msg.MessageType == TYPE_NONCONFIRMABLE {
+            ret.MessageType = TYPE_NONCONFIRMABLE
+        }
+
         ret.Code = COAPCODE_404_NOT_FOUND
         ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
         ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
@@ -81,6 +87,8 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		SendPacket(ret, conn, addr)
 		return
 	}
+
+    // TODO: Check Content Format if not ALL: 4.15 Unsupported Content-Format
 
     // Duplicate Message ID Check
     _, dupe := s.messageIds[msg.MessageId]
@@ -110,7 +118,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
     }
 }
 
-func (s *Server) matchingRoute(path string, method uint8) (*Route, error) {
+func (s *Server) matchingRoute(path string, method CoapCode) (*Route, error) {
 	for _, route := range s.routes {
 		if route.Path == path && route.Method == method {
 			return route, nil

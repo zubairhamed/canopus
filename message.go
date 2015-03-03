@@ -45,11 +45,8 @@ func BytesToMessage(data []byte) (*Message, error) {
 	}
 
     msg.MessageType = data[DATA_HEADER] >> 4 & 0x03
-
 	tokenLength := data[DATA_HEADER] & 0x0f
-
-	msg.Code = data[DATA_CODE]
-
+	msg.Code = CoapCode(data[DATA_CODE])
     msg.MessageId = binary.BigEndian.Uint16(data[DATA_MSGID_START:DATA_MSGID_END])
 
     // Token
@@ -99,7 +96,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 
         tmp = tmp[1:]
         if optionDelta < 13 {
-            optionId += int(optionDelta)
+            optionId += optionDelta
         } else {
             switch optionDelta {
                 case 13:
@@ -136,17 +133,26 @@ func BytesToMessage(data []byte) (*Message, error) {
         if optionLength > 0 {
             optionValue := tmp[:optionLength]
 
-            switch optionId {
+            optCode := OptionCode(optionId)
+
+            switch optCode {
 				case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1:
-				msg.Options = append(msg.Options, NewOption(optionId, decodeInt(optionValue)))
+				msg.Options = append(msg.Options, NewOption(optCode, decodeInt(optionValue)))
 				break;
 
 				case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
 				 	 OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
-				msg.Options = append(msg.Options, NewOption(optionId, string(optionValue)))
+				msg.Options = append(msg.Options, NewOption(optCode, string(optionValue)))
 				break;
 
 				default:
+                if optionId % 2 > 0 {
+                    // TODO: Critical Option
+                    fmt.Println(optionId)
+                    fmt.Println("Critical Option Found Unknown " + string(optionId))
+                        // If message is Confirmable, return a 4.02 - Bad Option with diagnostic payload - Unrecognized option
+                        /// If message is NON Confirmable, reject without a return
+                }
                 fmt.Println("Ignoring unknown option id " + string(optionId))
                 break;
             }
@@ -166,12 +172,10 @@ func MessageToBytes(msg *Message) []byte {
 
 	buf := bytes.NewBuffer([]byte{})
 	buf.Write( []byte{ (1 << 6) | (msg.MessageType << 4) | 0x0f & msg.GetTokenLength()} )
-	buf.Write( []byte{ msg.Code } )
+	buf.Write( []byte{ byte(msg.Code) } )
 	buf.Write( []byte{ messageId[0]} )
 	buf.Write( []byte{ messageId[1]} )
 	buf.Write(msg.Token)
-
-	// sort.Sort(&msg.Options)
 
 	lastOptionId := 0
 	for _, opt := range msg.Options {
@@ -207,8 +211,8 @@ func ValidateMessage(msg *Message) error {
 
 type Message struct {
 	MessageType uint8
-	Code		uint8
-	MessageId   uint16
+	Code		CoapCode
+    MessageId   uint16
 	Payload     []byte
 	Token       []byte
 	Options     []*Option
@@ -223,14 +227,14 @@ func (c Message) GetCodeString() string {
 
 
 func (c Message) GetMethod() uint8 {
-    return (c.Code & 0x1f)
+    return (byte(c.Code) & 0x1f)
 }
 
 func (c Message) GetTokenLength() uint8 {
 	return uint8(len(c.Token))
 }
 
-func (c Message) GetOptions(id int) []*Option {
+func (c Message) GetOptions(id OptionCode) []*Option {
     var opts []*Option
     for _, val := range c.Options {
         if val.Code == id {
@@ -240,7 +244,7 @@ func (c Message) GetOptions(id int) []*Option {
     return opts
 }
 
-func (c Message) GetOptionsAsString(id int) []string {
+func (c Message) GetOptionsAsString(id OptionCode) []string {
     opts := c.GetOptions(id)
 
     var str []string
@@ -286,23 +290,6 @@ func (m *Message) AddOptions (opts []*Option) {
     for _, opt := range opts {
         m.Options = append(m.Options, opt)
     }
-}
-
-func NewOption(optionNumber int, optionValue interface{}) *Option{
-    return &Option{
-        Code: optionNumber,
-        Value: optionValue,
-    }
-}
-
-/* Option */
-type Option struct {
-    Code     int
-    Value   interface{}
-}
-
-func (o *Option) Name() string {
-    return "Name of option"
 }
 
 /* Helpers */

@@ -2,8 +2,7 @@ package goap
 
 type RouteHandler func(*Message) *Message
 
-
-func (s *Server) NewRoute(path string, method uint8, fn RouteHandler,) (*Route) {
+func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler,) (*Route) {
 	r := &Route{
 		AutoAck: true,
 		Path: path,
@@ -17,8 +16,8 @@ func (s *Server) NewRoute(path string, method uint8, fn RouteHandler,) (*Route) 
 
 type Route struct {
 	Path		string
-	Method 		uint8
-	Handler 	RouteHandler
+	Method 		CoapCode
+    Handler 	RouteHandler
 	AutoAck 	bool
 }
 
