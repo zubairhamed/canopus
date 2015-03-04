@@ -2,9 +2,9 @@ package goap
 
 import (
     "encoding/binary"
-    "fmt"
     "strings"
     "bytes"
+    "log"
 )
 
 func NewMessage() *Message {
@@ -149,12 +149,11 @@ func BytesToMessage(data []byte) (*Message, error) {
 				default:
                 if optionId % 2 > 0 {
                     // TODO: Critical Option
-                    fmt.Println(optionId)
-                    fmt.Println("Critical Option Found Unknown " + string(optionId))
+                    log.Println("Critical Option Found Unknown " + string(optionId))
                         // If message is Confirmable, return a 4.02 - Bad Option with diagnostic payload - Unrecognized option
                         /// If message is NON Confirmable, reject without a return
                 }
-                fmt.Println("Ignoring unknown option id " + string(optionId))
+                log.Println("Ignoring unknown option id " + string(optionId))
                 break;
             }
             tmp = tmp[optionLength:]
@@ -171,7 +170,7 @@ func MessageToBytes(msg *Message) []byte {
 	messageId := []byte{ 0, 0 }
 	binary.BigEndian.PutUint16(messageId, msg.MessageId)
 
-	buf := bytes.NewBuffer([]byte{})
+    buf := bytes.Buffer{}
 	buf.Write( []byte{ (1 << 6) | (msg.MessageType << 4) | 0x0f & msg.GetTokenLength()} )
 	buf.Write( []byte{ byte(msg.Code) } )
 	buf.Write( []byte{ messageId[0]} )
@@ -182,11 +181,19 @@ func MessageToBytes(msg *Message) []byte {
 	for _, opt := range msg.Options {
 		b := ValueToBytes(opt.Value)
 		optCode := opt.Code
-		if len(b) >= 15 {
-			buf.Write([]byte{ byte(int(optCode) - lastOptionId) << 4 | 15, byte(len(b) - 15), } )
+        bLen := len(b)
+		if bLen >= 15 {
+			buf.Write([]byte{ byte(int(optCode) - lastOptionId) << 4 | 15, byte(bLen - 15), } )
 		} else {
-			buf.Write([]byte{ byte(int(optCode) - lastOptionId) << 4 | byte(len(b))} )
+			buf.Write([]byte{ byte(int(optCode) - lastOptionId) << 4 | byte(bLen)} )
 		}
+
+        if int(opt.Code) - lastOptionId > 15 {
+            // TODO: ERROR
+        }
+
+        buf.Write(b)
+        lastOptionId = int(opt.Code)
 	}
 
 	if (len(msg.Payload) > 0) {
@@ -283,8 +290,8 @@ func (c *Message) MethodString() string {
 	return ""
 }
 
-func (m *Message) AddOption (opt *Option) {
-	m.Options = append(m.Options, opt)
+func (m *Message) AddOption (code OptionCode, value interface{}) {
+	m.Options = append(m.Options, NewOption(code, value))
 }
 
 func (m *Message) AddOptions (opts []*Option) {
@@ -302,6 +309,8 @@ func ValueToBytes(value interface {}) []byte {
 		return []byte(i)
 	case []byte:
 		return i
+    case MediaType:
+        v = uint32(i)
 	case byte:
 		v = uint32(i)
 	case int:
@@ -328,6 +337,7 @@ func PayloadAsString(b []byte) string {
 func decodeInt(b []byte) uint32 {
 	tmp := []byte{0, 0, 0, 0}
 	copy(tmp[4-len(b):], b)
+
 	return binary.BigEndian.Uint32(tmp)
 }
 

@@ -101,6 +101,8 @@ const COAPS_DEFAULT_HOST    = ":5684"
 const PAYLOAD_MARKER = 0xff
 const BUF_SIZE = 1500
 
+const MESSAGEID_PURGE_DURATION = 60
+
 // ERRORS
 var ERR_NO_MATCHING_ROUTE = errors.New("No matching route found")
 var ERR_PACKET_LENGTH_LESS_THAN_4 = errors.New("Packet length less than 4 bytes")

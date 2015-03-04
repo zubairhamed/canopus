@@ -1,7 +1,6 @@
 package goap
 
 import (
-    "fmt"
     "net"
 	"log"
     "time"
@@ -15,7 +14,7 @@ func NewServer(net string, host string) *Server {
 	s.NewRoute(".well-known/core", GET, func(msg *Message) *Message {
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
-		ack.AddOption(NewOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT))
+		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
 
 		var buf bytes.Buffer
 		for _, r := range s.routes {
@@ -26,7 +25,7 @@ func NewServer(net string, host string) *Server {
 		ack.Payload = []byte(buf.String())
 
 		return ack
-	}).AutoAcknowledge(false)
+	})
 
     return s
 }
@@ -53,15 +52,14 @@ func (s *Server) Start() error {
     }
 
     // Routine for clearing up message IDs which has expired
-    ticker := time.NewTicker(1 * time.Minute)
+    ticker := time.NewTicker(MESSAGEID_PURGE_DURATION * time.Second)
     go func() {
         for {
             select {
                 case <- ticker.C:
                 for k, v := range s.messageIds {
                     elapsed := time.Since(v)
-                    if elapsed > 60 {
-						log.Println("Deleting Message ID after elapsed %d", k)
+                    if elapsed > MESSAGEID_PURGE_DURATION {
                         delete(s.messageIds, k)
                     }
                 }
@@ -86,7 +84,7 @@ func (s *Server) Start() error {
 func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
     msg, err := BytesToMessage(msgBuf)
     if err != nil {
-        fmt.Println(err)
+        log.Println(err)
         return
     }
 
@@ -135,6 +133,8 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			SendPacket (ack, conn, addr)
 		}
 		resp := route.Handler(msg)
+
+        // TODO: Validate Message before sending (.e.g missing messageId)
 
         SendPacket (resp, conn, addr)
     }

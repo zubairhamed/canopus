@@ -34,7 +34,7 @@ func createStandardResponse(msg *goap.Message) *goap.Message {
 	ack.Token = msg.Token
 	ack.Payload = []byte("Hello GoAP")
 
-	ack.AddOption(goap.NewOption(goap.OPTION_CONTENT_FORMAT, goap.MEDIATYPE_APPLICATION_XML))
+	ack.AddOption(goap.OPTION_CONTENT_FORMAT, goap.MEDIATYPE_APPLICATION_XML)
 
 	return ack
 }
