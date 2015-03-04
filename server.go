@@ -148,14 +148,3 @@ func (s *Server) matchingRoute(path string, method CoapCode) (*Route, error) {
 	}
 	return &Route{}, ERR_NO_MATCHING_ROUTE
 }
-
-func SendPacket (msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
-	log.Printf("%#v", msg)
-
-	b := MessageToBytes(msg)
-	_, err := conn.WriteTo(b, addr)
-
-	fmt.Println(b)
-
-    return err
-}
