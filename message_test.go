@@ -22,7 +22,6 @@ func TestMessageConversion(t *testing.T) {
 
 	// Byte 1
 	msg.Token = []byte("abcd1234")
-
 	msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
 
 	// Convert Message to BYte

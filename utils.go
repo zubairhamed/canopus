@@ -6,7 +6,7 @@ import (
     "strings"
 )
 
-
+var MESSAGEID_CURR = 0
 /*
 func GenerateMessageId() uint16 {
 
@@ -17,6 +17,7 @@ func GenerateToken() []byte {
 }
 */
 
+
 func SendPacket (msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
 	b := MessageToBytes(msg)
 	_, err := conn.WriteTo(b, addr)
@@ -26,11 +27,12 @@ func SendPacket (msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
 
 func CoreResourcesFromString(str string) []*CoreResource {
     var re = regexp.MustCompile(`(<[^>]+>\s*(;\s*\w+\s*(=\s*(\w+|"([^"\\]*(\\.[^"\\]*)*)")\s*)?)*)`)
+	var elemRe = regexp.MustCompile(`<\/[a-zA-Z0-9_%-]+>`)
 
     var resources []* CoreResource
     m := re.FindAllString(str, -1)
+
     for _, match := range m {
-        var elemRe = regexp.MustCompile(`<\/[a-zA-Z0-9_%-]+>`)
         elemMatch := elemRe.FindString(match)
         target :=elemMatch[1:len(elemMatch)-1]
 

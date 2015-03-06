@@ -1,5 +1,7 @@
 package goap
 
+import "strings"
+
 /* Option */
 type Option struct {
     Code    OptionCode
@@ -24,9 +26,26 @@ func (o *Option) IsCritical() bool {
     return false
 }
 
+////////////////////////////////////////
+
 func NewOption(optionNumber OptionCode, optionValue interface{}) *Option{
     return &Option{
         Code: optionNumber,
         Value: optionValue,
     }
 }
+
+func NewPathOptions(path string) []*Option {
+	opts := []*Option{}
+
+	ps := strings.Split(path, "/")
+	for _, p := range ps {
+		opt := NewOption(OPTION_URI_PATH, p)
+		opts = append(opts, opt)
+	}
+
+	return opts
+}
+
+// NewPathOptions
+

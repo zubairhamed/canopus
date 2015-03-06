@@ -5,6 +5,7 @@ import (
 	"log"
     "time"
 	"bytes"
+	"math/rand"
 )
 
 // Server
@@ -26,6 +27,10 @@ func NewServer(net string, host string) *Server {
 
 		return ack
 	})
+
+	// Set a MessageID Start
+	rand.Seed(42)
+	MESSAGEID_CURR = rand.Intn(65535)
 
     return s
 }
@@ -128,7 +133,6 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		// Auto acknowledge
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
 			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-			ack.MessageId = msg.MessageId
 
 			SendPacket (ack, conn, addr)
 		}
