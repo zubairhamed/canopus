@@ -11,6 +11,12 @@ func NewMessage() *Message {
     return &Message{}
 }
 
+func NewEmptyMessage(id uint16) *Message {
+	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, id)
+
+	return msg
+}
+
 func NewMessageOfType(t uint8, id uint16) *Message {
 	return &Message{
         MessageType: t,
@@ -232,7 +238,6 @@ func (c Message) GetCodeString() string {
 
 	return codeClass + "." + codeDetail
 }
-
 
 func (c Message) GetMethod() uint8 {
     return (byte(c.Code) & 0x1f)

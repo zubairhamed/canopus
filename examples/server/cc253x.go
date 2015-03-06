@@ -10,11 +10,11 @@ import (
 func main() {
 	server := goap.NewServer("udp", goap.COAP_DEFAULT_HOST)
 
-	server.NewRoute("state", addState, goap.POST)
+	server.NewRoute("event", addEvent, goap.POST)
 
 	server.Start()
 }
 
-func addState(msg *goap.Message) *goap.Message {
+func addEvent(msg *goap.Message) *goap.Message {
 	return nil
 }

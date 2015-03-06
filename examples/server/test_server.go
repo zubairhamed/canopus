@@ -3,9 +3,11 @@ package main
 import (
     "github.com/zubairhamed/goap"
 	// "encoding/binary"
+	"log"
 )
 
 func main() {
+	log.Println("Starting up server..")
 	server := goap.NewServer("udp", goap.COAP_DEFAULT_HOST)
 
 	server.NewRoute("example", goap.GET, func(msg *goap.Message) *goap.Message {
@@ -23,7 +25,7 @@ func main() {
 	server.NewRoute("example", goap.PUT, func(msg *goap.Message) *goap.Message  {
         return createStandardResponse(msg)
     })
-
+	log.Println("Server Started")
     server.Start()
 }
 
