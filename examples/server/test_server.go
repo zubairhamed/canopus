@@ -30,6 +30,7 @@ func main() {
 }
 
 func createStandardResponse(msg *goap.Message) *goap.Message {
+	log.Println("Got Request ")
     ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 	// ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, binary.BigEndian.Uint16([]byte{10, 20}))
 	ack.Code = goap.COAPCODE_205_CONTENT

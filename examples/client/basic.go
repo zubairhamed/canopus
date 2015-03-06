@@ -11,10 +11,10 @@ func main() {
 	client := goap.NewClient()
 	client.Dial("udp", goap.COAP_DEFAULT_HOST)
 
-	msg := goap.NewMessageOfType(goap.TYPE_CONFIRMABLE)
+	msg := goap.NewMessageOfType(goap.TYPE_CONFIRMABLE, 12345)
 	msg.Code = goap.GET
-	msg.MessageId = 12345
-	msg.Payload = []byte{"hello, goap"}
+	msg.Payload = []byte("Hello, goap")
+	msg.AddOptions(goap.NewPathOptions("/example"))
 
 	client.OnSuccess(func(msg *goap.Message) {
 		log.Println("Success")
@@ -31,14 +31,3 @@ func main() {
 	client.Send(msg)
 }
 
-func createStandardResponse(msg *goap.Message) *goap.Message {
-	ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-	// ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, binary.BigEndian.Uint16([]byte{10, 20}))
-	ack.Code = goap.COAPCODE_205_CONTENT
-	ack.Token = msg.Token
-	ack.Payload = []byte("Hello GoAP")
-
-	ack.AddOption(goap.OPTION_CONTENT_FORMAT, goap.MEDIATYPE_APPLICATION_XML)
-
-	return ack
-}
