@@ -94,7 +94,6 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
     }
 
     route, err := s.matchingRoute(msg.GetPath(), msg.Code)
-
     // TODO: Has matching path but not method: HTTP 405 "Method Not Allowed"
 	if err == ERR_NO_MATCHING_ROUTE {
         ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
