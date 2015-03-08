@@ -15,8 +15,6 @@ func main() {
 	server.Start()
 }
 
-
 func service(msg *goap.Message) *goap.Message {
 	return nil
 }
-

@@ -3,11 +3,11 @@ package goap
 type RouteHandler func(*Message) *Message
 type MessageHandler func(*Message)
 
-func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler,) (*Route) {
+func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
 	r := &Route{
 		AutoAck: false,
-		Path: path,
-		Method: method,
+		Path:    path,
+		Method:  method,
 		Handler: fn,
 	}
 	s.routes = append(s.routes, r)
@@ -16,13 +16,13 @@ func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler,) (*Rout
 }
 
 type Route struct {
-	Path		string
-	Method 		CoapCode
-    Handler 	RouteHandler
-	AutoAck 	bool
+	Path    string
+	Method  CoapCode
+	Handler RouteHandler
+	AutoAck bool
 }
 
-func (r *Route) AutoAcknowledge(ack bool) (*Route) {
+func (r *Route) AutoAcknowledge(ack bool) *Route {
 	r.AutoAck = ack
 
 	return r

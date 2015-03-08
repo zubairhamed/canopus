@@ -27,10 +27,9 @@ func main() {
 		log.Println("Reset")
 	})
 
-	client.OnTimeout(func(msg *goap.Message){
+	client.OnTimeout(func(msg *goap.Message) {
 		log.Println("Timeout")
 	})
 
 	client.Send(msg)
 }
-

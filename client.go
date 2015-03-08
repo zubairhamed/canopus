@@ -1,29 +1,28 @@
 package goap
 
 import (
-	"net"
-	"log"
-	"time"
 	"fmt"
+	"log"
+	"net"
+	"time"
 )
 
-
 func NewClient() *Client {
-    return &Client{
+	return &Client{
 		async: true,
 	}
 }
 
 type Client struct {
-	conn 			*net.UDPConn
-	async			bool
-	successHandler	MessageHandler
-	timeoutHandler	MessageHandler
-	resetHandler	MessageHandler
+	conn           *net.UDPConn
+	async          bool
+	successHandler MessageHandler
+	timeoutHandler MessageHandler
+	resetHandler   MessageHandler
 }
 
 func (c *Client) Dial(nwNet string, host string) {
-	udpAddr, err := net.ResolveUDPAddr(nwNet, host);
+	udpAddr, err := net.ResolveUDPAddr(nwNet, host)
 	if err != nil {
 		log.Println(err)
 	}
@@ -48,11 +47,11 @@ func (c *Client) OnTimeout(fn MessageHandler) {
 	c.timeoutHandler = fn
 }
 
-func (c *Client) validate() (error) {
+func (c *Client) validate() error {
 	return nil
 }
 
-func (c *Client) Send(msg *Message) (error) {
+func (c *Client) Send(msg *Message) error {
 	err := c.validate()
 
 	if err != nil {

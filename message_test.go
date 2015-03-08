@@ -1,17 +1,17 @@
 package goap
 
 import (
-	"testing"
 	"bytes"
+	"testing"
 )
 
 func TestInvalidMessage(t *testing.T) {
-    _, err := BytesToMessage(make([]byte, 0))
+	_, err := BytesToMessage(make([]byte, 0))
 	if err == nil {
 		t.Error("Message should be invalid")
 	}
 
-	_, err = BytesToMessage(make([]byte, 4));
+	_, err = BytesToMessage(make([]byte, 4))
 	if err == nil {
 		t.Error("Message should be invalid")
 	}
