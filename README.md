@@ -10,7 +10,7 @@ Install the [Copper][CuExt] extension for Firefox.
 
 Run examples/test_server.go
 
-In FireFox, point to coap://localhost:10001/example
+In FireFox, point to coap://localhost:5683/example
 
 [CuExt]: https://addons.mozilla.org/en-US/firefox/addon/copper-270430/
 
