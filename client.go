@@ -3,15 +3,20 @@ package goap
 import (
 	"net"
 	"log"
+	"time"
+	"fmt"
 )
 
 
 func NewClient() *Client {
-    return &Client{}
+    return &Client{
+		async: true,
+	}
 }
 
 type Client struct {
 	conn 			*net.UDPConn
+	async			bool
 	successHandler	MessageHandler
 	timeoutHandler	MessageHandler
 	resetHandler	MessageHandler
@@ -27,11 +32,11 @@ func (c *Client) Dial(nwNet string, host string) {
 	if err != nil {
 		log.Println(err)
 	}
-
 	c.conn = conn
 }
 
 func (c *Client) OnSuccess(fn MessageHandler) {
+	fmt.Println()
 	c.successHandler = fn
 }
 
@@ -65,6 +70,30 @@ func (c *Client) Send(msg *Message) (error) {
 	if msg.MessageType == TYPE_NONCONFIRMABLE {
 		return nil
 	} else {
-		return nil
+		// Read response
+		var buf []byte = make([]byte, 1500)
+
+		c.conn.SetReadDeadline(time.Now().Add(time.Second * 2))
+		n, _, err := c.conn.ReadFromUDP(buf)
+
+		if err != nil {
+			return err
+		}
+
+		if c.successHandler != nil {
+			resp, err := BytesToMessage(buf[:n])
+
+			if err != nil {
+				return err
+			}
+
+			fn := c.successHandler
+			fn(resp)
+		}
 	}
+	return nil
+}
+
+func (c *Client) Close() {
+	defer c.conn.Close()
 }
