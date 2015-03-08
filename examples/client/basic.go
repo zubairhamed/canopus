@@ -12,7 +12,7 @@ func main() {
 	client := goap.NewClient()
 	defer client.Close()
 
-	client.Dial("udp", goap.COAP_DEFAULT_HOST)
+	client.Dial("udp", goap.COAP_DEFAULT_HOST, goap.COAP_DEFAULT_PORT)
 
 	msg := goap.NewMessageOfType(goap.TYPE_CONFIRMABLE, 12345)
 	msg.Code = goap.GET

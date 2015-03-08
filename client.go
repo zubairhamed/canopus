@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"strconv"
 )
 
 func NewClient() *Client {
@@ -21,8 +22,9 @@ type Client struct {
 	resetHandler   MessageHandler
 }
 
-func (c *Client) Dial(nwNet string, host string) {
-	udpAddr, err := net.ResolveUDPAddr(nwNet, host)
+func (c *Client) Dial(nwNet string, host string, port int) {
+	hostString := host + ":" + strconv.Itoa(port)
+	udpAddr, err := net.ResolveUDPAddr(nwNet, hostString)
 	if err != nil {
 		log.Println(err)
 	}

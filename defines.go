@@ -98,8 +98,9 @@ func MaxTransmitWait() {
 	return ACK_TIMEOUT * ((2 ** (MAX_RETRANSMIT + 1)) - 1) * ACK_RANDOM_FACTOR
 */
 
-const COAP_DEFAULT_HOST = ":5683"
-const COAPS_DEFAULT_HOST = ":5684"
+const COAP_DEFAULT_HOST = ""
+const COAP_DEFAULT_PORT = 5683
+const COAPS_DEFAULT_PORT = 5684
 
 const PAYLOAD_MARKER = 0xff
 const BUF_SIZE = 1500

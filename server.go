@@ -6,11 +6,13 @@ import (
 	"math/rand"
 	"net"
 	"time"
+	"strconv"
 )
 
 // Server
-func NewServer(net string, host string) *Server {
-	s := &Server{net: net, host: host}
+func NewServer(net string, host string, port int) *Server {
+	hostString := host + ":" + strconv.Itoa(port)
+	s := &Server{net: net, host: hostString}
 
 	s.NewRoute(".well-known/core", GET, func(msg *Message) *Message {
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
