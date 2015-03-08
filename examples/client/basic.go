@@ -18,6 +18,7 @@ func main() {
 	msg.Code = goap.GET
 	msg.Payload = []byte("Hello, goap")
 	msg.AddOptions(goap.NewPathOptions("/example"))
+	msg.Token = []byte(goap.GenerateToken(8))
 
 	client.OnSuccess(func(msg *goap.Message) {
 		log.Print("Got message back: " + string(msg.Payload))

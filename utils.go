@@ -4,6 +4,8 @@ import (
 	"net"
 	"regexp"
 	"strings"
+	"math/rand"
+	"time"
 )
 
 var MESSAGEID_CURR = 0
@@ -12,11 +14,17 @@ var MESSAGEID_CURR = 0
 func GenerateMessageId() uint16 {
 
 }
-
-func GenerateToken() []byte {
-
-}
 */
+
+var genChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+func GenerateToken (l int) string {
+	rand.Seed(time.Now().UTC().UnixNano())
+	token := make([]rune, l)
+	for i := range token {
+		token[i] = genChars[rand.Intn(len(genChars))]
+	}
+	return string(token)
+}
 
 // Sends a CoAP Message to UDP address
 func SendPacket(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
