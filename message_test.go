@@ -18,14 +18,13 @@ func TestInvalidMessage(t *testing.T) {
 }
 
 func TestMessageConversion(t *testing.T) {
-	msg := NewMessageOfType(TYPE_CONFIRMABLE, 0xf0f0)
 
+	msg := NewBasicConfirmableMessage()
 	// Byte 1
-	msg.Token = []byte("abcd1234")
 	msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
 
 	// Convert Message to BYte
-	b := MessageToBytes(msg)
+	b, err := MessageToBytes(msg)
 
 	// Reconvert Back Bytes to Message
 	newMsg, err := BytesToMessage(b)
@@ -48,4 +47,29 @@ func TestMessageConversion(t *testing.T) {
 	if len(newMsg.Options) == 0 {
 		t.Error("Options should not be 0")
 	}
+}
+
+func TestMessageBadOptions(t *testing.T) {
+	testMsg := NewBasicConfirmableMessage()
+
+	// Unknown Critical Option
+	unk := OptionCode(99)
+	testMsg.AddOption(unk, 0)
+	testMsg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
+
+	_, err := MessageToBytes(testMsg)
+	if err == nil {
+		if err != ERR_UNKNOWN_CRITICAL_OPTION {
+			t.Log("Should throw ERR_UNKNOWN_CRITICAL_OPTION")
+			t.Fail()
+		}
+	}
+}
+
+
+func NewBasicConfirmableMessage() (*Message) {
+	msg := NewMessageOfType(TYPE_CONFIRMABLE, 0xf0f0)
+	msg.Token = []byte("abcd1234")
+
+	return msg
 }

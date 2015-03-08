@@ -88,8 +88,9 @@ func (s *Server) Start() error {
 func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
 	if err != nil {
-		log.Println(err)
-		return
+		if err == ERR_UNKNOWN_CRITICAL_OPTION {
+			SendError402BadOption(msg.MessageId, conn, addr)
+		}
 	}
 
 	route, err := s.matchingRoute(msg.GetPath(), msg.Code)
@@ -104,7 +105,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
-		SendPacket(ret, conn, addr)
+		SendMessage(ret, conn, addr)
 		return
 	}
 
@@ -120,7 +121,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
-			SendPacket(ret, conn, addr)
+			SendMessage(ret, conn, addr)
 		}
 		return
 	}
@@ -132,13 +133,12 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
 			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 
-			SendPacket(ack, conn, addr)
+			SendMessage(ack, conn, addr)
 		}
 		resp := route.Handler(msg)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
-
-		SendPacket(resp, conn, addr)
+		SendMessage(resp, conn, addr)
 	}
 }
 

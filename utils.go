@@ -1,7 +1,6 @@
 package goap
 
 import (
-	"net"
 	"regexp"
 	"strings"
 	"math/rand"
@@ -24,14 +23,6 @@ func GenerateToken (l int) string {
 		token[i] = genChars[rand.Intn(len(genChars))]
 	}
 	return string(token)
-}
-
-// Sends a CoAP Message to UDP address
-func SendPacket(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
-	b := MessageToBytes(msg)
-	_, err := conn.WriteTo(b, addr)
-
-	return err
 }
 
 // Converts to CoRE Resources Object from a CoRE String

@@ -59,7 +59,7 @@ func (c *Client) Send(msg *Message) error {
 	}
 
 	// Send message
-	b := MessageToBytes(msg)
+	b, _ := MessageToBytes(msg)
 	_, err = c.conn.Write(b)
 
 	if err != nil {

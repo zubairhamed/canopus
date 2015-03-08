@@ -152,7 +152,9 @@ func BytesToMessage(data []byte) (*Message, error) {
 				break
 
 			default:
-				if optionId%2 > 0 {
+				if optionId % 2 > 0 {
+					log.Println("CRITICAL OPTION!!!")
+					return msg, ERR_UNKNOWN_CRITICAL_OPTION
 					// TODO: Critical Option
 					log.Println("Critical Option Found Unknown " + string(optionId))
 					// If message is Confirmable, return a 4.02 - Bad Option with diagnostic payload - Unrecognized option
@@ -171,7 +173,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 	return msg, err
 }
 
-func MessageToBytes(msg *Message) []byte {
+func MessageToBytes(msg *Message) ([]byte, error) {
 	messageId := []byte{0, 0}
 	binary.BigEndian.PutUint16(messageId, msg.MessageId)
 
@@ -184,7 +186,7 @@ func MessageToBytes(msg *Message) []byte {
 
 	lastOptionId := 0
 	for _, opt := range msg.Options {
-		b := ValueToBytes(opt.Value)
+		b := valueToBytes(opt.Value)
 		optCode := opt.Code
 		bLen := len(b)
 		if bLen >= 15 {
@@ -194,7 +196,9 @@ func MessageToBytes(msg *Message) []byte {
 		}
 
 		if int(opt.Code)-lastOptionId > 15 {
-			// TODO: ERROR
+			log.Println("TODO: ERROR")
+
+			return nil, ERR_UNKNOWN_CRITICAL_OPTION
 		}
 
 		buf.Write(b)
@@ -202,12 +206,12 @@ func MessageToBytes(msg *Message) []byte {
 	}
 
 	if len(msg.Payload) > 0 {
-		buf.Write([]byte{PAYLOAD_MARKER})
+		buf.Write([]byte{ PAYLOAD_MARKER })
 	}
 
 	buf.Write(msg.Payload)
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 func ValidateMessage(msg *Message) error {
@@ -304,8 +308,12 @@ func (m *Message) AddOptions(opts []*Option) {
 	}
 }
 
+func (m *Message) SetStringPayload(s string) {
+	m.Payload = []byte(s)
+}
+
 /* Helpers */
-func ValueToBytes(value interface{}) []byte {
+func valueToBytes(value interface{}) []byte {
 	var v uint32
 
 	switch i := value.(type) {
