@@ -8,7 +8,7 @@ import (
 
 func main() {
 	log.Println("Starting up server..")
-	server := goap.NewServer("udp", goap.COAP_DEFAULT_HOST, goap.COAP_DEFAULT_PORT)
+	server := goap.NewLocalServer()
 
 	server.NewRoute("example", goap.GET, func(msg *goap.Message) *goap.Message {
 		return createStandardResponse(msg)

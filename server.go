@@ -11,10 +11,31 @@ import (
 
 // Server
 func NewServer(net string, host string, port int) *Server {
-	hostString := host + ":" + strconv.Itoa(port)
-	s := &Server{net: net, host: hostString}
+	s := &Server{net: net, host: host, port: port, discoveryPort: port }
 
-	s.NewRoute(".well-known/core", GET, func(msg *Message) *Message {
+	// Set a MessageID Start
+	rand.Seed(42)
+	MESSAGEID_CURR = rand.Intn(65535)
+
+	return s
+}
+
+func NewLocalServer() *Server{
+	return NewServer("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
+}
+
+type Server struct {
+	net        		string
+	host       		string
+	port 			int
+	discoveryPort	int
+	messageIds 	map[uint16]time.Time
+	routes     	[]*Route
+}
+
+func (s *Server) Start() {
+
+	var discoveryRoute RouteHandler = func (msg *Message) (*Message) {
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
@@ -28,33 +49,32 @@ func NewServer(net string, host string, port int) *Server {
 		ack.Payload = []byte(buf.String())
 
 		return ack
-	})
+	}
 
-	// Set a MessageID Start
-	rand.Seed(42)
-	MESSAGEID_CURR = rand.Intn(65535)
+	if s.port == s.discoveryPort {
+		s.NewRoute(".well-known/core", GET, discoveryRoute)
 
-	return s
+		serveServer(s)
+	} else {
+		discoveryServer := &Server{net: s.net, host: s.host, port: COAP_DEFAULT_PORT }
+		discoveryServer.NewRoute(".well-known/core", GET, discoveryRoute)
+
+		serveServer(discoveryServer)
+	}
 }
 
-type Server struct {
-	net        string
-	host       string
-	messageIds map[uint16]time.Time
-	routes     []*Route
-}
-
-func (s *Server) Start() error {
+func serveServer(s *Server) {
+	hostString := s.host + ":" + strconv.Itoa(s.port)
 	s.messageIds = make(map[uint16]time.Time)
 
-	udpAddr, err := net.ResolveUDPAddr(s.net, s.host)
+	udpAddr, err := net.ResolveUDPAddr(s.net, hostString)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	conn, err := net.ListenUDP(s.net, udpAddr)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	// Routine for clearing up message IDs which has expired
@@ -63,12 +83,12 @@ func (s *Server) Start() error {
 		for {
 			select {
 			case <-ticker.C:
-				for k, v := range s.messageIds {
-					elapsed := time.Since(v)
-					if elapsed > MESSAGEID_PURGE_DURATION {
-						delete(s.messageIds, k)
-					}
+			for k, v := range s.messageIds {
+				elapsed := time.Since(v)
+				if elapsed > MESSAGEID_PURGE_DURATION {
+					delete(s.messageIds, k)
 				}
+			}
 			}
 		}
 	}()
@@ -91,7 +111,13 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 	msg, err := BytesToMessage(msgBuf)
 	if err != nil {
 		if err == ERR_UNKNOWN_CRITICAL_OPTION {
-			SendError402BadOption(msg.MessageId, conn, addr)
+			if msg.MessageType == TYPE_CONFIRMABLE {
+				SendError402BadOption(msg.MessageId, conn, addr)
+				return
+			} else {
+				// Ignore silently
+				return
+			}
 		}
 	}
 

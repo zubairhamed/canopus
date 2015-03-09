@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"log"
 	"strings"
+	"fmt"
+	"strconv"
 )
 
 func NewMessage() *Message {
@@ -152,15 +154,10 @@ func BytesToMessage(data []byte) (*Message, error) {
 				break
 
 			default:
-				if optionId % 2 > 0 {
-					log.Println("CRITICAL OPTION!!!")
+				if (optionId & 0x01 == 1) {
+					fmt.Println("Ignoring unknown option id " + strconv.Itoa(optionId))
 					return msg, ERR_UNKNOWN_CRITICAL_OPTION
-					// TODO: Critical Option
-					log.Println("Critical Option Found Unknown " + string(optionId))
-					// If message is Confirmable, return a 4.02 - Bad Option with diagnostic payload - Unrecognized option
-					/// If message is NON Confirmable, reject without a return
 				}
-				log.Println("Ignoring unknown option id " + string(optionId))
 				break
 			}
 			tmp = tmp[optionLength:]

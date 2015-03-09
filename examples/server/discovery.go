@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	server := goap.NewServer("udp", goap.COAP_DEFAULT_HOST)
+	server := goap.NewLocalServer()
 
 	server.NewRoute("serviceA", goap.GET, service)
 	server.NewRoute("serviceB", goap.GET, service)
