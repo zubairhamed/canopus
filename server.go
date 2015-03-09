@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 	"strconv"
+	"fmt"
 )
 
 // Server
@@ -36,6 +37,7 @@ type Server struct {
 func (s *Server) Start() {
 
 	var discoveryRoute RouteHandler = func (msg *Message) (*Message) {
+		fmt.Println("Discover")
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
@@ -43,9 +45,30 @@ func (s *Server) Start() {
 		var buf bytes.Buffer
 		for _, r := range s.routes {
 			if r.Path != ".well-known/core" {
-				buf.WriteString("</" + r.Path + ">;ct=0,")
+				buf.WriteString("</")
+				buf.WriteString(r.Path)
+				buf.WriteString(">")
+
+				// Media Types
+				lenMt := len(r.MediaTypes)
+				if lenMt > 0 {
+					buf.WriteString(";ct=")
+					for idx, mt := range r.MediaTypes {
+
+						buf.WriteString(strconv.Itoa(int(mt)))
+						if idx+1 < lenMt {
+							buf.WriteString(" ")
+						}
+					}
+				}
+
+				buf.WriteString(",")
+				// buf.WriteString("</" + r.Path + ">;ct=0,")
 			}
 		}
+		fmt.Println("Payload == ")
+		fmt.Println(buf.String())
+
 		ack.Payload = []byte(buf.String())
 
 		return ack
@@ -121,8 +144,24 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		}
 	}
 
+	// Unsupported Method
+	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
+		ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+		if msg.MessageType == TYPE_NONCONFIRMABLE {
+			ret.MessageType = TYPE_NONCONFIRMABLE
+		}
+
+
+		ret.Code = COAPCODE_501_NOT_IMPLEMENTED
+		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
+		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+
+		SendMessage(ret, conn, addr)
+		return
+	}
+
 	route, err := s.matchingRoute(msg.GetPath(), msg.Code)
-	// TODO: Has matching path but not method: HTTP 405 "Method Not Allowed"
+
 	if err == ERR_NO_MATCHING_ROUTE {
 		ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		if msg.MessageType == TYPE_NONCONFIRMABLE {
@@ -136,6 +175,22 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		SendMessage(ret, conn, addr)
 		return
 	}
+
+	if err == ERR_NO_MATCHING_METHOD {
+		ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+		if msg.MessageType == TYPE_NONCONFIRMABLE {
+			ret.MessageType = TYPE_NONCONFIRMABLE
+		}
+
+		ret.Code = COAPCODE_405_METHOD_NOT_ALLOWED
+		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
+		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+
+		SendMessage(ret, conn, addr)
+		return
+	}
+
+
 
 	// TODO: Check Content Format if not ALL: 4.15 Unsupported Content-Format
 
@@ -171,10 +226,20 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 }
 
 func (s *Server) matchingRoute(path string, method CoapCode) (*Route, error) {
+	foundPath := false
 	for _, route := range s.routes {
-		if route.Path == path && route.Method == method {
-			return route, nil
+		if route.Path == path {
+			foundPath = true
+			if route.Method == method {
+				return route, nil
+			}
 		}
 	}
-	return &Route{}, ERR_NO_MATCHING_ROUTE
+
+	if foundPath {
+		return &Route{}, ERR_NO_MATCHING_METHOD
+	} else {
+		return &Route{}, ERR_NO_MATCHING_ROUTE
+	}
+
 }

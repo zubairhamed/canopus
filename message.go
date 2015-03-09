@@ -156,7 +156,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 			default:
 				if (optionId & 0x01 == 1) {
 					fmt.Println("Ignoring unknown option id " + strconv.Itoa(optionId))
-					return msg, ERR_UNKNOWN_CRITICAL_OPTION
+					// return msg, ERR_UNKNOWN_CRITICAL_OPTION
 				}
 				break
 			}
@@ -255,6 +255,15 @@ func (c Message) GetOptions(id OptionCode) []*Option {
 		}
 	}
 	return opts
+}
+
+func (c Message) GetOption(id OptionCode) *Option {
+	for _, val := range c.Options {
+		if val.Code == id {
+			return val
+		}
+	}
+	return nil
 }
 
 func (c Message) GetOptionsAsString(id OptionCode) []string {

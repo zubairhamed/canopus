@@ -115,3 +115,4 @@ var ERR_OPTION_LENGTH_USES_VALUE_15 = errors.New(("Message format error. Option 
 var ERR_UNKNOWN_MESSAGE_TYPE = errors.New("Unknown message type")
 var ERR_INVALID_TOKEN_LENGTH = errors.New("Invalid Token Length ( > 8)")
 var ERR_UNKNOWN_CRITICAL_OPTION = errors.New("Unknown critical option encountered")
+var ERR_NO_MATCHING_METHOD = errors.New("No matching method")

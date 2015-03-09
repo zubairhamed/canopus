@@ -7,9 +7,9 @@ import (
 func main() {
 	server := goap.NewLocalServer()
 
-	server.NewRoute("serviceA", goap.GET, service)
-	server.NewRoute("serviceB", goap.GET, service)
-	server.NewRoute("serviceC", goap.GET, service)
+	server.NewRoute("serviceA", goap.GET, service).BindMediaTypes([]goap.MediaType{goap.MEDIATYPE_TEXT_PLAIN})
+	server.NewRoute("serviceB", goap.GET, service).BindMediaTypes([]goap.MediaType{goap.MEDIATYPE_APPLICATION_XML})
+	server.NewRoute("serviceC", goap.GET, service).BindMediaTypes([]goap.MediaType{goap.MEDIATYPE_APPLICATION_JSON, goap.MEDIATYPE_TEXT_PLAIN})
 	server.NewRoute("serviceD", goap.GET, service)
 
 	server.Start()

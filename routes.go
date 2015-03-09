@@ -20,10 +20,15 @@ type Route struct {
 	Method  CoapCode
 	Handler RouteHandler
 	AutoAck bool
+	MediaTypes []MediaType
 }
 
 func (r *Route) AutoAcknowledge(ack bool) *Route {
 	r.AutoAck = ack
 
 	return r
+}
+
+func (r *Route) BindMediaTypes(ms []MediaType) {
+	r.MediaTypes = ms
 }
