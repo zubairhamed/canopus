@@ -47,4 +47,21 @@ func NewPathOptions(path string) []*Option {
 	return opts
 }
 
-// NewPathOptions
+/*
+	OPTION_IF_MATCH       OptionCode = 1
+	OPTION_URI_HOST       OptionCode = 3
+	OPTION_ETAG           OptionCode = 4
+	OPTION_IF_NONE_MATCH  OptionCode = 5
+	OPTION_URI_PORT       OptionCode = 7
+	OPTION_LOCATION_PATH  OptionCode = 8
+	OPTION_URI_PATH       OptionCode = 11
+	OPTION_CONTENT_FORMAT OptionCode = 12
+	OPTION_MAX_AGE        OptionCode = 14
+	OPTION_URI_QUERY      OptionCode = 15
+	OPTION_ACCEPT         OptionCode = 17
+	OPTION_LOCATION_QUERY OptionCode = 20
+	OPTION_PROXY_URI      OptionCode = 35
+	OPTION_PROXY_SCHEME   OptionCode = 39
+	OPTION_SIZE1          OptionCode = 60
+ */
+

@@ -39,6 +39,9 @@ func NewMessageOfType(t uint8, id uint16) *Message {
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
+/**
+ Converts bytes to a CoAP Message
+  */
 func BytesToMessage(data []byte) (*Message, error) {
 	msg := NewMessage()
 

@@ -7,7 +7,6 @@ import (
 	"net"
 	"time"
 	"strconv"
-	"fmt"
 )
 
 // Server
@@ -37,7 +36,6 @@ type Server struct {
 func (s *Server) Start() {
 
 	var discoveryRoute RouteHandler = func (msg *Message) (*Message) {
-		fmt.Println("Discover")
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
@@ -66,9 +64,6 @@ func (s *Server) Start() {
 				// buf.WriteString("</" + r.Path + ">;ct=0,")
 			}
 		}
-		fmt.Println("Payload == ")
-		fmt.Println(buf.String())
-
 		ack.Payload = []byte(buf.String())
 
 		return ack
@@ -151,7 +146,6 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.MessageType = TYPE_NONCONFIRMABLE
 		}
 
-
 		ret.Code = COAPCODE_501_NOT_IMPLEMENTED
 		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
@@ -190,9 +184,48 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		return
 	}
 
-
-
 	// TODO: Check Content Format if not ALL: 4.15 Unsupported Content-Format
+	err = nil
+	if len(route.MediaTypes) > 0 {
+
+		cf := msg.GetOption(OPTION_CONTENT_FORMAT)
+		if cf == nil {
+			ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+			if msg.MessageType == TYPE_NONCONFIRMABLE {
+				ret.MessageType = TYPE_NONCONFIRMABLE
+			}
+
+			ret.Code = COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT
+			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
+			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+
+			SendMessage(ret, conn, addr)
+
+			return
+		}
+
+		foundMediaType := false
+		for _, o := range route.MediaTypes {
+			if uint32(o) == cf.Value {
+				foundMediaType = true
+				break
+			}
+		}
+
+		if !foundMediaType {
+			ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+			if msg.MessageType == TYPE_NONCONFIRMABLE {
+				ret.MessageType = TYPE_NONCONFIRMABLE
+			}
+
+			ret.Code = COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT
+			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
+			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+
+			SendMessage(ret, conn, addr)
+			return
+		}
+	}
 
 	// Duplicate Message ID Check
 	_, dupe := s.messageIds[msg.MessageId]
@@ -221,6 +254,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		resp := route.Handler(msg)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
+
 		SendMessage(resp, conn, addr)
 	}
 }
