@@ -3,7 +3,6 @@ package goap
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"strconv"
 	"strings"
 	"log"
@@ -62,6 +61,12 @@ func BytesToMessage(data []byte) (*Message, error) {
 	msg.MessageType = data[DATA_HEADER] >> 4 & 0x03
 	tokenLength := data[DATA_HEADER] & 0x0f
 	msg.Code = CoapCode(data[DATA_CODE])
+
+	// Unsupported Method
+	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
+		return msg, ERR_UNSUPPORTED_METHOD
+	}
+
 	msg.MessageId = binary.BigEndian.Uint16(data[DATA_MSGID_START:DATA_MSGID_END])
 
 	// Token

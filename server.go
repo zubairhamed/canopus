@@ -132,56 +132,36 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 				return
 			}
 		}
+
+		if err == ERR_UNSUPPORTED_METHOD {
+			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
+			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+			SendMessage(ret, conn, addr)
+			return
+		}
 	}
 
-	// Unsupported Method
-	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
-		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+	route, err := s.matchingRoute(msg)
 
-		SendMessage(ret, conn, addr)
-		return
-	}
-
-	route, err := s.matchingRoute(msg.GetPath(), msg.Code)
-
-	if err == ERR_NO_MATCHING_ROUTE {
-		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_404_NOT_FOUND, msg.MessageId)
-		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-		SendMessage(ret, conn, addr)
-		return
-	}
-
-	if err == ERR_NO_MATCHING_METHOD {
-		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
-		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-		SendMessage(ret, conn, addr)
-		return
-	}
-
-	err = nil
-	if len(route.MediaTypes) > 0 {
-
-		cf := msg.GetOption(OPTION_CONTENT_FORMAT)
-		if cf == nil {
-			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
+	if err != nil {
+		if err == ERR_NO_MATCHING_ROUTE {
+			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_404_NOT_FOUND, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessage(ret, conn, addr)
 			return
 		}
 
-		foundMediaType := false
-		for _, o := range route.MediaTypes {
-			if uint32(o) == cf.Value {
-				foundMediaType = true
-				break
-			}
+		if err == ERR_NO_MATCHING_METHOD {
+			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
+			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+			SendMessage(ret, conn, addr)
+			return
 		}
 
-		if !foundMediaType {
+		if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
 			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
@@ -220,12 +200,34 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 	}
 }
 
-func (s *Server) matchingRoute(path string, method CoapCode) (*Route, error) {
+func (s *Server) matchingRoute(msg *Message) (*Route, error) {
+	path := msg.GetPath()
+	method := msg.Code
+
 	foundPath := false
 	for _, route := range s.routes {
 		if route.Path == path {
 			foundPath = true
 			if route.Method == method {
+				if len(route.MediaTypes) > 0 {
+
+					cf := msg.GetOption(OPTION_CONTENT_FORMAT)
+					if cf == nil {
+						return route, ERR_UNSUPPORTED_CONTENT_FORMAT
+					}
+
+					foundMediaType := false
+					for _, o := range route.MediaTypes {
+						if uint32(o) == cf.Value {
+							foundMediaType = true
+							break
+						}
+					}
+
+					if !foundMediaType {
+						return route, ERR_UNSUPPORTED_CONTENT_FORMAT
+					}
+				}
 				return route, nil
 			}
 		}
@@ -236,6 +238,8 @@ func (s *Server) matchingRoute(path string, method CoapCode) (*Route, error) {
 	} else {
 		return &Route{}, ERR_NO_MATCHING_ROUTE
 	}
+
+
 }
 
 func (s *Server) Close() {

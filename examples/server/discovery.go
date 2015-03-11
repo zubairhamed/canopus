@@ -2,6 +2,7 @@ package main
 
 import (
 	. "github.com/zubairhamed/goap"
+	"fmt"
 )
 
 func main() {
@@ -17,5 +18,7 @@ func main() {
 
 func service(msg *Message) *Message {
 	msg.MessageType = TYPE_ACKNOWLEDGEMENT
+
+	fmt.Println(msg.Payload)
 	return msg
 }
