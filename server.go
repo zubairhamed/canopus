@@ -142,8 +142,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 	// Unsupported Method
 	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
 		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
-		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
-		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 		SendMessage(ret, conn, addr)
 		return
@@ -153,8 +152,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
 	if err == ERR_NO_MATCHING_ROUTE {
 		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_404_NOT_FOUND, msg.MessageId)
-		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
-		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 		SendMessage(ret, conn, addr)
 		return
@@ -162,8 +160,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
 	if err == ERR_NO_MATCHING_METHOD {
 		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
-		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
-		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 		SendMessage(ret, conn, addr)
 		return
@@ -175,8 +172,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		cf := msg.GetOption(OPTION_CONTENT_FORMAT)
 		if cf == nil {
 			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
-			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
-			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessage(ret, conn, addr)
 			return
@@ -192,8 +188,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
 		if !foundMediaType {
 			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
-			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
-			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessage(ret, conn, addr)
 			return
@@ -206,8 +201,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		log.Println("Duplicate Message ID ", msg.MessageId)
 		if msg.MessageType == TYPE_CONFIRMABLE {
 			ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
-			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
-			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
+			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessage(ret, conn, addr)
 		}

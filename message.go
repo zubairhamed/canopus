@@ -318,6 +318,12 @@ func (m *Message) AddOptions(opts []*Option) {
 	}
 }
 
+func (m *Message) CloneOptions(cm *Message, opts ...OptionCode) {
+	for _, opt := range opts {
+		m.AddOptions(cm.GetOptions(opt))
+	}
+}
+
 func (m *Message) RemoveOptions(id OptionCode) {
 	var opts []*Option
 	for _, opt := range m.Options {
