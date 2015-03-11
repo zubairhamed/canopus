@@ -3,10 +3,10 @@ package goap
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
-	"strings"
 	"fmt"
+	"log"
 	"strconv"
+	"strings"
 )
 
 func NewMessage() *Message {
@@ -40,8 +40,8 @@ func NewMessageOfType(t uint8, id uint16) *Message {
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 /**
- Converts bytes to a CoAP Message
-  */
+Converts bytes to a CoAP Message
+*/
 func BytesToMessage(data []byte) (*Message, error) {
 	msg := NewMessage()
 
@@ -157,7 +157,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 				break
 
 			default:
-				if (optionId & 0x01 == 1) {
+				if optionId&0x01 == 1 {
 					fmt.Println("Ignoring unknown option id " + strconv.Itoa(optionId))
 					// return msg, ERR_UNKNOWN_CRITICAL_OPTION
 				}
@@ -206,7 +206,7 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 	}
 
 	if len(msg.Payload) > 0 {
-		buf.Write([]byte{ PAYLOAD_MARKER })
+		buf.Write([]byte{PAYLOAD_MARKER})
 	}
 
 	buf.Write(msg.Payload)

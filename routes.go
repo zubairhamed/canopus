@@ -16,10 +16,10 @@ func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler) *Route 
 }
 
 type Route struct {
-	Path    string
-	Method  CoapCode
-	Handler RouteHandler
-	AutoAck bool
+	Path       string
+	Method     CoapCode
+	Handler    RouteHandler
+	AutoAck    bool
 	MediaTypes []MediaType
 }
 

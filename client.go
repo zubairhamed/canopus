@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 	"strconv"
+	"time"
 )
 
 func NewClient() *Client {

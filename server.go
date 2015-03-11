@@ -5,13 +5,13 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"time"
 	"strconv"
+	"time"
 )
 
 // Server
 func NewServer(net string, host string, port int) *Server {
-	s := &Server{net: net, host: host, port: port, discoveryPort: port }
+	s := &Server{net: net, host: host, port: port, discoveryPort: port}
 
 	// Set a MessageID Start
 	rand.Seed(42)
@@ -20,22 +20,22 @@ func NewServer(net string, host string, port int) *Server {
 	return s
 }
 
-func NewLocalServer() *Server{
+func NewLocalServer() *Server {
 	return NewServer("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
 }
 
 type Server struct {
-	net        		string
-	host       		string
-	port 			int
-	discoveryPort	int
-	messageIds 	map[uint16]time.Time
-	routes     	[]*Route
+	net           string
+	host          string
+	port          int
+	discoveryPort int
+	messageIds    map[uint16]time.Time
+	routes        []*Route
 }
 
 func (s *Server) Start() {
 
-	var discoveryRoute RouteHandler = func (msg *Message) (*Message) {
+	var discoveryRoute RouteHandler = func(msg *Message) *Message {
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
@@ -74,7 +74,7 @@ func (s *Server) Start() {
 
 		serveServer(s)
 	} else {
-		discoveryServer := &Server{net: s.net, host: s.host, port: COAP_DEFAULT_PORT }
+		discoveryServer := &Server{net: s.net, host: s.host, port: COAP_DEFAULT_PORT}
 		discoveryServer.NewRoute(".well-known/core", GET, discoveryRoute)
 
 		serveServer(discoveryServer)
@@ -101,12 +101,12 @@ func serveServer(s *Server) {
 		for {
 			select {
 			case <-ticker.C:
-			for k, v := range s.messageIds {
-				elapsed := time.Since(v)
-				if elapsed > MESSAGEID_PURGE_DURATION {
-					delete(s.messageIds, k)
+				for k, v := range s.messageIds {
+					elapsed := time.Since(v)
+					if elapsed > MESSAGEID_PURGE_DURATION {
+						delete(s.messageIds, k)
+					}
 				}
-			}
 			}
 		}
 	}()

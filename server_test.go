@@ -1,18 +1,9 @@
 package goap
 
 import (
-	"testing"
 	"sync"
+	"testing"
 )
-
-
-/*
-	- Spin up test server as goroutine
-	- Setup Channel
-	- Run Tests
-	-
-
- */
 
 func TestServer(t *testing.T) {
 
@@ -70,7 +61,7 @@ func TestServer(t *testing.T) {
 	wg.Wait()
 }
 
-func newTestClient() (*Client) {
+func newTestClient() *Client {
 	client := NewClient()
 	client.Dial("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
 

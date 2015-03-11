@@ -63,5 +63,4 @@ func NewPathOptions(path string) []*Option {
 	OPTION_PROXY_URI      OptionCode = 35
 	OPTION_PROXY_SCHEME   OptionCode = 39
 	OPTION_SIZE1          OptionCode = 60
- */
-
+*/

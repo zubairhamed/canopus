@@ -66,8 +66,7 @@ func TestMessageBadOptions(t *testing.T) {
 	}
 }
 
-
-func NewBasicConfirmableMessage() (*Message) {
+func NewBasicConfirmableMessage() *Message {
 	msg := NewMessageOfType(TYPE_CONFIRMABLE, 0xf0f0)
 	msg.Token = []byte("abcd1234")
 

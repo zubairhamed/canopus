@@ -1,9 +1,9 @@
 package goap
 
 import (
+	"math/rand"
 	"regexp"
 	"strings"
-	"math/rand"
 	"time"
 )
 
@@ -16,7 +16,8 @@ func GenerateMessageId() uint16 {
 */
 
 var genChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-func GenerateToken (l int) string {
+
+func GenerateToken(l int) string {
 	rand.Seed(time.Now().UTC().UnixNano())
 	token := make([]rune, l)
 	for i := range token {
