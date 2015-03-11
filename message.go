@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 )
 
-func NewMessage() *Message {
-	return &Message{}
+func NewMessage(messageType uint8, messageCode CoapCode, messageId uint16) *Message {
+	msg := &Message{}
+	msg.MessageType = messageType
+	msg.Code = messageCode
+
+	return msg
 }
 
 func NewEmptyMessage(id uint16) *Message {
@@ -43,7 +46,7 @@ func NewMessageOfType(t uint8, id uint16) *Message {
 Converts bytes to a CoAP Message
 */
 func BytesToMessage(data []byte) (*Message, error) {
-	msg := NewMessage()
+	msg := &Message{}
 
 	dataLen := len(data)
 	if dataLen < 4 {
@@ -196,8 +199,6 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 		}
 
 		if int(opt.Code)-lastOptionId > 15 {
-			log.Println("TODO: ERROR")
-
 			return nil, ERR_UNKNOWN_CRITICAL_OPTION
 		}
 
@@ -318,13 +319,13 @@ func (m *Message) AddOptions(opts []*Option) {
 }
 
 func (m *Message) RemoveOptions(id OptionCode) {
-    var opts []*Option
+	var opts []*Option
 	for _, opt := range m.Options {
-        if opt.Code != id {
-            opts = append(opts, opt)
-        }
+		if opt.Code != id {
+			opts = append(opts, opt)
+		}
 	}
-    m.Options = opts
+	m.Options = opts
 }
 
 func (m *Message) SetStringPayload(s string) {

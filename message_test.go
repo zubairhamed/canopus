@@ -3,7 +3,6 @@ package goap
 import (
 	"bytes"
 	"testing"
-    . "github.com/zubairhamed/goap"
 )
 
 func TestInvalidMessage(t *testing.T) {
@@ -16,6 +15,10 @@ func TestInvalidMessage(t *testing.T) {
 	if err == nil {
 		t.Error("Message should be invalid")
 	}
+}
+
+func TestMessagValidation(t *testing.T) {
+	// ValidateMessage()
 }
 
 func TestMessageConversion(t *testing.T) {
@@ -68,32 +71,32 @@ func TestMessageBadOptions(t *testing.T) {
 }
 
 func TestMessageObject(t *testing.T) {
-    msg := NewMessage()
+	msg := &Message{}
 
-    if len(msg.Options) > 0 {
-        t.Error("Options expected = 0")
-        t.Fail()
-    }
+	if len(msg.Options) > 0 {
+		t.Error("Options expected = 0")
+		t.Fail()
+	}
 
-    msg.AddOptions(NewPathOptions("/example"))
-    msg.AddOption(OPTION_ACCEPT, MEDIATYPE_APPLICATION_XML)
-    msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_JSON)
-    if (len(msg.Options) != 4) {
-        t.Error("Options expected == 4")
-        t.Fail()
-    }
+	msg.AddOptions(NewPathOptions("/example"))
+	msg.AddOption(OPTION_ACCEPT, MEDIATYPE_APPLICATION_XML)
+	msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_JSON)
+	if len(msg.Options) != 4 {
+		t.Error("Options expected == 4")
+		t.Fail()
+	}
 
-    opt := msg.GetOption(OPTION_ACCEPT)
-    if opt == nil {
-        t.Error("Expect ACCEPT option")
-        t.Fail()
-    }
+	opt := msg.GetOption(OPTION_ACCEPT)
+	if opt == nil {
+		t.Error("Expect ACCEPT option")
+		t.Fail()
+	}
 
-    msg.RemoveOptions(OPTION_URI_PATH)
-    if len(msg.Options) > 2 {
-        t.Error("Options expected = 0")
-        t.Fail()
-    }
+	msg.RemoveOptions(OPTION_URI_PATH)
+	if len(msg.Options) > 2 {
+		t.Error("Options expected = 0")
+		t.Fail()
+	}
 }
 
 func NewBasicConfirmableMessage() *Message {

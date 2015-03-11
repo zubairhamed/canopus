@@ -141,12 +141,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
 	// Unsupported Method
 	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-		ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-		if msg.MessageType == TYPE_NONCONFIRMABLE {
-			ret.MessageType = TYPE_NONCONFIRMABLE
-		}
-
-		ret.Code = COAPCODE_501_NOT_IMPLEMENTED
+		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
 		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
@@ -157,12 +152,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 	route, err := s.matchingRoute(msg.GetPath(), msg.Code)
 
 	if err == ERR_NO_MATCHING_ROUTE {
-		ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-		if msg.MessageType == TYPE_NONCONFIRMABLE {
-			ret.MessageType = TYPE_NONCONFIRMABLE
-		}
-
-		ret.Code = COAPCODE_404_NOT_FOUND
+		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_404_NOT_FOUND, msg.MessageId)
 		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
@@ -171,12 +161,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 	}
 
 	if err == ERR_NO_MATCHING_METHOD {
-		ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-		if msg.MessageType == TYPE_NONCONFIRMABLE {
-			ret.MessageType = TYPE_NONCONFIRMABLE
-		}
-
-		ret.Code = COAPCODE_405_METHOD_NOT_ALLOWED
+		ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
 		ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 		ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
@@ -184,23 +169,16 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		return
 	}
 
-	// TODO: Check Content Format if not ALL: 4.15 Unsupported Content-Format
 	err = nil
 	if len(route.MediaTypes) > 0 {
 
 		cf := msg.GetOption(OPTION_CONTENT_FORMAT)
 		if cf == nil {
-			ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-			if msg.MessageType == TYPE_NONCONFIRMABLE {
-				ret.MessageType = TYPE_NONCONFIRMABLE
-			}
-
-			ret.Code = COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT
+			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
 			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
 			SendMessage(ret, conn, addr)
-
 			return
 		}
 
@@ -213,12 +191,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		}
 
 		if !foundMediaType {
-			ret := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-			if msg.MessageType == TYPE_NONCONFIRMABLE {
-				ret.MessageType = TYPE_NONCONFIRMABLE
-			}
-
-			ret.Code = COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT
+			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
 			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
@@ -232,8 +205,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 	if dupe {
 		log.Println("Duplicate Message ID ", msg.MessageId)
 		if msg.MessageType == TYPE_CONFIRMABLE {
-			ret := NewMessageOfType(TYPE_RESET, msg.MessageId)
-			ret.Code = COAPCODE_0_EMPTY
+			ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
 			ret.AddOptions(msg.GetOptions(OPTION_URI_PATH))
 			ret.AddOptions(msg.GetOptions(OPTION_CONTENT_FORMAT))
 
@@ -275,5 +247,8 @@ func (s *Server) matchingRoute(path string, method CoapCode) (*Route, error) {
 	} else {
 		return &Route{}, ERR_NO_MATCHING_ROUTE
 	}
+}
+
+func (s *Server) Close() {
 
 }
