@@ -2,7 +2,6 @@ package main
 
 import (
 	. "github.com/zubairhamed/goap"
-	"fmt"
 )
 
 func main() {

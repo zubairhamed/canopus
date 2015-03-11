@@ -3,9 +3,9 @@ package goap
 import (
 	"bytes"
 	"encoding/binary"
+	"log"
 	"strconv"
 	"strings"
-	"log"
 )
 
 func NewMessage(messageType uint8, messageCode CoapCode, messageId uint16) *Message {
@@ -152,17 +152,17 @@ func BytesToMessage(data []byte) (*Message, error) {
 
 			switch optCode {
 			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1,
-				 OPTION_BLOCK1, OPTION_BLOCK2:
+				OPTION_BLOCK1, OPTION_BLOCK2:
 				msg.Options = append(msg.Options, NewOption(optCode, decodeInt(optionValue)))
 				break
 
 			case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
-				 OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
+				OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
 				msg.Options = append(msg.Options, NewOption(optCode, string(optionValue)))
 				break
 
 			default:
-				if optionId & 0x01 == 1 {
+				if optionId&0x01 == 1 {
 					log.Println("Unknown Critical Option id " + strconv.Itoa(optionId))
 					return msg, ERR_UNKNOWN_CRITICAL_OPTION
 				}
@@ -200,7 +200,7 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | byte(bLen)})
 		}
 
-		if int(opt.Code) - lastOptionId > 15 {
+		if int(opt.Code)-lastOptionId > 15 {
 			return nil, ERR_UNKNOWN_CRITICAL_OPTION
 		}
 
@@ -237,7 +237,7 @@ func ValidateMessage(msg *Message) error {
 
 		if len(opts) > 1 {
 			if !RepeatableOption(opts[0]) {
-				if opts[0].Code & 0x01 == 1 {
+				if opts[0].Code&0x01 == 1 {
 					return ERR_UNKNOWN_CRITICAL_OPTION
 				}
 			}

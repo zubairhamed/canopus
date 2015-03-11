@@ -47,15 +47,14 @@ func NewPathOptions(path string) []*Option {
 	return opts
 }
 
-func RepeatableOption (opt *Option) (bool) {
+func RepeatableOption(opt *Option) bool {
 	switch opt.Code {
 
 	case OPTION_IF_MATCH, OPTION_ETAG, OPTION_URI_PORT, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY, OPTION_LOCATION_QUERY,
-		 OPTION_BLOCK2, OPTION_BLOCK1:
+		OPTION_BLOCK2, OPTION_BLOCK1:
 		return true
 
 	default:
 		return false
 	}
 }
-

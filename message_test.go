@@ -3,6 +3,7 @@ package goap
 import (
 	"bytes"
 	"testing"
+	. "github.com/zubairhamed/goap"
 )
 
 func TestInvalidMessage(t *testing.T) {
@@ -96,6 +97,7 @@ func TestMessageObject(t *testing.T) {
 
 func NewBasicConfirmableMessage() *Message {
 	msg := NewMessageOfType(TYPE_CONFIRMABLE, 0xf0f0)
+	msg.Code = GET
 	msg.Token = []byte("abcd1234")
 
 	return msg

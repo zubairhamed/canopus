@@ -6,6 +6,7 @@ import (
 )
 
 var MESSAGEID_CURR = 0
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 

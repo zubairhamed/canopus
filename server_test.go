@@ -3,6 +3,7 @@ package goap
 import (
 	"sync"
 	"testing"
+	. "github.com/zubairhamed/goap"
 )
 
 func TestServer(t *testing.T) {

@@ -239,7 +239,6 @@ func (s *Server) matchingRoute(msg *Message) (*Route, error) {
 		return &Route{}, ERR_NO_MATCHING_ROUTE
 	}
 
-
 }
 
 func (s *Server) Close() {

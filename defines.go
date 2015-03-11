@@ -32,8 +32,8 @@ const (
 	OPTION_URI_QUERY      OptionCode = 15
 	OPTION_ACCEPT         OptionCode = 17
 	OPTION_LOCATION_QUERY OptionCode = 20
-	OPTION_BLOCK2		  OptionCode = 23
-	OPTION_BLOCK1		  OptionCode = 27
+	OPTION_BLOCK2         OptionCode = 23
+	OPTION_BLOCK1         OptionCode = 27
 	OPTION_PROXY_URI      OptionCode = 35
 	OPTION_PROXY_SCHEME   OptionCode = 39
 	OPTION_SIZE1          OptionCode = 60
