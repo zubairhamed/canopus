@@ -3,7 +3,6 @@ package goap
 import (
 	"bytes"
 	"log"
-	"math/rand"
 	"net"
 	"strconv"
 	"time"
@@ -12,10 +11,6 @@ import (
 // Server
 func NewServer(net string, host string, port int) *Server {
 	s := &Server{net: net, host: host, port: port, discoveryPort: port}
-
-	// Set a MessageID Start
-    rand.Seed(time.Now().UTC().UnixNano())
-	MESSAGEID_CURR = rand.Intn(65535)
 
 	return s
 }

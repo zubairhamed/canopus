@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/zubairhamed/goap"
+	. "github.com/zubairhamed/goap"
 	"log"
 )
 
@@ -9,26 +9,26 @@ import (
 func main() {
 	// Client
 	log.Println("Starting Client..")
-	client := goap.NewClient()
+	client := NewClient()
 	defer client.Close()
 
-	client.Dial("udp", goap.COAP_DEFAULT_HOST, goap.COAP_DEFAULT_PORT)
+	client.Dial("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
 
-	msg := goap.NewMessageOfType(goap.TYPE_CONFIRMABLE, 12345)
-	msg.Code = goap.GET
+	msg := NewMessageOfType(TYPE_CONFIRMABLE, 12345)
+	msg.Code = GET
 	msg.Payload = []byte("Hello, goap")
-	msg.AddOptions(goap.NewPathOptions("/example"))
-	msg.Token = []byte(goap.GenerateToken(8))
+	msg.AddOptions(NewPathOptions("/example"))
+	msg.Token = []byte(GenerateToken(8))
 
-	client.OnSuccess(func(msg *goap.Message) {
+	client.OnSuccess(func(msg *Message) {
 		log.Print("Got message back: " + string(msg.Payload))
 	})
 
-	client.OnReset(func(msg *goap.Message) {
+	client.OnReset(func(msg *Message) {
 		log.Println("Reset")
 	})
 
-	client.OnTimeout(func(msg *goap.Message) {
+	client.OnTimeout(func(msg *Message) {
 		log.Println("Timeout")
 	})
 

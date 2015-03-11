@@ -7,13 +7,14 @@ import (
 	"time"
 )
 
-var MESSAGEID_CURR = 0
-
-/*
 func GenerateMessageId() uint16 {
-
+	if MESSAGEID_CURR != 65535 {
+		MESSAGEID_CURR++
+	} else {
+		MESSAGEID_CURR = 1
+	}
+	return uint16(MESSAGEID_CURR)
 }
-*/
 
 var genChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
