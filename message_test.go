@@ -64,8 +64,7 @@ func TestMessageBadOptions(t *testing.T) {
 	_, err := MessageToBytes(testMsg)
 	if err == nil {
 		if err != ERR_UNKNOWN_CRITICAL_OPTION {
-			t.Log("Should throw ERR_UNKNOWN_CRITICAL_OPTION")
-			t.Fail()
+			t.Error("Should throw ERR_UNKNOWN_CRITICAL_OPTION")
 		}
 	}
 }
@@ -75,7 +74,6 @@ func TestMessageObject(t *testing.T) {
 
 	if len(msg.Options) > 0 {
 		t.Error("Options expected = 0")
-		t.Fail()
 	}
 
 	msg.AddOptions(NewPathOptions("/example"))
@@ -83,19 +81,16 @@ func TestMessageObject(t *testing.T) {
 	msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_JSON)
 	if len(msg.Options) != 4 {
 		t.Error("Options expected == 4")
-		t.Fail()
 	}
 
 	opt := msg.GetOption(OPTION_ACCEPT)
 	if opt == nil {
 		t.Error("Expect ACCEPT option")
-		t.Fail()
 	}
 
 	msg.RemoveOptions(OPTION_URI_PATH)
 	if len(msg.Options) > 2 {
 		t.Error("Options expected = 0")
-		t.Fail()
 	}
 }
 

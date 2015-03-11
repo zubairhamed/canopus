@@ -15,45 +15,37 @@ func TestServer(t *testing.T) {
 	server.NewRoute("testGET", GET, func(msg *Message) *Message {
 		defer wg.Done()
 		if msg.MessageType != TYPE_CONFIRMABLE {
-			t.Log("Type of message received should be TYPE_CONFIRMABLE")
-			t.Fail()
+			t.Error("Type of message received should be TYPE_CONFIRMABLE")
 		}
 
 		// Payload
 		if string(msg.Payload) != "TestGET" {
 			t.Error("Payload should be TestGET")
-			t.Fail()
 		}
 
 		// Method
 		if msg.Code != GET {
 			t.Error("Message Code/Method should be GET")
-			t.Fail()
 		}
 
 		if msg.Token == nil {
 			t.Error("Token should not be a nil value")
-			t.Fail()
 		}
 
 		if msg.GetTokenLength() != 8 {
 			t.Error("Token length should be 8")
-			t.Fail()
 		}
 
 		if msg.GetPath() != "testGET" {
 			t.Error("Path should be testGET")
-			t.Fail()
 		}
 
 		if msg.MethodString() != "GET" {
 			t.Error("MethodString should be GET")
-			t.Fail()
 		}
 
 		if msg.MessageId != 12345 {
 			t.Error("Message ID expected == 12345")
-			t.Fail()
 		}
 
 		return msg
@@ -87,8 +79,7 @@ func TestServer(t *testing.T) {
 		s := PayloadAsString(msg.Payload)
 
 		if s != "</testGET>,</discoveryService1>,</discoveryService2>,</discoveryService3>," {
-			t.Log("Unexpected return for discovery service")
-			t.Fail()
+			t.Error("Unexpected return for discovery service")
 		}
 	})
 
