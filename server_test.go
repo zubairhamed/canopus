@@ -3,6 +3,7 @@ package goap
 import (
 	"sync"
 	"testing"
+    . "github.com/zubairhamed/goap"
 )
 
 func TestServer(t *testing.T) {
@@ -18,29 +19,46 @@ func TestServer(t *testing.T) {
 		if msg.MessageType != TYPE_CONFIRMABLE {
 			t.Log("Type of message received should be TYPE_CONFIRMABLE")
 			t.Fail()
-		}
+		} else {
+
+        }
 
 		// Payload
 		if string(msg.Payload) != "TestGET" {
-			t.Log("Payload should be TestGET")
+			t.Error("Payload should be TestGET")
 			t.Fail()
 		}
 
 		// Method
 		if msg.Code != GET {
-			t.Log("Message Code/Method should be GET")
+			t.Error("Message Code/Method should be GET")
 			t.Fail()
 		}
 
 		if msg.Token == nil {
-			t.Log("Token should not be a nil value")
+			t.Error("Token should not be a nil value")
 			t.Fail()
 		}
 
+        if msg.GetTokenLength() != 8 {
+            t.Error("Token length should be 8")
+            t.Fail()
+        }
+
 		if msg.GetPath() != "testGET" {
-			t.Log("Path should be testGET")
+			t.Error("Path should be testGET")
 			t.Fail()
 		}
+
+        if msg.MethodString() != "GET" {
+            t.Error("MethodString should be GET")
+            t.Fail()
+        }
+
+        if msg.MessageId != 12345 {
+            t.Error("Message ID expected == 12345")
+            t.Fail()
+        }
 
 		return msg
 	})

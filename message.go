@@ -318,9 +318,13 @@ func (m *Message) AddOptions(opts []*Option) {
 }
 
 func (m *Message) RemoveOptions(id OptionCode) {
-	for i, _ := range m.Options {
-		m.Options[i], m.Options = m.Options[len(m.Options)-1], m.Options[:len(m.Options)-1]
+    var opts []*Option
+	for _, opt := range m.Options {
+        if opt.Code != id {
+            opts = append(opts, opt)
+        }
 	}
+    m.Options = opts
 }
 
 func (m *Message) SetStringPayload(s string) {
