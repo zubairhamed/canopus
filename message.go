@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"log"
 )
 
 func NewMessage(messageType uint8, messageCode CoapCode, messageId uint16) *Message {
@@ -161,7 +162,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 
 			default:
 				if optionId&0x01 == 1 {
-					fmt.Println("Ignoring unknown option id " + strconv.Itoa(optionId))
+					log.Println("Unknown Critical Option id " + strconv.Itoa(optionId))
 					return msg, ERR_UNKNOWN_CRITICAL_OPTION
 				}
 				break
