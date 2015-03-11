@@ -1,21 +1,21 @@
 package main
 
 import (
-	"github.com/zubairhamed/goap"
+	. "github.com/zubairhamed/goap"
 )
 
 func main() {
-	server := goap.NewLocalServer()
+	server := NewLocalServer()
 
-	server.NewRoute("serviceA", goap.GET, service).BindMediaTypes([]goap.MediaType{goap.MEDIATYPE_APPLICATION_JSON})
-	server.NewRoute("serviceB", goap.GET, service).BindMediaTypes([]goap.MediaType{goap.MEDIATYPE_APPLICATION_XML})
-	server.NewRoute("serviceC", goap.GET, service).BindMediaTypes([]goap.MediaType{goap.MEDIATYPE_APPLICATION_JSON, goap.MEDIATYPE_TEXT_XML})
-	server.NewRoute("serviceD", goap.GET, service)
+	server.NewRoute("serviceA", GET, service).BindMediaTypes([]MediaType{MEDIATYPE_APPLICATION_JSON})
+	server.NewRoute("serviceB", GET, service).BindMediaTypes([]MediaType{MEDIATYPE_APPLICATION_XML})
+	server.NewRoute("serviceC", GET, service).BindMediaTypes([]MediaType{MEDIATYPE_APPLICATION_JSON, MEDIATYPE_TEXT_XML})
+	server.NewRoute("serviceD", GET, service)
 
 	server.Start()
 }
 
-func service(msg *goap.Message) *goap.Message {
-	msg.MessageType = goap.TYPE_ACKNOWLEDGEMENT
+func service(msg *Message) *Message {
+	msg.MessageType = TYPE_ACKNOWLEDGEMENT
 	return msg
 }

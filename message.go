@@ -150,7 +150,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 			optCode := OptionCode(optionId)
 
 			switch optCode {
-			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1:
+			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1, OPTION_BLOCK1, OPTION_BLOCK2:
 				msg.Options = append(msg.Options, NewOption(optCode, decodeInt(optionValue)))
 				break
 
@@ -162,7 +162,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 			default:
 				if optionId&0x01 == 1 {
 					fmt.Println("Ignoring unknown option id " + strconv.Itoa(optionId))
-					// return msg, ERR_UNKNOWN_CRITICAL_OPTION
+					return msg, ERR_UNKNOWN_CRITICAL_OPTION
 				}
 				break
 			}
