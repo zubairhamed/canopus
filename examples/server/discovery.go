@@ -19,6 +19,5 @@ func main() {
 func service(msg *Message) *Message {
 	msg.MessageType = TYPE_ACKNOWLEDGEMENT
 
-	fmt.Println(msg.Payload)
 	return msg
 }

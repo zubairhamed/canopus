@@ -62,11 +62,6 @@ func BytesToMessage(data []byte) (*Message, error) {
 	tokenLength := data[DATA_HEADER] & 0x0f
 	msg.Code = CoapCode(data[DATA_CODE])
 
-	// Unsupported Method
-	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-		return msg, ERR_UNSUPPORTED_METHOD
-	}
-
 	msg.MessageId = binary.BigEndian.Uint16(data[DATA_MSGID_START:DATA_MSGID_END])
 
 	// Token
@@ -156,17 +151,18 @@ func BytesToMessage(data []byte) (*Message, error) {
 			optCode := OptionCode(optionId)
 
 			switch optCode {
-			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1, OPTION_BLOCK1, OPTION_BLOCK2:
+			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1,
+				 OPTION_BLOCK1, OPTION_BLOCK2:
 				msg.Options = append(msg.Options, NewOption(optCode, decodeInt(optionValue)))
 				break
 
 			case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
-				OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
+				 OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
 				msg.Options = append(msg.Options, NewOption(optCode, string(optionValue)))
 				break
 
 			default:
-				if optionId&0x01 == 1 {
+				if optionId & 0x01 == 1 {
 					log.Println("Unknown Critical Option id " + strconv.Itoa(optionId))
 					return msg, ERR_UNKNOWN_CRITICAL_OPTION
 				}
@@ -204,7 +200,7 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | byte(bLen)})
 		}
 
-		if int(opt.Code)-lastOptionId > 15 {
+		if int(opt.Code) - lastOptionId > 15 {
 			return nil, ERR_UNKNOWN_CRITICAL_OPTION
 		}
 
@@ -228,6 +224,24 @@ func ValidateMessage(msg *Message) error {
 
 	if msg.GetTokenLength() > 8 {
 		return ERR_INVALID_TOKEN_LENGTH
+	}
+
+	// Unsupported Method
+	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
+		return ERR_UNSUPPORTED_METHOD
+	}
+
+	// Repeated Unrecognized Options
+	for _, opt := range msg.Options {
+		opts := msg.GetOptions(opt.Code)
+
+		if len(opts) > 1 {
+			if !RepeatableOption(opts[0]) {
+				if opts[0].Code & 0x01 == 1 {
+					return ERR_UNKNOWN_CRITICAL_OPTION
+				}
+			}
+		}
 	}
 
 	return nil
