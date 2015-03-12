@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"strings"
-    "errors"
+	"log"
+	"strconv"
 )
 
 func NewMessage(messageType uint8, messageCode CoapCode, messageId uint16) *Message {
@@ -94,45 +95,80 @@ func BytesToMessage(data []byte) (*Message, error) {
 	   \                               \
 	   +-------------------------------+
 	*/
-	tmp := data[DATA_TOKEN_START + msg.GetTokenLength():]
-    lastOptionId := 0
-    for len(tmp) > 0 {
-        if tmp[0] == PAYLOAD_MARKER {
-            tmp = tmp[1:]
-            break
-        }
+	tmp := data[DATA_TOKEN_START+msg.GetTokenLength():]
 
-        optionId := lastOptionId + int(tmp[0]>>4)
-        optionLength := int(tmp[0] & 0xf)
-        tmp = tmp[1:]
-        if optionLength > 14 {
-            optionLength += int(tmp[0])
-            tmp = tmp[1:]
-        }
+	lastOptionId := 0
+	for len(tmp) > 0 {
+		if tmp[0] == PAYLOAD_MARKER {
+			tmp = tmp[1:]
+			break
+		}
 
-        if len(tmp) < optionLength {
-            return msg, errors.New("truncated")
-        }
+		optionDelta := int(tmp[0] >> 4)
+		optionLength := int(tmp[0] & 0x0f)
 
-        var optionValue interface{} = tmp[:optionLength]
-        optCode := OptionCode(optionId)
-        switch OptionCode(optionId) {
-            case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1,
-            OPTION_BLOCK1, OPTION_BLOCK2:
-            optionValue = decodeInt(tmp[:optionLength])
+		tmp = tmp[1:]
+		switch optionDelta {
+		case 13:
+			optionDeltaExtended := int(tmp[0])
+			optionDelta += optionDeltaExtended
+			tmp = tmp[1:]
+			break
 
-            case    OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
-            OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
-            optionValue = string(tmp[:optionLength])
-        }
-        newOpt := NewOption(optCode, optionValue)
+		case 14:
+			optionDeltaExtended := decodeInt(tmp[:1])
+			optionDelta += int(optionDeltaExtended - uint32(269))
+			tmp = tmp[2:]
+			break
 
-        tmp = tmp[optionLength:]
-        lastOptionId = int(newOpt.Code)
+		case 15:
+			return msg, ERR_OPTION_LENGTH_USES_VALUE_15
+		}
+		lastOptionId += optionDelta
 
-        msg.Options = append(msg.Options, newOpt)
-    }
+		switch optionLength {
+		case 13:
+			optionLengthExtended := int(tmp[0])
+			optionLength += optionLengthExtended
+			tmp = tmp[1:]
+			break
 
+		case 14:
+			optionLengthExtended := decodeInt(tmp[:1])
+			optionLength += int(optionLengthExtended - uint32(269))
+			tmp = tmp[2:]
+			break
+
+		case 15:
+			return msg, ERR_OPTION_LENGTH_USES_VALUE_15
+		}
+
+		if optionLength > 0 {
+			optionValue := tmp[:optionLength]
+
+			optCode := OptionCode(lastOptionId)
+
+			switch optCode {
+			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1,
+			OPTION_BLOCK1, OPTION_BLOCK2:
+				msg.Options = append(msg.Options, NewOption(optCode, decodeInt(optionValue)))
+				break
+
+			case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
+			OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
+				msg.Options = append(msg.Options, NewOption(optCode, string(optionValue)))
+				break
+
+			default:
+				if lastOptionId &0x01 == 1 {
+					log.Println("Unknown Critical Option id " + strconv.Itoa(lastOptionId))
+					return msg, ERR_UNKNOWN_CRITICAL_OPTION
+				}
+				break
+			}
+			tmp = tmp[optionLength:]
+		}
+	}
 	msg.Payload = tmp
 	err := ValidateMessage(msg)
 

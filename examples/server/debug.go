@@ -10,8 +10,9 @@ func main() {
 	server.NewRoute("debug", goap.GET, func(msg *goap.Message) *goap.Message {
 		goap.PrintOptions(msg)
 
-		msg.MessageType = goap.TYPE_ACKNOWLEDGEMENT
-		return msg
+		ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+
+		return ack
 	})
 
 	server.Start()
