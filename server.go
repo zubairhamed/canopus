@@ -26,6 +26,12 @@ type Server struct {
 	discoveryPort int
 	messageIds    map[uint16]time.Time
 	routes        []*Route
+	forwardProxy  bool
+	conn 		  *net.UDPConn
+}
+
+func (s *Server) AllowForwardProxy(b bool) {
+	s.forwardProxy = b
 }
 
 func (s *Server) Start() {
@@ -76,7 +82,7 @@ func (s *Server) Start() {
 	}
 }
 
-func serveServer(s *Server) {
+func startServer(s *Server) (*net.UDPConn) {
 	hostString := s.host + ":" + strconv.Itoa(s.port)
 	s.messageIds = make(map[uint16]time.Time)
 
@@ -90,21 +96,33 @@ func serveServer(s *Server) {
 		log.Fatal(err)
 	}
 
+	return conn
+}
+
+func handleMessageIdPurge(s *Server) {
 	// Routine for clearing up message IDs which has expired
 	ticker := time.NewTicker(MESSAGEID_PURGE_DURATION * time.Second)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				for k, v := range s.messageIds {
-					elapsed := time.Since(v)
-					if elapsed > MESSAGEID_PURGE_DURATION {
-						delete(s.messageIds, k)
-					}
+			for k, v := range s.messageIds {
+				elapsed := time.Since(v)
+				if elapsed > MESSAGEID_PURGE_DURATION {
+					delete(s.messageIds, k)
 				}
+			}
 			}
 		}
 	}()
+}
+
+func serveServer(s *Server) {
+	conn := startServer(s)
+
+	handleMessageIdPurge(s)
+
+	s.conn = conn
 
 	readBuf := make([]byte, BUF_SIZE)
 	for {
@@ -143,7 +161,6 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 	}
 
 	route, err := s.matchingRoute(msg)
-
 	if err != nil {
 		if err == ERR_NO_MATCHING_ROUTE {
 			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_404_NOT_FOUND, msg.MessageId)
@@ -242,5 +259,5 @@ func (s *Server) matchingRoute(msg *Message) (*Route, error) {
 }
 
 func (s *Server) Close() {
-
+	s.conn.Close()
 }

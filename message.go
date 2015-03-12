@@ -96,6 +96,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 	   +-------------------------------+
 	*/
 	tmp := data[DATA_TOKEN_START+msg.GetTokenLength():]
+
 	lastOptionId := 0
 	for len(tmp) > 0 {
 		if tmp[0] == PAYLOAD_MARKER {
@@ -104,6 +105,9 @@ func BytesToMessage(data []byte) (*Message, error) {
 		}
 
 		optionId := lastOptionId
+
+		log.Println("OptionID")
+		log.Println(optionId)
 
 		optionDelta := int(tmp[0] >> 4)
 		optionLength := int(tmp[0] & 0x0f)
