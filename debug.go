@@ -4,17 +4,23 @@ import "log"
 
 
 func PrintOptions(msg *Message) {
-	log.Println("==== PRINT OPTIONS ===")
-
+	log.Println(" - - - OPTIONS - - - ")
 	for _, opts := range msg.Options {
-		log.Println("Code/Number: ", opts.Code)
-		log.Println("Name: ", OptionNumberToString(opts.Code))
-		log.Println("Value: ", opts.Value)
-
-		log.Println("---")
+		log.Println("Code/Number: ", opts.Code, ", Name: ", OptionNumberToString(opts.Code), ", Value: ", opts.Value)
 	}
+}
 
-	log.Println("======================")
+func PrintMessage(msg *Message) {
+	log.Println("= = = = = = = = = = = = = = = = ")
+	log.Println("Code: ", msg.Code)
+	log.Println("MessageId: ", msg.MessageId)
+	log.Println("MessageType: ", msg.MessageType)
+	log.Println("Token: ", string(msg.Token))
+	log.Println("Token Length: ", msg.GetTokenLength())
+	log.Println("Payload: ", PayloadAsString(msg.Payload))
+	PrintOptions(msg)
+	log.Println("= = = = = = = = = = = = = = = = ")
+
 }
 
 func OptionNumberToString(o OptionCode) string {

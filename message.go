@@ -122,7 +122,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 			break
 
 		case 15:
-			return msg, ERR_OPTION_LENGTH_USES_VALUE_15
+			return msg, ERR_OPTION_DELTA_USES_VALUE_15
 		}
 		lastOptionId += optionDelta
 
@@ -221,11 +221,6 @@ func ValidateMessage(msg *Message) error {
 
 	if msg.GetTokenLength() > 8 {
 		return ERR_INVALID_TOKEN_LENGTH
-	}
-
-	// Unsupported Method
-	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-		return ERR_UNSUPPORTED_METHOD
 	}
 
 	// Repeated Unrecognized Options

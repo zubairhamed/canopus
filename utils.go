@@ -54,3 +54,92 @@ func CoreResourcesFromString(str string) []*CoreResource {
 	}
 	return resources
 }
+
+func CoapCodeToString(code CoapCode) string {
+    switch (code) {
+        case GET:
+            return "GET"
+
+        case POST:
+            return "POST"
+
+        case PUT:
+            return "PUT"
+
+        case DELETE:
+            return "DELETE"
+
+        case COAPCODE_0_EMPTY:
+            return "0 Empty"
+
+        case COAPCODE_201_CREATED:
+            return "201 Created"
+
+        case COAPCODE_202_DELETED:
+            return "202 Deleted"
+
+        case COAPCODE_203_VALID:
+            return "203 Valid"
+
+        case COAPCODE_204_CHANGED:
+            return "204 Changed"
+
+        case COAPCODE_205_CONTENT:
+            return "205 Content"
+
+        case COAPCODE_400_BAD_REQUEST:
+            return "400 Bad Request"
+
+        case COAPCODE_401_UNAUTHORIZED:
+            return "401 Unauthorized"
+
+        case COAPCODE_402_BAD_OPTION:
+            return "402 Bad Option"
+
+        case COAPCODE_403_FORBIDDEN:
+            return "403 Forbidden"
+
+        case COAPCODE_404_NOT_FOUND:
+            return "404 Not Found"
+
+        case COAPCODE_405_METHOD_NOT_ALLOWED:
+            return "405 Method Not Allowed"
+
+        case COAPCODE_406_NOT_ACCEPTABLE:
+            return "406 Not Acceptable"
+
+        case COAPCODE_412_PRECONDITION_FAILED:
+            return "412 Precondition Failed"
+
+        case COAPCODE_413_REQUEST_ENTITY_TOO_LARGE:
+            return "413 Request Entity Too Large"
+
+        case COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT:
+            return "415 Unsupported Content Format"
+
+        case COAPCODE_500_INTERNAL_SERVER_ERROR:
+            return "500 Internal Server Error"
+
+        case COAPCODE_501_NOT_IMPLEMENTED:
+            return "501 Not Implemented"
+
+        case COAPCODE_502_BAD_GATEWAY:
+            return "502 Bad Gateway"
+
+        case COAPCODE_503_SERVICE_UNAVAILABLE:
+            return "503 Service Unavailable"
+
+        case COAPCODE_504_GATEWAY_TIMEOUT:
+            return "504 Gateway Timeout"
+
+        case COAPCODE_505_PROXYING_NOT_SUPPORTED:
+            return "505 Proxying Not Supported"
+
+        default:
+            return "Unknown"
+    }
+}
+/*
+
+
+*/

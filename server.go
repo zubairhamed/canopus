@@ -140,6 +140,16 @@ func serveServer(s *Server) {
 
 func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
+
+    // Unsupported Method
+    if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
+        ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
+        ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+        SendMessage(ret, conn, addr)
+        return
+    }
+
 	if err != nil {
 		if err == ERR_UNKNOWN_CRITICAL_OPTION {
 			if msg.MessageType == TYPE_CONFIRMABLE {
@@ -150,28 +160,21 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 				return
 			}
 		}
-
-		if err == ERR_UNSUPPORTED_METHOD {
-			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
-			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-			SendMessage(ret, conn, addr)
-			return
-		}
 	}
 
 	route, err := s.matchingRoute(msg)
 	if err != nil {
 		if err == ERR_NO_MATCHING_ROUTE {
-			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_404_NOT_FOUND, msg.MessageId)
+			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+			ret.Token = msg.Token
 
 			SendMessage(ret, conn, addr)
 			return
 		}
 
 		if err == ERR_NO_MATCHING_METHOD {
-			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
+			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessage(ret, conn, addr)
@@ -179,7 +182,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		}
 
 		if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
-			ret := NewMessage(TYPE_ACKNOWLEDGEMENT, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
+			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessage(ret, conn, addr)
@@ -202,6 +205,9 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
 	if err == nil {
 		s.messageIds[msg.MessageId] = time.Now()
+
+		// TODO: #47 - Forward Proxy
+
 
 		// Auto acknowledge
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
