@@ -295,6 +295,8 @@ func (c Message) GetOptionsAsString(id OptionCode) []string {
 func (c Message) GetPath() string {
 	opts := c.GetOptionsAsString(OPTION_URI_PATH)
 
+    log.Println(opts)
+
 	return strings.Join(opts, "/")
 }
 

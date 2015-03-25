@@ -139,7 +139,3 @@ func CoapCodeToString(code CoapCode) string {
             return "Unknown"
     }
 }
-/*
-
-
-*/
