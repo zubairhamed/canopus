@@ -224,7 +224,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 }
 
 func (s *Server) matchingRoute(msg *Message) (*Route, error) {
-	path := msg.GetPath()
+	path := msg.GetUriPath()
 	method := msg.Code
 
 	foundPath := false

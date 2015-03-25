@@ -292,10 +292,14 @@ func (c Message) GetOptionsAsString(id OptionCode) []string {
 	return str
 }
 
-func (c Message) GetPath() string {
-	opts := c.GetOptionsAsString(OPTION_URI_PATH)
+func (c *Message) GetLocationPath() string {
+    opts := c.GetOptionsAsString(OPTION_LOCATION_PATH)
 
-    log.Println(opts)
+    return strings.Join(opts, "/")
+}
+
+func (c Message) GetUriPath() string {
+	opts := c.GetOptionsAsString(OPTION_URI_PATH)
 
 	return strings.Join(opts, "/")
 }
