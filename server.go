@@ -26,20 +26,7 @@ type Server struct {
 	discoveryPort int
 	messageIds    map[uint16]time.Time
 	routes        []*Route
-	forwardProxy  bool
 	conn 		  *net.UDPConn
-
-    // Events
-    fnEventDiscover EventHandler
-}
-
-func (s *Server) On(evt EventCode, fn EventHandler) {
-
-}
-
-
-func (s *Server) AllowForwardProxy(b bool) {
-	s.forwardProxy = b
 }
 
 func (s *Server) Start() {
@@ -75,12 +62,14 @@ func (s *Server) Start() {
 		}
 		ack.Payload = []byte(buf.String())
 
+        /*
         if s.fnEventDiscover != nil {
             e := NewEvent()
             e.Message = ack
 
             ack = s.fnEventDiscover(e)
         }
+        */
 
 		return ack
 	}

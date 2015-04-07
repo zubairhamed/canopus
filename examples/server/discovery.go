@@ -12,6 +12,11 @@ func main() {
 	server.NewRoute("serviceC", GET, service).BindMediaTypes([]MediaType{MEDIATYPE_APPLICATION_JSON, MEDIATYPE_TEXT_XML})
 	server.NewRoute("serviceD", GET, service)
 
+    // OnDiscover
+    // On404
+    // OnError
+    // 
+
 	server.Start()
 }
 
