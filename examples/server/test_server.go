@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	log.Println("Starting up server..")
+	log.Println("Starting up lwm2m..")
 	server := NewLocalServer()
 
 	server.NewRoute("example", GET, func(msg *Message) *Message {

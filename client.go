@@ -54,6 +54,8 @@ func (c *Client) validate() error {
 }
 
 func (c *Client) doSend(msg *Message, fn MessageHandler) error {
+    resp, err := SendMessage(msg, c.conn)
+
     err := c.validate()
 
     if err != nil {

@@ -28,7 +28,15 @@ type Server struct {
 	routes        []*Route
 	forwardProxy  bool
 	conn 		  *net.UDPConn
+
+    // Events
+    fnEventDiscover EventHandler
 }
+
+func (s *Server) On(evt EventCode, fn EventHandler) {
+
+}
+
 
 func (s *Server) AllowForwardProxy(b bool) {
 	s.forwardProxy = b
@@ -67,6 +75,13 @@ func (s *Server) Start() {
 		}
 		ack.Payload = []byte(buf.String())
 
+        if s.fnEventDiscover != nil {
+            e := NewEvent()
+            e.Message = ack
+
+            ack = s.fnEventDiscover(e)
+        }
+
 		return ack
 	}
 
@@ -96,6 +111,8 @@ func startServer(s *Server) (*net.UDPConn) {
 		log.Fatal(err)
 	}
 
+    log.Println("Started server on port ", s.port)
+
 	return conn
 }
 
@@ -106,12 +123,12 @@ func handleMessageIdPurge(s *Server) {
 		for {
 			select {
 			case <-ticker.C:
-			for k, v := range s.messageIds {
-				elapsed := time.Since(v)
-				if elapsed > MESSAGEID_PURGE_DURATION {
-					delete(s.messageIds, k)
-				}
-			}
+                for k, v := range s.messageIds {
+                    elapsed := time.Since(v)
+                    if elapsed > MESSAGEID_PURGE_DURATION {
+                        delete(s.messageIds, k)
+                    }
+                }
 			}
 		}
 	}()
