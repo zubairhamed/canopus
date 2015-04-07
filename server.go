@@ -163,7 +163,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
         ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
         ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-        SendMessage(ret, conn, addr)
+        SendMessageTo(ret, conn, addr)
         return
     }
 
@@ -186,7 +186,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 			ret.Token = msg.Token
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 			return
 		}
 
@@ -194,7 +194,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 			return
 		}
 
@@ -202,7 +202,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 			return
 		}
 	}
@@ -215,7 +215,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 		}
 		return
 	}
@@ -230,13 +230,12 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
 			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 
-			SendMessage(ack, conn, addr)
+            SendMessageTo(ack, conn, addr)
 		}
 		resp := route.Handler(msg)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
-
-		SendMessage(resp, conn, addr)
+        SendMessageTo(resp, conn, addr)
 	}
 }
 

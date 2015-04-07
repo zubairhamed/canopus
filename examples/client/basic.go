@@ -20,17 +20,25 @@ func main() {
 	msg.AddOptions(NewPathOptions("/example"))
 	msg.Token = []byte(GenerateToken(8))
 
-	client.OnSuccess(func(msg *Message) {
-		log.Print("Got message back: " + string(msg.Payload))
-	})
+    // Sync Client Test
+    log.Println("Sending Synchronous Message")
+	resp, err := client.Send(msg)
+    if err != nil {
+        log.Println(err)
+    } else {
+        log.Println("Got Synchronous Response:")
+        log.Println(resp)
+    }
 
-	client.OnReset(func(msg *Message) {
-		log.Println("Reset")
-	})
+    log.Println("Sending Asynchronous Message")
+    client.SendAsync(msg, func(msg *Message, err error){
+        if err != nil {
+            log.Println(err)
+        } else {
+            log.Println("Got Asynchronous Response:")
+            log.Println(resp)
+        }
+    })
 
-	client.OnTimeout(func(msg *Message) {
-		log.Println("Timeout")
-	})
-
-	client.Send(msg)
+    // Async Client Test
 }

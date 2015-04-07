@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"strconv"
-	"time"
 )
 
 func NewClient() *Client {
@@ -53,55 +52,20 @@ func (c *Client) validate() error {
 	return nil
 }
 
-func (c *Client) doSend(msg *Message, fn MessageHandler) error {
+func (c *Client) doSend(msg *Message) (*Message, error) {
     resp, err := SendMessage(msg, c.conn)
 
-    err := c.validate()
-
-    if err != nil {
-        return err
-    }
-
-    // Send message
-    b, _ := MessageToBytes(msg)
-    _, err = c.conn.Write(b)
-
-    if err != nil {
-        log.Println(err)
-    }
-
-    if msg.MessageType == TYPE_NONCONFIRMABLE {
-        return nil
-    } else {
-        // Read response
-        var buf []byte = make([]byte, 1500)
-
-        c.conn.SetReadDeadline(time.Now().Add(time.Second * 2))
-        n, _, err := c.conn.ReadFromUDP(buf)
-
-        if err != nil {
-            return err
-        }
-
-        if fn != nil {
-            resp, err := BytesToMessage(buf[:n])
-
-            if err != nil {
-                return err
-            }
-
-            fn(resp)
-        }
-    }
-    return nil
+    return resp, err
 }
 
-func (c *Client) SendAsync(msg *Message, fn MessageHandler) error {
-    return c.doSend(msg, fn)
+func (c *Client) Send(msg *Message)(*Message, error) {
+    return c.doSend (msg)
 }
 
-func (c *Client) Send(msg *Message) error {
-    return c.doSend(msg, c.successHandler)
+func (c *Client) SendAsync(msg *Message, fn MessageHandler) {
+    msg, err := c.doSend(msg)
+
+    fn (msg, err)
 }
 
 func (c *Client) Close() {

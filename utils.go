@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-    "net"
-    "log"
 )
 
 func GenerateMessageId() uint16 {
@@ -27,10 +25,6 @@ func GenerateToken(l int) string {
 		token[i] = genChars[rand.Intn(len(genChars))]
 	}
 	return string(token)
-}
-
-func ValidateMessage() {
-
 }
 
 // Converts to CoRE Resources Object from a CoRE String
