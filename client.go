@@ -1,24 +1,17 @@
 package goap
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"strconv"
 )
 
 func NewClient() *Client {
-	return &Client{
-		async: true,
-	}
+	return &Client{}
 }
 
 type Client struct {
 	conn           *net.UDPConn
-	async          bool
-	successHandler MessageHandler
-	timeoutHandler MessageHandler
-	resetHandler   MessageHandler
 }
 
 func (c *Client) Dial(nwNet string, host string, port int) {
@@ -33,23 +26,6 @@ func (c *Client) Dial(nwNet string, host string, port int) {
 		log.Println(err)
 	}
 	c.conn = conn
-}
-
-func (c *Client) OnSuccess(fn MessageHandler) {
-	fmt.Println()
-	c.successHandler = fn
-}
-
-func (c *Client) OnReset(fn MessageHandler) {
-	c.resetHandler = fn
-}
-
-func (c *Client) OnTimeout(fn MessageHandler) {
-	c.timeoutHandler = fn
-}
-
-func (c *Client) validate() error {
-	return nil
 }
 
 func (c *Client) doSend(msg *Message) (*Message, error) {

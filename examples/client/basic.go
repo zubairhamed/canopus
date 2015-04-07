@@ -30,6 +30,7 @@ func main() {
         log.Println(resp)
     }
 
+    // Async Client Test
     log.Println("Sending Asynchronous Message")
     client.SendAsync(msg, func(msg *Message, err error){
         if err != nil {
@@ -39,6 +40,4 @@ func main() {
             log.Println(resp)
         }
     })
-
-    // Async Client Test
 }
