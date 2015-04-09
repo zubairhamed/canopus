@@ -1,10 +1,11 @@
 package goap
-
 import (
     "net"
-    "log"
     "time"
+    "log"
 )
+
+
 
 /*
 SendInternalServerError()
@@ -15,10 +16,10 @@ SendContent()
 */
 
 func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAddr) {
-	msg := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, messageId)
-	msg.SetStringPayload("Bad Option: An unknown option of type critical was encountered")
+    msg := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, messageId)
+    msg.SetStringPayload("Bad Option: An unknown option of type critical was encountered")
 
-	SendMessageTo(msg, conn, addr)
+    SendMessageTo(msg, conn, addr)
 }
 
 // Sends a CoAP Message to a UDP Connection
@@ -26,14 +27,13 @@ func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAdd
 
 // Sends a CoAP Message to UDP address
 func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
-	b, _ := MessageToBytes(msg)
-	_, err := conn.WriteTo(b, addr)
+    b, _ := MessageToBytes(msg)
+    _, err := conn.WriteTo(b, addr)
 
-	return err
+    return err
 }
 
-func SendMessage(req *CoapRequest, conn *net.UDPConn) (*CoapResponse, error) {
-    msg := req.msg
+func SendMessage(msg *Message, conn *net.UDPConn) (*CoapResponse, error) {
     b, _ := MessageToBytes(msg)
     _, err := conn.Write(b)
 

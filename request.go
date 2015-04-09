@@ -6,14 +6,17 @@ func NewRequest(messageType uint8, messageCode CoapCode, messageId uint16) *Coap
 
     return &CoapRequest{
         msg: msg,
-        isConfirmable: true,
+    }
+}
+
+func NewRequestFromMessage(msg *Message) *CoapRequest {
+    return &CoapRequest{
+        msg: msg,
     }
 }
 
 type CoapRequest struct {
     msg             *Message
-    uri             string
-    isConfirmable   bool
 }
 
 func (c *CoapRequest) GetRequestURI() {
@@ -28,8 +31,8 @@ func (c *CoapRequest) GetOptions() {
 
 }
 
-func (c *CoapRequest) GetMessage() {
-
+func (c *CoapRequest) GetMessage() *Message {
+    return c.msg
 }
 
 func (c *CoapRequest) GetMethod() {

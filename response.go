@@ -9,6 +9,14 @@ func NewResponse(msg *Message, err error) *CoapResponse {
     return resp
 }
 
+func NewResponseFromMessage(msg *Message) *CoapResponse {
+    resp := &CoapResponse{
+        msg: msg,
+    }
+
+    return resp
+}
+
 type CoapResponse struct {
     msg     *Message
     err     error

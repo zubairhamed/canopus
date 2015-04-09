@@ -14,8 +14,8 @@ func main() {
     client.Dial("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
 
     req := NewRequest(TYPE_CONFIRMABLE, GET, 12345)
-    req.SetStringPayload("Hello, goap")
-    req.SetRequestURI("/serviceD")
+    req.SetStringPayload("Hello, GoAP")
+    req.SetRequestURI("/basic")
 
     // Sync Client Test
     log.Println("Sending Synchronous Message")
@@ -40,7 +40,9 @@ func main() {
     })
 
     // Discovery Test
+    /*
     client.Discover(func(resp *CoapCode, err error){
 
     })
+    */
 }

@@ -31,7 +31,9 @@ type Server struct {
 
 func (s *Server) Start() {
 
-	var discoveryRoute RouteHandler = func(msg *Message) *Message {
+	var discoveryRoute RouteHandler = func(req *CoapRequest) *CoapResponse {
+		msg := req.GetMessage()
+
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
@@ -71,7 +73,9 @@ func (s *Server) Start() {
         }
         */
 
-		return ack
+		resp := NewResponseFromMessage(ack)
+
+		return resp
 	}
 
 	if s.port == s.discoveryPort {
@@ -168,7 +172,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		}
 	}
 
-	route, err := s.matchingRoute(msg)
+	route, err := MatchingRoute(msg, s.routes)
 	if err != nil {
 		if err == ERR_NO_MATCHING_ROUTE {
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
@@ -221,52 +225,14 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
             SendMessageTo(ack, conn, addr)
 		}
-		resp := route.Handler(msg)
+
+		req := NewRequestFromMessage(msg)
+
+		resp := route.Handler(req)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
-        SendMessageTo(resp, conn, addr)
+        SendMessageTo(resp.GetMessage(), conn, addr)
 	}
-}
-
-func (s *Server) matchingRoute(msg *Message) (*Route, error) {
-	path := msg.GetUriPath()
-	method := msg.Code
-
-	foundPath := false
-	for _, route := range s.routes {
-		if route.Path == path {
-			foundPath = true
-			if route.Method == method {
-				if len(route.MediaTypes) > 0 {
-
-					cf := msg.GetOption(OPTION_CONTENT_FORMAT)
-					if cf == nil {
-						return route, ERR_UNSUPPORTED_CONTENT_FORMAT
-					}
-
-					foundMediaType := false
-					for _, o := range route.MediaTypes {
-						if uint32(o) == cf.Value {
-							foundMediaType = true
-							break
-						}
-					}
-
-					if !foundMediaType {
-						return route, ERR_UNSUPPORTED_CONTENT_FORMAT
-					}
-				}
-				return route, nil
-			}
-		}
-	}
-
-	if foundPath {
-		return &Route{}, ERR_NO_MATCHING_METHOD
-	} else {
-		return &Route{}, ERR_NO_MATCHING_ROUTE
-	}
-
 }
 
 func (s *Server) Close() {

@@ -143,3 +143,45 @@ func CoapCodeToString(code CoapCode) string {
 func ValidateResponse(req *CoapRequest, resp *CoapResponse) error {
     return nil
 }
+
+func MatchingRoute(msg *Message, routes []*Route) (*Route, error) {
+    path := msg.GetUriPath()
+    method := msg.Code
+
+    foundPath := false
+    for _, route := range routes {
+        if route.Path == path {
+            foundPath = true
+            if route.Method == method {
+                if len(route.MediaTypes) > 0 {
+
+                    cf := msg.GetOption(OPTION_CONTENT_FORMAT)
+                    if cf == nil {
+                        return route, ERR_UNSUPPORTED_CONTENT_FORMAT
+                    }
+
+                    foundMediaType := false
+                    for _, o := range route.MediaTypes {
+                        if uint32(o) == cf.Value {
+                            foundMediaType = true
+                            break
+                        }
+                    }
+
+                    if !foundMediaType {
+                        return route, ERR_UNSUPPORTED_CONTENT_FORMAT
+                    }
+                }
+                return route, nil
+            }
+        }
+    }
+
+    if foundPath {
+        return &Route{}, ERR_NO_MATCHING_METHOD
+    } else {
+        return &Route{}, ERR_NO_MATCHING_ROUTE
+    }
+}
+
+

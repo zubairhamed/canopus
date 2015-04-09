@@ -1,22 +1,25 @@
 package main
 
 import (
-	"github.com/zubairhamed/goap"
+	. "github.com/zubairhamed/goap"
 	"log"
 )
 
 func main() {
-	server := goap.NewLocalServer()
+	server := NewLocalServer()
 
-	server.NewRoute("debug", goap.GET, func(msg *goap.Message) *goap.Message {
+	server.NewRoute("debug", GET, func(req *CoapRequest) *CoapResponse {
 		// goap.PrintMessage(msg)
 
-		fwOpt := msg.GetOption(goap.OPTION_PROXY_URI)
+		msg := req.GetMessage()
+		fwOpt := msg.GetOption(OPTION_PROXY_URI)
 		log.Println(fwOpt)
 
-		ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 
-		return ack
+		resp := NewResponse(ack, nil)
+
+		return resp
 	})
 
 	server.Start()

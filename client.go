@@ -29,7 +29,7 @@ func (c *Client) Dial(nwNet string, host string, port int) {
 }
 
 func (c *Client) doSend(req *CoapRequest) (*CoapResponse, error) {
-    resp, err := SendMessage(req, c.conn)
+    resp, err := SendMessage(req.GetMessage(), c.conn)
 
     return resp, err
 }
@@ -44,6 +44,7 @@ func (c *Client) SendAsync(req *CoapRequest, fn ResponseHandler) {
     fn (resp, err)
 }
 
+/*
 func (c *Client) Discover(fn ResponseHandler) {
     // TODO: Construct Discovery Payload
     req := nil
@@ -51,6 +52,7 @@ func (c *Client) Discover(fn ResponseHandler) {
 
     fn (resp, err)
 }
+*/
 
 func (c *Client) Close() {
 	defer c.conn.Close()
