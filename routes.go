@@ -2,6 +2,7 @@ package goap
 
 type RouteHandler func(*Message) *Message
 type MessageHandler func(*Message, error)
+type ResponseHandler func(*CoapResponse, error)
 
 func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
 	r := &Route{

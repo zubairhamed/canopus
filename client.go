@@ -28,20 +28,20 @@ func (c *Client) Dial(nwNet string, host string, port int) {
 	c.conn = conn
 }
 
-func (c *Client) doSend(msg *Message) (*Message, error) {
-    resp, err := SendMessage(msg, c.conn)
+func (c *Client) doSend(req *CoapRequest) (*CoapResponse, error) {
+    resp, err := SendMessage(req, c.conn)
 
     return resp, err
 }
 
-func (c *Client) Send(msg *Message)(*Message, error) {
-    return c.doSend (msg)
+func (c *Client) Send(req *CoapRequest)(*CoapResponse, error) {
+    return c.doSend (req)
 }
 
-func (c *Client) SendAsync(msg *Message, fn MessageHandler) {
-    msg, err := c.doSend(msg)
+func (c *Client) SendAsync(req *CoapRequest, fn ResponseHandler) {
+    resp, err := c.doSend(req)
 
-    fn (msg, err)
+    fn (resp, err)
 }
 
 func (c *Client) Close() {

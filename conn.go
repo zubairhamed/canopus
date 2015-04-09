@@ -32,7 +32,8 @@ func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) error {
 	return err
 }
 
-func SendMessage(msg *Message, conn *net.UDPConn) (*Message, error) {
+func SendMessage(req *CoapRequest, conn *net.UDPConn) (*CoapResponse, error) {
+    msg := req.msg
     b, _ := MessageToBytes(msg)
     _, err := conn.Write(b)
 
@@ -53,7 +54,9 @@ func SendMessage(msg *Message, conn *net.UDPConn) (*Message, error) {
             return nil, err
         }
 
-        resp, err := BytesToMessage(buf[:n])
+        msg, err := BytesToMessage(buf[:n])
+
+        resp := NewResponse(msg, err)
 
         return resp, err
     }
