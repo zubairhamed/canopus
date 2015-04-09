@@ -44,6 +44,14 @@ func (c *Client) SendAsync(req *CoapRequest, fn ResponseHandler) {
     fn (resp, err)
 }
 
+func (c *Client) Discover(fn ResponseHandler) {
+    // TODO: Construct Discovery Payload
+    req := nil
+    resp, err := c.doSend(req)
+
+    fn (resp, err)
+}
+
 func (c *Client) Close() {
 	defer c.conn.Close()
 }

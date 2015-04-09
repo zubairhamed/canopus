@@ -38,4 +38,9 @@ func main() {
             log.Println(CoapCodeToString(resp.GetMessage().Code))
         }
     })
+
+    // Discovery Test
+    client.Discover(func(resp *CoapCode, err error){
+
+    })
 }

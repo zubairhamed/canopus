@@ -139,3 +139,7 @@ func CoapCodeToString(code CoapCode) string {
             return "Unknown"
     }
 }
+
+func ValidateResponse(req *CoapRequest, resp *CoapResponse) error {
+    return nil
+}
