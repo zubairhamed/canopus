@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+    "log"
 )
 
 func GenerateMessageId() uint16 {
@@ -144,12 +145,20 @@ func ValidateResponse(req *CoapRequest, resp *CoapResponse) error {
     return nil
 }
 
+func MatchRoute(route string, match string) (error, map[string] string) {
+    matched, _ := regexp.Match(match, []byte(route))
+    log.Print(matched)
+
+    return nil, nil
+}
+
 func MatchingRoute(msg *Message, routes []*Route) (*Route, error) {
     path := msg.GetUriPath()
     method := msg.Code
 
     foundPath := false
     for _, route := range routes {
+
         if route.Path == path {
             foundPath = true
             if route.Method == method {
