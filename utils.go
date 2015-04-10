@@ -146,27 +146,41 @@ func ValidateResponse(req *CoapRequest, resp *CoapResponse) error {
 }
 
 func MatchRoute(route string, match string) (error, map[string] string) {
-    matched, _ := regexp.Match(match, []byte(route))
-    log.Print(matched)
+    re, _ := regexp.Compile(match)
+
+    matched := re.FindAllStringSubmatch(route, -1)
+    if len(matched) > 0 {
+        result := make(map[string]string)
+
+        for i, name := range re.SubexpNames() {
+            result[name] = matched[0][i]
+        }
+
+        log.Println(result)
+    } else {
+        log.Println("No match")
+    }
 
     return nil, nil
 }
 
-func MatchingRoute(msg *Message, routes []*Route) (*Route, error) {
+func MatchingRoute(msg *Message, routes []*Route) (*Route, map[string]string, error) {
     path := msg.GetUriPath()
     method := msg.Code
 
     foundPath := false
+    attrs := make(map[string]string)
     for _, route := range routes {
-
-        if route.Path == path {
+        match, att := route.Matches(path)
+        if match {
+            attrs = att
             foundPath = true
             if route.Method == method {
                 if len(route.MediaTypes) > 0 {
 
                     cf := msg.GetOption(OPTION_CONTENT_FORMAT)
                     if cf == nil {
-                        return route, ERR_UNSUPPORTED_CONTENT_FORMAT
+                        return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
                     }
 
                     foundMediaType := false
@@ -178,18 +192,18 @@ func MatchingRoute(msg *Message, routes []*Route) (*Route, error) {
                     }
 
                     if !foundMediaType {
-                        return route, ERR_UNSUPPORTED_CONTENT_FORMAT
+                        return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
                     }
                 }
-                return route, nil
+                return route, attrs, nil
             }
         }
     }
 
     if foundPath {
-        return &Route{}, ERR_NO_MATCHING_METHOD
+        return &Route{}, attrs, ERR_NO_MATCHING_METHOD
     } else {
-        return &Route{}, ERR_NO_MATCHING_ROUTE
+        return &Route{}, attrs, ERR_NO_MATCHING_ROUTE
     }
 }
 

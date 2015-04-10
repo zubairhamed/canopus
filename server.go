@@ -172,7 +172,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		}
 	}
 
-	route, err := MatchingRoute(msg, s.routes)
+	route, _, err := MatchingRoute(msg, s.routes)
 	if err != nil {
 		if err == ERR_NO_MATCHING_ROUTE {
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)

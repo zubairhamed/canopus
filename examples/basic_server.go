@@ -1,11 +1,12 @@
 package main
 import (
     . "github.com/zubairhamed/goap"
-    "log"
 )
 
 func main() {
     server := NewLocalServer()
+
+    server.NewRoute("{obj}/{inst}/{rsrc}", GET, routeXml)
 
     server.NewRoute("basic", GET, routeBasic)
     server.NewRoute("basic/json", GET, routeJson)
