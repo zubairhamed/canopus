@@ -172,7 +172,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		}
 	}
 
-	route, _, err := MatchingRoute(msg, s.routes)
+	route, attrs, err := MatchingRoute(msg, s.routes)
 	if err != nil {
 		if err == ERR_NO_MATCHING_ROUTE {
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
@@ -218,7 +218,6 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
 		// TODO: #47 - Forward Proxy
 
-
 		// Auto acknowledge
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
 			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
@@ -226,7 +225,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
             SendMessageTo(ack, conn, addr)
 		}
 
-		req := NewRequestFromMessage(msg)
+		req := NewRequestFromMessage(msg, attrs)
 
 		resp := route.Handler(req)
 

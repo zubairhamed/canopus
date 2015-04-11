@@ -1,12 +1,13 @@
 package main
 import (
     . "github.com/zubairhamed/goap"
+    "log"
 )
 
 func main() {
     server := NewLocalServer()
 
-    server.NewRoute("{obj}/{inst}/{rsrc}", GET, routeXml)
+    server.NewRoute("{obj}/{inst}/{rsrc}", GET, routeParams)
 
     server.NewRoute("basic", GET, routeBasic)
     server.NewRoute("basic/json", GET, routeJson)
@@ -23,6 +24,20 @@ func main() {
     */
     server.Start()
 }
+
+func routeParams (req *CoapRequest) *CoapResponse {
+    msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+    msg.SetStringPayload("Acknowledged")
+    res := NewResponse(msg, nil)
+
+    log.Println (req.GetAttributes())
+    log.Println("obj", req.GetAttribute("obj"))
+    log.Println("inst", req.GetAttribute("inst"))
+    log.Println("rsrc", req.GetAttribute("rsrc"))
+
+    return res
+}
+
 
 func routeBasic (req *CoapRequest) *CoapResponse {
     msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)

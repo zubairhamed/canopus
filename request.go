@@ -9,15 +9,26 @@ func NewRequest(messageType uint8, messageCode CoapCode, messageId uint16) *Coap
     }
 }
 
-func NewRequestFromMessage(msg *Message) *CoapRequest {
+func NewRequestFromMessage(msg *Message, attrs map[string]string) *CoapRequest {
     return &CoapRequest{
         msg: msg,
+        attrs: attrs,
     }
 }
 
 type CoapRequest struct {
     msg             *Message
+    attrs           map[string]string
 }
+
+func (c *CoapRequest) GetAttributes() map[string]string {
+    return c.attrs
+}
+
+func (c *CoapRequest) GetAttribute(attr string) string {
+    return c.attrs[attr]
+}
+
 
 func (c *CoapRequest) GetRequestURI() {
 

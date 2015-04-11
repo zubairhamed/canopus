@@ -2,7 +2,6 @@ package goap
 import (
     "regexp"
     "strings"
-    "log"
 )
 
 func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
@@ -62,8 +61,15 @@ func (r *Route) BindMediaTypes(ms []MediaType) {
 
 func (r *Route) Matches(s string) (bool, map[string]string) {
     matches := r.RegEx.FindAllStringSubmatch(s, -1)
+    attrs := make(map[string]string)
+    if len(matches) > 0 {
+        subExp := r.RegEx.SubexpNames()
+        for idx, exp := range subExp {
+            attrs[exp] = matches[0][idx]
+        }
 
-    log.Println(matches)
+        return true, attrs
+    }
 
-    return false, nil
+    return false, attrs
 }

@@ -15,7 +15,7 @@ func main() {
 
     req := NewRequest(TYPE_CONFIRMABLE, GET, 12345)
     req.SetStringPayload("Hello, GoAP")
-    req.SetRequestURI("/basic")
+    req.SetRequestURI("/0/1/2")
 
     // Sync Client Test
     log.Println("Sending Synchronous Message")
