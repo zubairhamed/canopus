@@ -40,9 +40,12 @@ func bootstrap (req *CoapRequest) *CoapResponse {
 func registration (req *CoapRequest) *CoapResponse {
     log.Println("Registration")
 
+    msg := NewMessageOfType(COAPCODE_201_CREATED, req.GetMessage().MessageId)
+    resp := NewResponse(msg, nil)
+
     PrintMessage(req.GetMessage())
 
-    return nil
+    return resp
 }
 
 /*
@@ -68,3 +71,7 @@ func registration (req *CoapRequest) *CoapResponse {
 /{loc}										DELETE
 
 */
+
+// TODO: Service Instantiation for LWM2M and iPSO SmartObjects
+
+//
