@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+    "log"
 )
 
 func GenerateMessageId() uint16 {
@@ -139,3 +140,71 @@ func CoapCodeToString(code CoapCode) string {
             return "Unknown"
     }
 }
+
+func ValidateResponse(req *CoapRequest, resp *CoapResponse) error {
+    return nil
+}
+
+func MatchRoute(route string, match string) (error, map[string] string) {
+    re, _ := regexp.Compile(match)
+
+    matched := re.FindAllStringSubmatch(route, -1)
+    if len(matched) > 0 {
+        result := make(map[string]string)
+
+        for i, name := range re.SubexpNames() {
+            result[name] = matched[0][i]
+        }
+
+        log.Println(result)
+    } else {
+        log.Println("No match")
+    }
+
+    return nil, nil
+}
+
+func MatchingRoute(msg *Message, routes []*Route) (*Route, map[string]string, error) {
+    path := msg.GetUriPath()
+    method := msg.Code
+
+    foundPath := false
+    attrs := make(map[string]string)
+    for _, route := range routes {
+        match, att := route.Matches(path)
+        if match {
+            attrs = att
+            foundPath = true
+            if route.Method == method {
+                if len(route.MediaTypes) > 0 {
+
+                    cf := msg.GetOption(OPTION_CONTENT_FORMAT)
+                    if cf == nil {
+                        return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
+                    }
+
+                    foundMediaType := false
+                    for _, o := range route.MediaTypes {
+                        if uint32(o) == cf.Value {
+                            foundMediaType = true
+                            break
+                        }
+                    }
+
+                    if !foundMediaType {
+                        return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
+                    }
+                }
+                return route, attrs, nil
+            }
+        }
+    }
+
+    if foundPath {
+        return &Route{}, attrs, ERR_NO_MATCHING_METHOD
+    } else {
+        return &Route{}, attrs, ERR_NO_MATCHING_ROUTE
+    }
+}
+
+

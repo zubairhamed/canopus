@@ -26,17 +26,14 @@ type Server struct {
 	discoveryPort int
 	messageIds    map[uint16]time.Time
 	routes        []*Route
-	forwardProxy  bool
 	conn 		  *net.UDPConn
-}
-
-func (s *Server) AllowForwardProxy(b bool) {
-	s.forwardProxy = b
 }
 
 func (s *Server) Start() {
 
-	var discoveryRoute RouteHandler = func(msg *Message) *Message {
+	var discoveryRoute RouteHandler = func(req *CoapRequest) *CoapResponse {
+		msg := req.GetMessage()
+
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
@@ -67,7 +64,18 @@ func (s *Server) Start() {
 		}
 		ack.Payload = []byte(buf.String())
 
-		return ack
+        /*
+        if s.fnEventDiscover != nil {
+            e := NewEvent()
+            e.Message = ack
+
+            ack = s.fnEventDiscover(e)
+        }
+        */
+
+		resp := NewResponseFromMessage(ack)
+
+		return resp
 	}
 
 	if s.port == s.discoveryPort {
@@ -96,6 +104,8 @@ func startServer(s *Server) (*net.UDPConn) {
 		log.Fatal(err)
 	}
 
+    log.Println("Started server on port ", s.port)
+
 	return conn
 }
 
@@ -106,12 +116,12 @@ func handleMessageIdPurge(s *Server) {
 		for {
 			select {
 			case <-ticker.C:
-			for k, v := range s.messageIds {
-				elapsed := time.Since(v)
-				if elapsed > MESSAGEID_PURGE_DURATION {
-					delete(s.messageIds, k)
-				}
-			}
+                for k, v := range s.messageIds {
+                    elapsed := time.Since(v)
+                    if elapsed > MESSAGEID_PURGE_DURATION {
+                        delete(s.messageIds, k)
+                    }
+                }
 			}
 		}
 	}()
@@ -146,7 +156,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
         ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
         ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-        SendMessage(ret, conn, addr)
+        SendMessageTo(ret, conn, addr)
         return
     }
 
@@ -162,14 +172,14 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		}
 	}
 
-	route, err := s.matchingRoute(msg)
+	route, attrs, err := MatchingRoute(msg, s.routes)
 	if err != nil {
 		if err == ERR_NO_MATCHING_ROUTE {
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 			ret.Token = msg.Token
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 			return
 		}
 
@@ -177,7 +187,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 			return
 		}
 
@@ -185,7 +195,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 			return
 		}
 	}
@@ -198,7 +208,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessage(ret, conn, addr)
+            SendMessageTo(ret, conn, addr)
 		}
 		return
 	}
@@ -208,60 +218,20 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 
 		// TODO: #47 - Forward Proxy
 
-
 		// Auto acknowledge
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
 			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 
-			SendMessage(ack, conn, addr)
+            SendMessageTo(ack, conn, addr)
 		}
-		resp := route.Handler(msg)
+
+		req := NewRequestFromMessage(msg, attrs)
+
+		resp := route.Handler(req)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
-
-		SendMessage(resp, conn, addr)
+        SendMessageTo(resp.GetMessage(), conn, addr)
 	}
-}
-
-func (s *Server) matchingRoute(msg *Message) (*Route, error) {
-	path := msg.GetUriPath()
-	method := msg.Code
-
-	foundPath := false
-	for _, route := range s.routes {
-		if route.Path == path {
-			foundPath = true
-			if route.Method == method {
-				if len(route.MediaTypes) > 0 {
-
-					cf := msg.GetOption(OPTION_CONTENT_FORMAT)
-					if cf == nil {
-						return route, ERR_UNSUPPORTED_CONTENT_FORMAT
-					}
-
-					foundMediaType := false
-					for _, o := range route.MediaTypes {
-						if uint32(o) == cf.Value {
-							foundMediaType = true
-							break
-						}
-					}
-
-					if !foundMediaType {
-						return route, ERR_UNSUPPORTED_CONTENT_FORMAT
-					}
-				}
-				return route, nil
-			}
-		}
-	}
-
-	if foundPath {
-		return &Route{}, ERR_NO_MATCHING_METHOD
-	} else {
-		return &Route{}, ERR_NO_MATCHING_ROUTE
-	}
-
 }
 
 func (s *Server) Close() {
