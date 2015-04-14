@@ -9,6 +9,7 @@ func main() {
 
     server.NewRoute("bs", POST, bootstrap)
     server.NewRoute("rd", POST, registration)
+    server.NewRoute("lwm2m", POST, bootstrap)
 
     /*
     server.NewRoute("{obj}/{inst}/{rsrc}", PUT, svc)
@@ -45,8 +46,39 @@ func registration (req *CoapRequest) *CoapResponse {
 
     PrintMessage(req.GetMessage())
 
+    ep := req.GetUriQuery("ep")
+    lt := req.GetUriQuery("lt")
+    b := req.GetUriQuery("b")
+
+    log.Println(ep, lt, b)
+
+    /*
+        - Record IP and Port for all future interactions
+        - Record registration
+        - If already registered, remove and re-register
+
+
+
+2015/04/14 09:47:01 Got Synchronous Response:
+2015/04/14 09:47:01 201 Created
+2015/04/14 09:47:01 = = = = = = = = = = = = = = = =
+2015/04/14 09:47:01 Code:  65
+2015/04/14 09:47:01 MessageId:  0
+2015/04/14 09:47:01 MessageType:  2
+2015/04/14 09:47:01 Token:  UQ4kgpiE
+2015/04/14 09:47:01 Token Length:  8
+2015/04/14 09:47:01 Payload:
+2015/04/14 09:47:01  - - - OPTIONS - - -
+2015/04/14 09:47:01 Code/Number:  8 , Name:  Location-Path , Value:  rd
+2015/04/14 09:47:01 Code/Number:  8 , Name:  Location-Path , Value:  WzP8ECttu3
+2015/04/14 09:47:01 = = = = = = = = = = = = = = = =
+    */
+
+
+
     return resp
 }
+
 
 /*
 /bs 											POST

@@ -1,4 +1,7 @@
 package goap
+import (
+    "strings"
+)
 
 func NewRequest(messageType uint8, messageCode CoapCode, messageId uint16) *CoapRequest {
     msg := NewMessage(messageType, messageCode, messageId)
@@ -76,4 +79,22 @@ func (c *CoapRequest) SetToken(t string) {
 
 func (c *CoapRequest) IncrementMessageId () {
     c.msg.MessageId = c.msg.MessageId+1
+}
+
+func (c *CoapRequest) GetUriQuery(q string) string {
+    qs := c.GetMessage().GetOptionsAsString(OPTION_URI_QUERY)
+
+    for _, o := range qs {
+        ps := strings.Split(o, "=")
+        if len(ps)  == 2 {
+            if ps[0] == q {
+                return ps[1]
+            }
+        }
+    }
+    return ""
+}
+
+func (c *CoapRequest) SetUriQuery(k string, v string) {
+    c.GetMessage().AddOption(OPTION_URI_QUERY, k + "=" + v)
 }
