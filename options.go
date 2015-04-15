@@ -26,6 +26,10 @@ func (o *Option) IsCritical() bool {
 	return false
 }
 
+func (o *Option) StringValue() string {
+	return o.Value.(string)
+}
+
 ////////////////////////////////////////
 
 func NewOption(optionNumber OptionCode, optionValue interface{}) *Option {

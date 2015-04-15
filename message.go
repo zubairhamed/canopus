@@ -12,6 +12,7 @@ func NewMessage(messageType uint8, messageCode CoapCode, messageId uint16) *Mess
 	msg := &Message{}
 	msg.MessageType = messageType
 	msg.Code = messageCode
+	msg.MessageId = messageId
 
 	return msg
 }
