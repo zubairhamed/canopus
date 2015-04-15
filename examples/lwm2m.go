@@ -2,6 +2,7 @@ package main
 import (
     . "github.com/zubairhamed/goap"
     "log"
+    "errors"
 )
 
 func main() {
@@ -107,3 +108,21 @@ func registration (req *CoapRequest) *CoapResponse {
 // TODO: Service Instantiation for LWM2M and iPSO SmartObjects
 
 //
+
+// Errors
+var ERR_LWM2M_MANDATORY_PARAM_NOT_SPECIFIED = errors.New("The mandatory parameter is not specified or unknown parameter is specified")
+/*
+    Unknown Endpoint Client Name
+    Endpoint Client Name does not match with CN field of X.509 Certificates
+
+    The Endpoint Client Name results in a duplicate entry on the LWM2M Server.
+
+    The mandatory parameter is not specified or unknown parameter is specified
+
+    URI of “Update” operation is not found
+
+    “De-register” operation is completed successfully
+
+    URI of “De-register” operation is not found
+
+*/

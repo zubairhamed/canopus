@@ -138,6 +138,8 @@ var ERR_NO_MATCHING_METHOD = errors.New("No matching method")
 var ERR_UNSUPPORTED_CONTENT_FORMAT = errors.New("Unsupported Content-Format")
 var ERR_UNSUPPORTED_METHOD = errors.New("Unsupported Method")
 
+// Function Handlers
 type RouteHandler func(*CoapRequest) *CoapResponse
 type MessageHandler func(*Message, error)
 type ResponseHandler func(*CoapResponse, error)
+type EventHandler func(*Event)

@@ -14,4 +14,3 @@ type Event struct {
     Message     *Message
 }
 
-type EventHandler func(*Event)(*Message)

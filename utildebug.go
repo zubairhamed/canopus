@@ -1,18 +1,26 @@
 package goap
 
-import "log"
+import (
+	"log"
+)
 
 
 func PrintOptions(msg *Message) {
+	opts := msg.Options
 	log.Println(" - - - OPTIONS - - - ")
-	for _, opts := range msg.Options {
-		log.Println("Code/Number: ", opts.Code, ", Name: ", OptionNumberToString(opts.Code), ", Value: ", opts.Value)
+	if len(opts) > 0 {
+		for _, opts := range msg.Options {
+			log.Println("Code/Number: ", opts.Code, ", Name: ", OptionNumberToString(opts.Code), ", Value: ", opts.Value)
+		}
+	} else {
+		log.Println("None")
 	}
 }
 
 func PrintMessage(msg *Message) {
 	log.Println("= = = = = = = = = = = = = = = = ")
 	log.Println("Code: ", msg.Code)
+	log.Println("Code String: ", CoapCodeToString(msg.Code))
 	log.Println("MessageId: ", msg.MessageId)
 	log.Println("MessageType: ", msg.MessageType)
 	log.Println("Token: ", string(msg.Token))

@@ -20,13 +20,15 @@ func NewLocalServer() *Server {
 }
 
 type Server struct {
-	net           string
-	host          string
-	port          int
-	discoveryPort int
-	messageIds    map[uint16]time.Time
-	routes        []*Route
-	conn 		  *net.UDPConn
+	net           	string
+	host          	string
+	port          	int
+	discoveryPort 	int
+	messageIds    	map[uint16]time.Time
+	routes        	[]*Route
+	conn 		  	*net.UDPConn
+
+	evtServerStart	EventHandler
 }
 
 func (s *Server) Start() {
@@ -90,6 +92,10 @@ func (s *Server) Start() {
 	}
 }
 
+func (s *Server) OnStartup(fn EventHandler) {
+	s.evtServerStart = fn
+}
+
 func startServer(s *Server) (*net.UDPConn) {
 	hostString := s.host + ":" + strconv.Itoa(s.port)
 	s.messageIds = make(map[uint16]time.Time)
@@ -105,6 +111,11 @@ func startServer(s *Server) (*net.UDPConn) {
 	}
 
     log.Println("Started server on port ", s.port)
+
+	evt := s.evtServerStart
+	if evt != nil {
+		evt(NewEvent())
+	}
 
 	return conn
 }

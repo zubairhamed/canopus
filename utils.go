@@ -206,5 +206,3 @@ func MatchingRoute(msg *Message, routes []*Route) (*Route, map[string]string, er
         return &Route{}, attrs, ERR_NO_MATCHING_ROUTE
     }
 }
-
-

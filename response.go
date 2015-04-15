@@ -1,4 +1,5 @@
 package goap
+import "strings"
 
 func NewResponse(msg *Message, err error) *CoapResponse {
     resp := &CoapResponse{
@@ -28,4 +29,18 @@ func (c *CoapResponse) GetMessage() (*Message) {
 
 func (c *CoapResponse) GetError() (error) {
     return c.err
+}
+
+func (c *CoapResponse) GetUriQuery(q string) string {
+    qs := c.GetMessage().GetOptionsAsString(OPTION_URI_QUERY)
+
+    for _, o := range qs {
+        ps := strings.Split(o, "=")
+        if len(ps)  == 2 {
+            if ps[0] == q {
+                return ps[1]
+            }
+        }
+    }
+    return ""
 }
