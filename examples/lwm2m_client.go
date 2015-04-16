@@ -78,6 +78,10 @@ func main() {
         */
     })
 
+    server.OnError(func (evt *Event){
+
+    })
+
     server.Start()
 }
 

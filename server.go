@@ -29,6 +29,7 @@ type Server struct {
 	conn 		  	*net.UDPConn
 
 	evtServerStart	EventHandler
+	evtServerError	EventHandler
 }
 
 func (s *Server) Start() {
@@ -96,6 +97,11 @@ func (s *Server) OnStartup(fn EventHandler) {
 	s.evtServerStart = fn
 }
 
+func (s *Server) OnError(fn EventHandler) {
+	s.evtServerError = fn
+}
+
+
 func startServer(s *Server) (*net.UDPConn) {
 	hostString := s.host + ":" + strconv.Itoa(s.port)
 	s.messageIds = make(map[uint16]time.Time)
@@ -112,12 +118,16 @@ func startServer(s *Server) (*net.UDPConn) {
 
     log.Println("Started server on port ", s.port)
 
-	evt := s.evtServerStart
-	if evt != nil {
-		evt(NewEvent())
-	}
+	callEvent(s.evtServerStart)
 
 	return conn
+}
+
+func callEvent(eh EventHandler) {
+	if eh != nil {
+		eh(NewEvent())
+	}
+
 }
 
 func handleMessageIdPurge(s *Server) {
@@ -192,6 +202,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.Token = msg.Token
 
             SendMessageTo(ret, conn, addr)
+			callEvent(s.evtServerError)
 			return
 		}
 
@@ -200,6 +211,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
+			callEvent(s.evtServerError)
 			return
 		}
 
@@ -208,6 +220,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
+			callEvent(s.evtServerError)
 			return
 		}
 	}
