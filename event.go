@@ -3,7 +3,8 @@ package goap
 
 type EventCode uint8
 const (
-    EVENT_DISCOVERY = EventCode(0)
+    EVENT_SERVER_STARTED = EventCode(0)
+    EVENT_DISCOVERY = EventCode(1)
 )
 
 func NewEvent() (*Event) {
@@ -13,4 +14,3 @@ func NewEvent() (*Event) {
 type Event struct {
     Message     *Message
 }
-

@@ -149,6 +149,7 @@ func serveServer(s *Server) {
 	for {
 		len, addr, err := conn.ReadFromUDP(readBuf)
 		if err == nil {
+			log.Println(readBuf)
 
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf)

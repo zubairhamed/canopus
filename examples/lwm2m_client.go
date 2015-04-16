@@ -5,7 +5,19 @@ import (
 )
 
 func main() {
-    server := NewLocalServer()
+    server := NewServer("udp", COAP_DEFAULT_HOST, 5685)
+
+    server.NewRoute("{obj}/",GET ,func (req *CoapRequest) *CoapResponse {
+        log.Println(req)
+
+        return nil
+    })
+
+    server.NewRoute("{obj}/{obj2}",GET ,func (req *CoapRequest) *CoapResponse {
+        log.Println(req)
+
+        return nil
+    })
 
     server.OnStartup(func (evt *Event){
         client := NewClient()
@@ -27,7 +39,7 @@ func main() {
 
         log.Println(" ---- > REGISTER")
         req = NewRequest(TYPE_CONFIRMABLE, POST, GenerateMessageId())
-        req.SetStringPayload("<1 />")
+        req.SetStringPayload("</1>,</2>,</3>,</4>,</5>,</6>,</7>,</8>,</9>,</10>")
         req.SetRequestURI("rd")
         req.SetUriQuery("ep", "GOAPLWM2M")
         resp, err = client.Send(req)
@@ -53,6 +65,7 @@ func main() {
         }
 
         // Delete
+        /*
         log.Println(" ---- > DELETE")
         req = NewRequest(TYPE_CONFIRMABLE, DELETE, GenerateMessageId())
         req.SetRequestURI(path)
@@ -62,6 +75,7 @@ func main() {
         } else {
             PrintMessage(resp.GetMessage())
         }
+        */
     })
 
     server.Start()
