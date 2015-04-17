@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-    server := NewServer("udp", COAP_DEFAULT_HOST, 5685)
+    server := NewServer("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
 
     server.NewRoute("{obj}/",GET ,func (req *CoapRequest) *CoapResponse {
         log.Println(req)
@@ -13,7 +13,19 @@ func main() {
         return nil
     })
 
-    server.NewRoute("{obj}/{obj2}",GET ,func (req *CoapRequest) *CoapResponse {
+    server.NewRoute("{obj}/{obj2}/{obj3}",GET ,func (req *CoapRequest) *CoapResponse {
+        log.Println(req)
+
+        return nil
+    })
+
+    server.NewRoute("{obj}/{obj2}/{obj3}",POST ,func (req *CoapRequest) *CoapResponse {
+        log.Println(req)
+
+        return nil
+    })
+
+    server.NewRoute("{obj}/{obj2}/{obj3}",PUT ,func (req *CoapRequest) *CoapResponse {
         log.Println(req)
 
         return nil
@@ -23,7 +35,7 @@ func main() {
         client := NewClient()
         defer client.Close()
 
-        client.Dial("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
+        client.Dial("udp", "192.168.99.100", COAP_DEFAULT_PORT)
 
         log.Println(" ---- > BOOTSTRAP")
         req := NewRequest(TYPE_CONFIRMABLE, POST, GenerateMessageId())
