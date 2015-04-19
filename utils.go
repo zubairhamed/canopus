@@ -206,3 +206,24 @@ func MatchingRoute(msg *Message, routes []*Route) (*Route, map[string]string, er
         return &Route{}, attrs, ERR_NO_MATCHING_ROUTE
     }
 }
+
+
+func IfErr(e error) {
+    if e != nil {
+        log.Println(e)
+    }
+}
+
+func IfErrFatal(e error) {
+    if e != nil {
+        log.Fatal(e)
+    }
+}
+
+
+func CallEvent(eh EventHandler) {
+    if eh != nil {
+        eh(NewEvent())
+    }
+
+}

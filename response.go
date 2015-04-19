@@ -10,7 +10,7 @@ func NewResponse(msg *Message, err error) *CoapResponse {
     return resp
 }
 
-func NewResponseFromMessage(msg *Message) *CoapResponse {
+func NewResponseWithMessage(msg *Message) *CoapResponse {
     resp := &CoapResponse{
         msg: msg,
     }

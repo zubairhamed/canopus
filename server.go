@@ -9,27 +9,29 @@ import (
 )
 
 // Server
-func NewServer(net string, host string, port int) *Server {
-	s := &Server{net: net, host: host, port: port, discoveryPort: port}
+func NewServer(host string) *Server {
+	addr, _ := net.ResolveUDPAddr("udp", host)
+	s := &Server{addr: addr}
 
 	return s
 }
 
 func NewLocalServer() *Server {
-	return NewServer("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
+	return NewServer(":5683")
 }
 
 type Server struct {
-	net           	string
-	host          	string
-	port          	int
-	discoveryPort 	int
+	addr          	*net.UDPAddr
 	messageIds    	map[uint16]time.Time
 	routes        	[]*Route
 	conn 		  	*net.UDPConn
 
 	evtServerStart	EventHandler
 	evtServerError	EventHandler
+}
+
+func (s *Server) Send(req *CoapRequest) {
+
 }
 
 func (s *Server) Start() {
@@ -76,21 +78,13 @@ func (s *Server) Start() {
         }
         */
 
-		resp := NewResponseFromMessage(ack)
+		resp := NewResponseWithMessage(ack)
 
 		return resp
 	}
 
-	if s.port == s.discoveryPort {
-		s.NewRoute(".well-known/core", GET, discoveryRoute)
-
-		serveServer(s)
-	} else {
-		discoveryServer := &Server{net: s.net, host: s.host, port: COAP_DEFAULT_PORT}
-		discoveryServer.NewRoute(".well-known/core", GET, discoveryRoute)
-
-		serveServer(discoveryServer)
-	}
+	s.NewRoute(".well-known/core", GET, discoveryRoute)
+	serveServer(s)
 }
 
 func (s *Server) OnStartup(fn EventHandler) {
@@ -103,31 +97,25 @@ func (s *Server) OnError(fn EventHandler) {
 
 
 func startServer(s *Server) (*net.UDPConn) {
-	hostString := s.host + ":" + strconv.Itoa(s.port)
 	s.messageIds = make(map[uint16]time.Time)
 
-	udpAddr, err := net.ResolveUDPAddr(s.net, hostString)
+	// udpAddr, err := net.ResolveUDPAddr("udp", s.host)
+	/*
+	if err != nil {
+		log.Fatal(err)
+	}
+	*/
+
+	conn, err := net.ListenUDP("udp", s.addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	conn, err := net.ListenUDP(s.net, udpAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
+    log.Println("Started server ", s.conn.LocalAddr())
 
-    log.Println("Started server on port ", s.port)
-
-	callEvent(s.evtServerStart)
+	CallEvent(s.evtServerStart)
 
 	return conn
-}
-
-func callEvent(eh EventHandler) {
-	if eh != nil {
-		eh(NewEvent())
-	}
-
 }
 
 func handleMessageIdPurge(s *Server) {
@@ -202,7 +190,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.Token = msg.Token
 
             SendMessageTo(ret, conn, addr)
-			callEvent(s.evtServerError)
+			CallEvent(s.evtServerError)
 			return
 		}
 
@@ -211,7 +199,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
-			callEvent(s.evtServerError)
+			CallEvent(s.evtServerError)
 			return
 		}
 
@@ -220,7 +208,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
-			callEvent(s.evtServerError)
+			CallEvent(s.evtServerError)
 			return
 		}
 	}

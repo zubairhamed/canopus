@@ -8,12 +8,12 @@ import (
 /*	To test this example, also run examples/test_server.go */
 func main() {
     log.Println("Starting Client..")
-    client := NewClient()
+    client := NewClient(":64868")
     defer client.Close()
 
-    client.Dial("udp", COAP_DEFAULT_HOST, COAP_DEFAULT_PORT)
+    client.Dial("udp", "127.0.0.1", 58417)
 
-    req := NewRequest(TYPE_CONFIRMABLE, GET, 12345)
+    req := NewRequest(TYPE_CONFIRMABLE, GET, 50782)
     req.SetStringPayload("Hello, GoAP")
     req.SetRequestURI("/0/1/2")
 

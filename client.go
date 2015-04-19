@@ -6,17 +6,24 @@ import (
 	"strconv"
 )
 
-func NewClient() *Client {
-	return &Client{}
+func NewClient(host string) (*Client) {
+	serverAddr, _ := net.ResolveUDPAddr("udp", host)
+
+	return  &Client{
+		serverAddr: serverAddr,
+	}
 }
 
 type Client struct {
-	conn           *net.UDPConn
+	serverAddr 		*net.UDPAddr
+	conn			*net.UDPConn
+	coapServer 		*Server
 }
 
 func (c *Client) Dial(nwNet string, host string, port int) {
 	hostString := host + ":" + strconv.Itoa(port)
 	udpAddr, err := net.ResolveUDPAddr(nwNet, hostString)
+
 	if err != nil {
 		log.Println(err)
 	}
