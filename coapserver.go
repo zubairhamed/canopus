@@ -28,6 +28,7 @@ type CoapServer struct {
     evtOnClose      EventHandler
     evtOnDiscover   EventHandler
     evtOnError      EventHandler
+    evtOnMessage    EventHandler
 }
 
 func (s *CoapServer) Start() {
@@ -131,6 +132,8 @@ func (s *CoapServer) handleMessageIdPurge() {
 
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
     msg, err := BytesToMessage(msgBuf)
+
+    CallEvent(s.evtOnMessage)
 
     // Unsupported Method
     if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
@@ -254,10 +257,6 @@ func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Ro
     return r
 }
 
-func (c *CoapServer) OnStartup (eh EventHandler) {
-    c.evtOnStartup = eh
-}
-
 func (c *CoapServer) Send(req *CoapRequest)(*CoapResponse, error) {
     return SendMessageTo(req.GetMessage(), c.conn, c.remoteAddr)
 }
@@ -265,3 +264,25 @@ func (c *CoapServer) Send(req *CoapRequest)(*CoapResponse, error) {
 func (c *CoapServer) SendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
     return SendMessageTo(req.GetMessage(), c.conn, addr)
 }
+
+func (c *CoapServer) OnStartup (eh EventHandler) {
+    c.evtOnStartup = eh
+}
+
+func (c *CoapServer) OnClose (eh EventHandler) {
+    c.evtOnStartup = eh
+}
+
+func (c *CoapServer) OnDiscover (eh EventHandler) {
+    c.evtOnStartup = eh
+}
+
+func (c *CoapServer) OnError (eh EventHandler) {
+    c.evtOnStartup = eh
+}
+
+func (c *CoapServer) OnMessage (eh EventHandler) {
+    c.evtOnStartup = eh
+}
+
+

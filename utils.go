@@ -225,5 +225,6 @@ func CallEvent(eh EventHandler) {
     if eh != nil {
         eh(NewEvent())
     }
-
 }
+
+func CreateEventPayload()
