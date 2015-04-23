@@ -155,3 +155,7 @@ type RouteHandler func(*CoapRequest) *CoapResponse
 type MessageHandler func(*Message, error)
 type ResponseHandler func(*CoapResponse, error)
 type EventHandler func(*Event)
+
+func EmptyEventPayload() (map[string] interface{}) {
+	return make(map[string] interface{})
+}

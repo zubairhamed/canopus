@@ -113,7 +113,7 @@ func startServer(s *Server) (*net.UDPConn) {
 
     log.Println("Started server ", s.conn.LocalAddr())
 
-	CallEvent(s.evtServerStart)
+	CallEvent(s.evtServerStart, EmptyEventPayload())
 
 	return conn
 }
@@ -190,7 +190,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.Token = msg.Token
 
             SendMessageTo(ret, conn, addr)
-			CallEvent(s.evtServerError)
+			CallEvent(s.evtServerError, EmptyEventPayload())
 			return
 		}
 
@@ -199,7 +199,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
-			CallEvent(s.evtServerError)
+			CallEvent(s.evtServerError, EmptyEventPayload())
 			return
 		}
 
@@ -208,7 +208,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
-			CallEvent(s.evtServerError)
+			CallEvent(s.evtServerError, EmptyEventPayload())
 			return
 		}
 	}

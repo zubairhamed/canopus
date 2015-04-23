@@ -221,9 +221,9 @@ func IfErrFatal(e error) {
 }
 
 
-func CallEvent(eh EventHandler) {
-    if eh != nil {
-        eh(NewEvent())
+func CallEvent(fn EventHandler, payload map[string]interface{}) {
+    if fn != nil {
+        fn(NewEvent(payload))
     }
 }
 

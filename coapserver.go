@@ -93,7 +93,7 @@ func (s *CoapServer) serveServer() {
 
     log.Println("Started server ", conn.LocalAddr())
 
-    CallEvent(s.evtOnStartup)
+    CallEvent(s.evtOnStartup, EmptyEventPayload())
 
     s.handleMessageIdPurge()
 
@@ -133,7 +133,7 @@ func (s *CoapServer) handleMessageIdPurge() {
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
     msg, err := BytesToMessage(msgBuf)
 
-    CallEvent(s.evtOnMessage)
+    CallEvent(s.evtOnMessage, EmptyEventPayload())
 
     // Unsupported Method
     if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
@@ -164,7 +164,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
             ret.Token = msg.Token
 
             SendMessageTo(ret, conn, addr)
-            CallEvent(s.evtOnError)
+            CallEvent(s.evtOnError, EmptyEventPayload())
             return
         }
 
@@ -173,7 +173,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
             ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
-            CallEvent(s.evtOnError)
+            CallEvent(s.evtOnError, EmptyEventPayload())
             return
         }
 
@@ -182,7 +182,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
             ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
             SendMessageTo(ret, conn, addr)
-            CallEvent(s.evtOnError)
+            CallEvent(s.evtOnError, EmptyEventPayload())
             return
         }
     }
