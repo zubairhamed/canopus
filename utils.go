@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
     "log"
+    "errors"
 )
 
 func GenerateMessageId() uint16 {
@@ -156,12 +157,10 @@ func MatchRoute(route string, match string) (error, map[string] string) {
             result[name] = matched[0][i]
         }
 
-        log.Println(result)
+        return nil, result
     } else {
-        log.Println("No match")
+        return errors.New("No match for this route"), nil
     }
-
-    return nil, nil
 }
 
 func MatchingRoute(msg *Message, routes []*Route) (*Route, map[string]string, error) {

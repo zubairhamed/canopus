@@ -51,7 +51,7 @@ const (
 	OPTION_SIZE1          OptionCode = 60
 )
 
-type MediaType byte
+type MediaType int
 
 const (
 	MEDIATYPE_TEXT_PLAIN                  MediaType = 0
