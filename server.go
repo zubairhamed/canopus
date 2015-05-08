@@ -67,7 +67,7 @@ func (s *Server) Start() {
 				// buf.WriteString("</" + r.Path + ">;ct=0,")
 			}
 		}
-		ack.Payload = []byte(buf.String())
+        ack.Payload = NewPlainTextPayload(buf.String())
 
         /*
         if s.fnEventDiscover != nil {
@@ -111,7 +111,7 @@ func startServer(s *Server) (*net.UDPConn) {
 		log.Fatal(err)
 	}
 
-    log.Println("Started server ", s.conn.LocalAddr())
+    log.Println("Started server ")
 
 	CallEvent(s.evtServerStart, EmptyEventPayload())
 

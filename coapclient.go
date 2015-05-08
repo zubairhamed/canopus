@@ -1,4 +1,5 @@
 package goap
+
 import (
     "net"
     "log"
@@ -7,8 +8,8 @@ import (
 type CoapClient struct {
     localAddr       *net.UDPAddr
     remoteAddr      *net.UDPAddr
-
     conn            *net.UDPConn
+
     evtOnError      EventHandler
     evtOnStartup    EventHandler
     evtOnClose      EventHandler

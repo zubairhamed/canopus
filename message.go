@@ -170,7 +170,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 			tmp = tmp[optionLength:]
 		}
 	}
-	msg.Payload = tmp
+    msg.Payload = NewBytesPayload(tmp)
 	err := ValidateMessage(msg)
 
 	return msg, err
@@ -206,11 +206,10 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 		lastOptionId = int(opt.Code)
 	}
 
-	if len(msg.Payload) > 0 {
-		buf.Write([]byte{PAYLOAD_MARKER})
-	}
-
-	buf.Write(msg.Payload)
+    if msg.Payload.Length() > 0 {
+        buf.Write([]byte{PAYLOAD_MARKER})
+    }
+	buf.Write(msg.Payload.GetBytes())
 
 	return buf.Bytes(), nil
 }
@@ -244,7 +243,7 @@ type Message struct {
 	MessageType uint8
 	Code        CoapCode
 	MessageId   uint16
-	Payload     []byte
+    Payload     MessagePayload
 	Token       []byte
 	Options     []*Option
 }
@@ -354,7 +353,7 @@ func (m *Message) RemoveOptions(id OptionCode) {
 }
 
 func (m *Message) SetStringPayload(s string) {
-	m.Payload = []byte(s)
+    m.Payload = NewPlainTextPayload(s)
 }
 
 /* Helpers */
@@ -385,10 +384,8 @@ func valueToBytes(value interface{}) []byte {
 	return encodeInt(v)
 }
 
-func PayloadAsString(b []byte) string {
-	buff := bytes.NewBuffer(b)
-
-	return buff.String()
+func PayloadAsString(p MessagePayload) string {
+    return p.ToString()
 }
 
 func decodeInt(b []byte) uint32 {

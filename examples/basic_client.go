@@ -11,7 +11,7 @@ func main() {
     client := NewClient(":64868")
     defer client.Close()
 
-    client.Dial("udp", "127.0.0.1", 58417)
+    client.Dial("udp", "127.0.0.1", 5683)
 
     req := NewRequest(TYPE_CONFIRMABLE, GET, 50782)
     req.SetStringPayload("Hello, GoAP")

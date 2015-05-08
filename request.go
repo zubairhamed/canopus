@@ -57,8 +57,8 @@ func (c *CoapRequest) GetError() {
 
 }
 
-func (c *CoapRequest) SetStringPayload(payload string) {
-    c.msg.Payload = []byte(payload)
+func (c *CoapRequest) SetStringPayload(s string) {
+    c.msg.Payload = NewPlainTextPayload(s)
 }
 
 func (c *CoapRequest) SetRequestURI(uri string) {

@@ -64,7 +64,7 @@ func (s *CoapServer) Start() {
                 // buf.WriteString("</" + r.Path + ">;ct=0,")
             }
         }
-        ack.Payload = []byte(buf.String())
+        ack.Payload = NewPlainTextPayload(buf.String())
 
         /*
         if s.fnEventDiscover != nil {
