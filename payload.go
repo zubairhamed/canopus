@@ -5,7 +5,7 @@ import "bytes"
 type MessagePayload interface {
     GetBytes() ([]byte)
     Length() (int)
-    ToString() (string)
+    String() (string)
 }
 
 func NewPlainTextPayload(s string) (MessagePayload) {
@@ -26,7 +26,7 @@ func (p *PlainTextPayload) Length() (int) {
     return len(p.content)
 }
 
-func (p *PlainTextPayload) ToString() (string) {
+func (p *PlainTextPayload) String() (string) {
     return p.content
 }
 
@@ -42,7 +42,7 @@ func (p *CoreLinkFormatPayload) Length() (int) {
     return 0
 }
 
-func (p *CoreLinkFormatPayload) ToString() (string) {
+func (p *CoreLinkFormatPayload) String() (string) {
     return ""
 }
 
@@ -64,7 +64,7 @@ func (p *BytesPayload) Length() (int) {
     return len(p.content)
 }
 
-func (p *BytesPayload) ToString() (string) {
+func (p *BytesPayload) String() (string) {
     return string(p.content)
 }
 

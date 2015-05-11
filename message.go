@@ -385,7 +385,7 @@ func valueToBytes(value interface{}) []byte {
 }
 
 func PayloadAsString(p MessagePayload) string {
-    return p.ToString()
+    return p.String()
 }
 
 func decodeInt(b []byte) uint32 {
