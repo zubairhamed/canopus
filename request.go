@@ -1,6 +1,7 @@
 package goap
 import (
     "strings"
+    "strconv"
 )
 
 func NewRequest(messageType uint8, messageCode CoapCode, messageId uint16) *CoapRequest {
@@ -28,10 +29,16 @@ func (c *CoapRequest) GetAttributes() map[string]string {
     return c.attrs
 }
 
-func (c *CoapRequest) GetAttribute(attr string) string {
-    return c.attrs[attr]
+func (c *CoapRequest) GetAttribute(o string) string {
+    return c.attrs[o]
 }
 
+func (c *CoapRequest) GetAttributeAsInt(o string) int {
+    attr := c.GetAttribute(o)
+    i, _ := strconv.Atoi(attr)
+
+    return i
+}
 
 func (c *CoapRequest) GetRequestURI() {
 

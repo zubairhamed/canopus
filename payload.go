@@ -1,6 +1,9 @@
 package goap
 
-import "bytes"
+import (
+    "bytes"
+    "log"
+)
 
 type MessagePayload interface {
     GetBytes() ([]byte)
@@ -47,6 +50,7 @@ func (p *CoreLinkFormatPayload) String() (string) {
 }
 
 func NewBytesPayload(b []byte) (MessagePayload) {
+    log.Println("NewBytesPayload", b)
     return &BytesPayload{
         content: b,
     }
@@ -57,10 +61,11 @@ type BytesPayload struct {
 }
 
 func (p *BytesPayload) GetBytes() ([]byte) {
-    return make([]byte, 0)
+    return p.content
 }
 
 func (p *BytesPayload) Length() (int) {
+    log.Println("Bytes length", len(p.content))
     return len(p.content)
 }
 
