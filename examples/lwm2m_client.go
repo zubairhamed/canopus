@@ -121,7 +121,7 @@ func main() {
     /rd
     ## Register
     POST
-    rd?ep={Endpoint Client Name}&lt={Lifetime}&sms={MSISDN} &lwm2m={version}&b={binding}
+    rd?ep={Endpoint Client Name}&lt={Lifetime}&sms={MSISDN} &go-lwm2m={version}&b={binding}
     > 2.01 Created
     < 4.00 Bad Request, 4.09 Conflict
 

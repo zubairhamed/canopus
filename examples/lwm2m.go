@@ -10,7 +10,7 @@ func main() {
 
     server.NewRoute("bs", POST, bootstrap)
     server.NewRoute("rd", POST, registration)
-    server.NewRoute("lwm2m", POST, bootstrap)
+    server.NewRoute("go-lwm2m", POST, bootstrap)
 
     /*
     server.NewRoute("{obj}/{inst}/{rsrc}", PUT, svc)
