@@ -206,11 +206,12 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 		lastOptionId = int(opt.Code)
 	}
 
-    if msg.Payload.Length() > 0 {
-        buf.Write([]byte{PAYLOAD_MARKER})
-    }
-	buf.Write(msg.Payload.GetBytes())
-
+	if msg.Payload != nil {
+		if msg.Payload.Length() > 0 {
+			buf.Write([]byte{PAYLOAD_MARKER})
+		}
+		buf.Write(msg.Payload.GetBytes())
+	}
 	return buf.Bytes(), nil
 }
 
