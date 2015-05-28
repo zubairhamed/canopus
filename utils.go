@@ -1,12 +1,12 @@
 package goap
 
 import (
+	"errors"
+	"log"
 	"math/rand"
 	"regexp"
 	"strings"
 	"time"
-    "log"
-    "errors"
 )
 
 func GenerateMessageId() uint16 {
@@ -58,172 +58,168 @@ func CoreResourcesFromString(str string) []*CoreResource {
 }
 
 func CoapCodeToString(code CoapCode) string {
-    switch (code) {
-        case GET:
-            return "GET"
+	switch code {
+	case GET:
+		return "GET"
 
-        case POST:
-            return "POST"
+	case POST:
+		return "POST"
 
-        case PUT:
-            return "PUT"
+	case PUT:
+		return "PUT"
 
-        case DELETE:
-            return "DELETE"
+	case DELETE:
+		return "DELETE"
 
-        case COAPCODE_0_EMPTY:
-            return "0 Empty"
+	case COAPCODE_0_EMPTY:
+		return "0 Empty"
 
-        case COAPCODE_201_CREATED:
-            return "201 Created"
+	case COAPCODE_201_CREATED:
+		return "201 Created"
 
-        case COAPCODE_202_DELETED:
-            return "202 Deleted"
+	case COAPCODE_202_DELETED:
+		return "202 Deleted"
 
-        case COAPCODE_203_VALID:
-            return "203 Valid"
+	case COAPCODE_203_VALID:
+		return "203 Valid"
 
-        case COAPCODE_204_CHANGED:
-            return "204 Changed"
+	case COAPCODE_204_CHANGED:
+		return "204 Changed"
 
-        case COAPCODE_205_CONTENT:
-            return "205 Content"
+	case COAPCODE_205_CONTENT:
+		return "205 Content"
 
-        case COAPCODE_400_BAD_REQUEST:
-            return "400 Bad Request"
+	case COAPCODE_400_BAD_REQUEST:
+		return "400 Bad Request"
 
-        case COAPCODE_401_UNAUTHORIZED:
-            return "401 Unauthorized"
+	case COAPCODE_401_UNAUTHORIZED:
+		return "401 Unauthorized"
 
-        case COAPCODE_402_BAD_OPTION:
-            return "402 Bad Option"
+	case COAPCODE_402_BAD_OPTION:
+		return "402 Bad Option"
 
-        case COAPCODE_403_FORBIDDEN:
-            return "403 Forbidden"
+	case COAPCODE_403_FORBIDDEN:
+		return "403 Forbidden"
 
-        case COAPCODE_404_NOT_FOUND:
-            return "404 Not Found"
+	case COAPCODE_404_NOT_FOUND:
+		return "404 Not Found"
 
-        case COAPCODE_405_METHOD_NOT_ALLOWED:
-            return "405 Method Not Allowed"
+	case COAPCODE_405_METHOD_NOT_ALLOWED:
+		return "405 Method Not Allowed"
 
-        case COAPCODE_406_NOT_ACCEPTABLE:
-            return "406 Not Acceptable"
+	case COAPCODE_406_NOT_ACCEPTABLE:
+		return "406 Not Acceptable"
 
-        case COAPCODE_412_PRECONDITION_FAILED:
-            return "412 Precondition Failed"
+	case COAPCODE_412_PRECONDITION_FAILED:
+		return "412 Precondition Failed"
 
-        case COAPCODE_413_REQUEST_ENTITY_TOO_LARGE:
-            return "413 Request Entity Too Large"
+	case COAPCODE_413_REQUEST_ENTITY_TOO_LARGE:
+		return "413 Request Entity Too Large"
 
-        case COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT:
-            return "415 Unsupported Content Format"
+	case COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT:
+		return "415 Unsupported Content Format"
 
-        case COAPCODE_500_INTERNAL_SERVER_ERROR:
-            return "500 Internal Server Error"
+	case COAPCODE_500_INTERNAL_SERVER_ERROR:
+		return "500 Internal Server Error"
 
-        case COAPCODE_501_NOT_IMPLEMENTED:
-            return "501 Not Implemented"
+	case COAPCODE_501_NOT_IMPLEMENTED:
+		return "501 Not Implemented"
 
-        case COAPCODE_502_BAD_GATEWAY:
-            return "502 Bad Gateway"
+	case COAPCODE_502_BAD_GATEWAY:
+		return "502 Bad Gateway"
 
-        case COAPCODE_503_SERVICE_UNAVAILABLE:
-            return "503 Service Unavailable"
+	case COAPCODE_503_SERVICE_UNAVAILABLE:
+		return "503 Service Unavailable"
 
-        case COAPCODE_504_GATEWAY_TIMEOUT:
-            return "504 Gateway Timeout"
+	case COAPCODE_504_GATEWAY_TIMEOUT:
+		return "504 Gateway Timeout"
 
-        case COAPCODE_505_PROXYING_NOT_SUPPORTED:
-            return "505 Proxying Not Supported"
+	case COAPCODE_505_PROXYING_NOT_SUPPORTED:
+		return "505 Proxying Not Supported"
 
-        default:
-            return "Unknown"
-    }
+	default:
+		return "Unknown"
+	}
 }
 
 func ValidateResponse(req *CoapRequest, resp *CoapResponse) error {
-    return nil
+	return nil
 }
 
-func MatchRoute(route string, match string) (error, map[string] string) {
-    re, _ := regexp.Compile(match)
+func MatchRoute(route string, match string) (error, map[string]string) {
+	re, _ := regexp.Compile(match)
 
-    matched := re.FindAllStringSubmatch(route, -1)
-    if len(matched) > 0 {
-        result := make(map[string]string)
+	matched := re.FindAllStringSubmatch(route, -1)
+	if len(matched) > 0 {
+		result := make(map[string]string)
 
-        for i, name := range re.SubexpNames() {
-            result[name] = matched[0][i]
-        }
+		for i, name := range re.SubexpNames() {
+			result[name] = matched[0][i]
+		}
 
-        return nil, result
-    } else {
-        return errors.New("No match for this route"), nil
-    }
+		return nil, result
+	} else {
+		return errors.New("No match for this route"), nil
+	}
 }
 
 func MatchingRoute(msg *Message, routes []*Route) (*Route, map[string]string, error) {
-    path := msg.GetUriPath()
-    method := msg.Code
+	path := msg.GetUriPath()
+	method := msg.Code
 
-    foundPath := false
-    attrs := make(map[string]string)
-    for _, route := range routes {
-        match, att := route.Matches(path)
-        if match {
-            attrs = att
-            foundPath = true
-            if route.Method == method {
-                if len(route.MediaTypes) > 0 {
+	foundPath := false
+	attrs := make(map[string]string)
+	for _, route := range routes {
+		match, att := route.Matches(path)
+		if match {
+			attrs = att
+			foundPath = true
+			if route.Method == method {
+				if len(route.MediaTypes) > 0 {
 
-                    cf := msg.GetOption(OPTION_CONTENT_FORMAT)
-                    if cf == nil {
-                        return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
-                    }
+					cf := msg.GetOption(OPTION_CONTENT_FORMAT)
+					if cf == nil {
+						return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
+					}
 
-                    foundMediaType := false
-                    for _, o := range route.MediaTypes {
-                        if uint32(o) == cf.Value {
-                            foundMediaType = true
-                            break
-                        }
-                    }
+					foundMediaType := false
+					for _, o := range route.MediaTypes {
+						if uint32(o) == cf.Value {
+							foundMediaType = true
+							break
+						}
+					}
 
-                    if !foundMediaType {
-                        return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
-                    }
-                }
-                return route, attrs, nil
-            }
-        }
-    }
+					if !foundMediaType {
+						return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
+					}
+				}
+				return route, attrs, nil
+			}
+		}
+	}
 
-    if foundPath {
-        return &Route{}, attrs, ERR_NO_MATCHING_METHOD
-    } else {
-        return &Route{}, attrs, ERR_NO_MATCHING_ROUTE
-    }
+	if foundPath {
+		return &Route{}, attrs, ERR_NO_MATCHING_METHOD
+	} else {
+		return &Route{}, attrs, ERR_NO_MATCHING_ROUTE
+	}
 }
 
-
 func IfErr(e error) {
-    if e != nil {
-        log.Println(e)
-    }
+	if e != nil {
+		log.Println(e)
+	}
 }
 
 func IfErrFatal(e error) {
-    if e != nil {
-        log.Fatal(e)
-    }
+	if e != nil {
+		log.Fatal(e)
+	}
 }
-
 
 func CallEvent(fn EventHandler, payload map[string]interface{}) {
-    if fn != nil {
-        fn(NewEvent(payload))
-    }
+	if fn != nil {
+		fn(NewEvent(payload))
+	}
 }
-
-

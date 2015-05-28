@@ -21,13 +21,13 @@ func NewLocalServer() *Server {
 }
 
 type Server struct {
-	addr          	*net.UDPAddr
-	messageIds    	map[uint16]time.Time
-	routes        	[]*Route
-	conn 		  	*net.UDPConn
+	addr       *net.UDPAddr
+	messageIds map[uint16]time.Time
+	routes     []*Route
+	conn       *net.UDPConn
 
-	evtServerStart	EventHandler
-	evtServerError	EventHandler
+	evtServerStart EventHandler
+	evtServerError EventHandler
 }
 
 func (s *Server) Send(req *CoapRequest) {
@@ -67,16 +67,16 @@ func (s *Server) Start() {
 				// buf.WriteString("</" + r.Path + ">;ct=0,")
 			}
 		}
-        ack.Payload = NewPlainTextPayload(buf.String())
+		ack.Payload = NewPlainTextPayload(buf.String())
 
-        /*
-        if s.fnEventDiscover != nil {
-            e := NewEvent()
-            e.Message = ack
+		/*
+		   if s.fnEventDiscover != nil {
+		       e := NewEvent()
+		       e.Message = ack
 
-            ack = s.fnEventDiscover(e)
-        }
-        */
+		       ack = s.fnEventDiscover(e)
+		   }
+		*/
 
 		resp := NewResponseWithMessage(ack)
 
@@ -95,15 +95,14 @@ func (s *Server) OnError(fn EventHandler) {
 	s.evtServerError = fn
 }
 
-
-func startServer(s *Server) (*net.UDPConn) {
+func startServer(s *Server) *net.UDPConn {
 	s.messageIds = make(map[uint16]time.Time)
 
 	// udpAddr, err := net.ResolveUDPAddr("udp", s.host)
 	/*
-	if err != nil {
-		log.Fatal(err)
-	}
+		if err != nil {
+			log.Fatal(err)
+		}
 	*/
 
 	conn, err := net.ListenUDP("udp", s.addr)
@@ -111,7 +110,7 @@ func startServer(s *Server) (*net.UDPConn) {
 		log.Fatal(err)
 	}
 
-    log.Println("Started server ")
+	log.Println("Started server ")
 
 	CallEvent(s.evtServerStart, EmptyEventPayload())
 
@@ -125,12 +124,12 @@ func handleMessageIdPurge(s *Server) {
 		for {
 			select {
 			case <-ticker.C:
-                for k, v := range s.messageIds {
-                    elapsed := time.Since(v)
-                    if elapsed > MESSAGEID_PURGE_DURATION {
-                        delete(s.messageIds, k)
-                    }
-                }
+				for k, v := range s.messageIds {
+					elapsed := time.Since(v)
+					if elapsed > MESSAGEID_PURGE_DURATION {
+						delete(s.messageIds, k)
+					}
+				}
 			}
 		}
 	}()
@@ -161,14 +160,14 @@ func serveServer(s *Server) {
 func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
 
-    // Unsupported Method
-    if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-        ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
-        ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+	// Unsupported Method
+	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
+		ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
+		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-        SendMessageTo(ret, conn, addr)
-        return
-    }
+		SendMessageTo(ret, conn, addr)
+		return
+	}
 
 	if err != nil {
 		if err == ERR_UNKNOWN_CRITICAL_OPTION {
@@ -189,7 +188,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 			ret.Token = msg.Token
 
-            SendMessageTo(ret, conn, addr)
+			SendMessageTo(ret, conn, addr)
 			CallEvent(s.evtServerError, EmptyEventPayload())
 			return
 		}
@@ -198,7 +197,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-            SendMessageTo(ret, conn, addr)
+			SendMessageTo(ret, conn, addr)
 			CallEvent(s.evtServerError, EmptyEventPayload())
 			return
 		}
@@ -207,7 +206,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-            SendMessageTo(ret, conn, addr)
+			SendMessageTo(ret, conn, addr)
 			CallEvent(s.evtServerError, EmptyEventPayload())
 			return
 		}
@@ -221,7 +220,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 			ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-            SendMessageTo(ret, conn, addr)
+			SendMessageTo(ret, conn, addr)
 		}
 		return
 	}
@@ -235,7 +234,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
 			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 
-            SendMessageTo(ack, conn, addr)
+			SendMessageTo(ack, conn, addr)
 		}
 
 		req := NewRequestFromMessage(msg, attrs)
@@ -243,7 +242,7 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 		resp := route.Handler(req)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
-        SendMessageTo(resp.GetMessage(), conn, addr)
+		SendMessageTo(resp.GetMessage(), conn, addr)
 	}
 }
 

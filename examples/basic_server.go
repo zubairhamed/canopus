@@ -1,75 +1,75 @@
 package main
+
 import (
-    . "github.com/zubairhamed/goap"
-    "log"
+	. "github.com/zubairhamed/goap"
+	"log"
 )
 
 func main() {
-    server := NewLocalServer()
+	server := NewLocalServer()
 
-    server.NewRoute("{obj}/{inst}/{rsrc}", GET, routeParams)
+	server.NewRoute("{obj}/{inst}/{rsrc}", GET, routeParams)
 
-    server.NewRoute("basic", GET, routeBasic)
-    server.NewRoute("basic/json", GET, routeJson)
-    server.NewRoute("basic/xml", GET, routeXml)
+	server.NewRoute("basic", GET, routeBasic)
+	server.NewRoute("basic/json", GET, routeJson)
+	server.NewRoute("basic/xml", GET, routeXml)
 
-    /*
-    server.OnDiscover(request, response) {
+	/*
+	   server.OnDiscover(request, response) {
 
-    }
+	   }
 
-    server.OnError(request, error, errorCode) {
+	   server.OnError(request, error, errorCode) {
 
-    }
-    */
-    server.Start()
+	   }
+	*/
+	server.Start()
 }
 
-func routeParams (req *CoapRequest) *CoapResponse {
-    msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-    msg.SetStringPayload("Acknowledged")
-    res := NewResponse(msg, nil)
+func routeParams(req *CoapRequest) *CoapResponse {
+	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+	msg.SetStringPayload("Acknowledged")
+	res := NewResponse(msg, nil)
 
-    log.Println (req.GetAttributes())
-    log.Println("obj", req.GetAttribute("obj"))
-    log.Println("inst", req.GetAttribute("inst"))
-    log.Println("rsrc", req.GetAttribute("rsrc"))
+	log.Println(req.GetAttributes())
+	log.Println("obj", req.GetAttribute("obj"))
+	log.Println("inst", req.GetAttribute("inst"))
+	log.Println("rsrc", req.GetAttribute("rsrc"))
 
-    return res
+	return res
 }
 
+func routeBasic(req *CoapRequest) *CoapResponse {
+	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+	msg.SetStringPayload("Acknowledged")
 
-func routeBasic (req *CoapRequest) *CoapResponse {
-    msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-    msg.SetStringPayload("Acknowledged")
+	res := NewResponse(msg, nil)
 
-    res := NewResponse(msg, nil)
-
-    return res
+	return res
 }
 
-func routeJson (req *CoapRequest) *CoapResponse {
-    msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-    res := NewResponse(msg, nil)
+func routeJson(req *CoapRequest) *CoapResponse {
+	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+	res := NewResponse(msg, nil)
 
-    return res
+	return res
 }
 
-func routeXml (req *CoapRequest) *CoapResponse {
-    msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-    res := NewResponse(msg, nil)
+func routeXml(req *CoapRequest) *CoapResponse {
+	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+	res := NewResponse(msg, nil)
 
-    return res
+	return res
 }
 
 /*
-		// goap.PrintMessage(msg)
+	// goap.PrintMessage(msg)
 
-		fwOpt := msg.GetOption(goap.OPTION_PROXY_URI)
-		log.Println(fwOpt)
+	fwOpt := msg.GetOption(goap.OPTION_PROXY_URI)
+	log.Println(fwOpt)
 
-		ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+	ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 
-		return ack
+	return ack
 
 */

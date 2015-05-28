@@ -3,18 +3,17 @@ package goap
 import (
 	"bytes"
 	"encoding/binary"
-	"strings"
 	"log"
 	"strconv"
+	"strings"
 )
 
-func NewMessage(messageType uint8, messageCode CoapCode, messageId uint16) *Message {
-	msg := &Message{}
-	msg.MessageType = messageType
-	msg.Code = messageCode
-	msg.MessageId = messageId
-
-	return msg
+func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
+	return &Message{
+		MessageType: messageType,
+		MessageId:   messageId,
+		Code:        code,
+	}
 }
 
 func NewEmptyMessage(id uint16) *Message {
@@ -151,17 +150,17 @@ func BytesToMessage(data []byte) (*Message, error) {
 
 			switch optCode {
 			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1,
-			OPTION_BLOCK1, OPTION_BLOCK2:
+				OPTION_BLOCK1, OPTION_BLOCK2:
 				msg.Options = append(msg.Options, NewOption(optCode, decodeInt(optionValue)))
 				break
 
 			case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
-			OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
+				OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
 				msg.Options = append(msg.Options, NewOption(optCode, string(optionValue)))
 				break
 
 			default:
-				if lastOptionId &0x01 == 1 {
+				if lastOptionId&0x01 == 1 {
 					log.Println("Unknown Critical Option id " + strconv.Itoa(lastOptionId))
 					return msg, ERR_UNKNOWN_CRITICAL_OPTION
 				}
@@ -170,7 +169,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 			tmp = tmp[optionLength:]
 		}
 	}
-    msg.Payload = NewBytesPayload(tmp)
+	msg.Payload = NewBytesPayload(tmp)
 	err := ValidateMessage(msg)
 
 	return msg, err
@@ -244,7 +243,7 @@ type Message struct {
 	MessageType uint8
 	Code        CoapCode
 	MessageId   uint16
-    Payload     MessagePayload
+	Payload     MessagePayload
 	Token       []byte
 	Options     []*Option
 }
@@ -294,9 +293,9 @@ func (c Message) GetOptionsAsString(id OptionCode) []string {
 }
 
 func (c *Message) GetLocationPath() string {
-    opts := c.GetOptionsAsString(OPTION_LOCATION_PATH)
+	opts := c.GetOptionsAsString(OPTION_LOCATION_PATH)
 
-    return strings.Join(opts, "/")
+	return strings.Join(opts, "/")
 }
 
 func (c Message) GetUriPath() string {
@@ -354,7 +353,7 @@ func (m *Message) RemoveOptions(id OptionCode) {
 }
 
 func (m *Message) SetStringPayload(s string) {
-    m.Payload = NewPlainTextPayload(s)
+	m.Payload = NewPlainTextPayload(s)
 }
 
 /* Helpers */
@@ -386,7 +385,7 @@ func valueToBytes(value interface{}) []byte {
 }
 
 func PayloadAsString(p MessagePayload) string {
-    return p.String()
+	return p.String()
 }
 
 func decodeInt(b []byte) uint32 {

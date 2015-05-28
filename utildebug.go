@@ -4,7 +4,6 @@ import (
 	"log"
 )
 
-
 func PrintOptions(msg *Message) {
 	opts := msg.Options
 	log.Println(" - - - OPTIONS - - - ")
@@ -90,7 +89,6 @@ func OptionNumberToString(o OptionCode) string {
 	return ""
 }
 
-
 /*
 
- */
+*/

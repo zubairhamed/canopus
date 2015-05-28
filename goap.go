@@ -1,9 +1,9 @@
 package goap
 
 import (
+	"errors"
 	"math/rand"
 	"time"
-	"errors"
 )
 
 var MESSAGEID_CURR = 0
@@ -76,10 +76,10 @@ const (
 	MEDIATYPE_APPLICATION_SOAPFASTINFOSET MediaType = 49
 	MEDIATYPE_APPLICATION_JSON            MediaType = 50
 	MEDIATYPE_APPLICATION_X_OBIT_BINARY   MediaType = 51
-    MEDIATYPE_TEXT_PLAIN_VND_OMA_LWM2M    MediaType = 1541
-    MEDIATYPE_TLV_VND_OMA_LWM2M           MediaType = 1542
-    MEDIATYPE_JSON_VND_OMA_LWM2M          MediaType = 1543
-    MEDIATYPE_OPAQUE_VND_OMA_LWM2M        MediaType = 1544
+	MEDIATYPE_TEXT_PLAIN_VND_OMA_LWM2M    MediaType = 1541
+	MEDIATYPE_TLV_VND_OMA_LWM2M           MediaType = 1542
+	MEDIATYPE_JSON_VND_OMA_LWM2M          MediaType = 1543
+	MEDIATYPE_OPAQUE_VND_OMA_LWM2M        MediaType = 1544
 )
 
 type CoapCode uint8
@@ -89,31 +89,29 @@ const (
 	POST   CoapCode = 2
 	PUT    CoapCode = 3
 	DELETE CoapCode = 4
-)
 
-const (
-	COAPCODE_0_EMPTY                        = 0
-	COAPCODE_201_CREATED                    = 65
-	COAPCODE_202_DELETED                    = 66
-	COAPCODE_203_VALID                      = 67
-	COAPCODE_204_CHANGED                    = 68
-	COAPCODE_205_CONTENT                    = 69
-	COAPCODE_400_BAD_REQUEST                = 128
-	COAPCODE_401_UNAUTHORIZED               = 129
-	COAPCODE_402_BAD_OPTION                 = 130
-	COAPCODE_403_FORBIDDEN                  = 131
-	COAPCODE_404_NOT_FOUND                  = 132
-	COAPCODE_405_METHOD_NOT_ALLOWED         = 133
-	COAPCODE_406_NOT_ACCEPTABLE             = 134
-	COAPCODE_412_PRECONDITION_FAILED        = 140
-	COAPCODE_413_REQUEST_ENTITY_TOO_LARGE   = 141
-	COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT = 143
-	COAPCODE_500_INTERNAL_SERVER_ERROR      = 160
-	COAPCODE_501_NOT_IMPLEMENTED            = 161
-	COAPCODE_502_BAD_GATEWAY                = 162
-	COAPCODE_503_SERVICE_UNAVAILABLE        = 163
-	COAPCODE_504_GATEWAY_TIMEOUT            = 164
-	COAPCODE_505_PROXYING_NOT_SUPPORTED     = 165
+	COAPCODE_0_EMPTY                        CoapCode = 0
+	COAPCODE_201_CREATED                    CoapCode = 65
+	COAPCODE_202_DELETED                    CoapCode = 66
+	COAPCODE_203_VALID                      CoapCode = 67
+	COAPCODE_204_CHANGED                    CoapCode = 68
+	COAPCODE_205_CONTENT                    CoapCode = 69
+	COAPCODE_400_BAD_REQUEST                CoapCode = 128
+	COAPCODE_401_UNAUTHORIZED               CoapCode = 129
+	COAPCODE_402_BAD_OPTION                 CoapCode = 130
+	COAPCODE_403_FORBIDDEN                  CoapCode = 131
+	COAPCODE_404_NOT_FOUND                  CoapCode = 132
+	COAPCODE_405_METHOD_NOT_ALLOWED         CoapCode = 133
+	COAPCODE_406_NOT_ACCEPTABLE             CoapCode = 134
+	COAPCODE_412_PRECONDITION_FAILED        CoapCode = 140
+	COAPCODE_413_REQUEST_ENTITY_TOO_LARGE   CoapCode = 141
+	COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT CoapCode = 143
+	COAPCODE_500_INTERNAL_SERVER_ERROR      CoapCode = 160
+	COAPCODE_501_NOT_IMPLEMENTED            CoapCode = 161
+	COAPCODE_502_BAD_GATEWAY                CoapCode = 162
+	COAPCODE_503_SERVICE_UNAVAILABLE        CoapCode = 163
+	COAPCODE_504_GATEWAY_TIMEOUT            CoapCode = 164
+	COAPCODE_505_PROXYING_NOT_SUPPORTED     CoapCode = 165
 )
 
 const DEFAULT_ACK_TIMEOUT = 2
@@ -160,6 +158,6 @@ type MessageHandler func(*Message, error)
 type ResponseHandler func(*CoapResponse, error)
 type EventHandler func(*Event)
 
-func EmptyEventPayload() (map[string] interface{}) {
-	return make(map[string] interface{})
+func EmptyEventPayload() map[string]interface{} {
+	return make(map[string]interface{})
 }

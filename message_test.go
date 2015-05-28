@@ -2,8 +2,8 @@ package goap
 
 import (
 	"bytes"
-	"testing"
 	. "github.com/zubairhamed/goap"
+	"testing"
 )
 
 func TestInvalidMessage(t *testing.T) {
