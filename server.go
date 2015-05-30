@@ -1,5 +1,6 @@
 package goap
 
+/*
 import (
 	"bytes"
 	"log"
@@ -9,6 +10,7 @@ import (
 )
 
 // Server
+
 func NewServer(host string) *Server {
 	addr, _ := net.ResolveUDPAddr("udp", host)
 	s := &Server{addr: addr}
@@ -69,14 +71,12 @@ func (s *Server) Start() {
 		}
 		ack.Payload = NewPlainTextPayload(buf.String())
 
-		/*
 		   if s.fnEventDiscover != nil {
 		       e := NewEvent()
 		       e.Message = ack
 
 		       ack = s.fnEventDiscover(e)
 		   }
-		*/
 
 		resp := NewResponseWithMessage(ack)
 
@@ -99,11 +99,9 @@ func startServer(s *Server) *net.UDPConn {
 	s.messageIds = make(map[uint16]time.Time)
 
 	// udpAddr, err := net.ResolveUDPAddr("udp", s.host)
-	/*
 		if err != nil {
 			log.Fatal(err)
 		}
-	*/
 
 	conn, err := net.ListenUDP("udp", s.addr)
 	if err != nil {
@@ -249,3 +247,4 @@ func (s *Server) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAd
 func (s *Server) Close() {
 	s.conn.Close()
 }
+*/

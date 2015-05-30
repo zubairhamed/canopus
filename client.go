@@ -1,10 +1,12 @@
 package goap
 
+/*
 import (
 	"log"
 	"net"
 	"strconv"
 )
+
 
 func NewClient(host string) *Client {
 	serverAddr, _ := net.ResolveUDPAddr("udp", host)
@@ -51,7 +53,7 @@ func (c *Client) SendAsync(req *CoapRequest, fn ResponseHandler) {
 	fn(resp, err)
 }
 
-/*
+
 func (c *Client) Discover(fn ResponseHandler) {
     // TODO: Construct Discovery Payload
     req := nil
@@ -59,8 +61,9 @@ func (c *Client) Discover(fn ResponseHandler) {
 
     fn (resp, err)
 }
-*/
+
 
 func (c *Client) Close() {
 	defer c.conn.Close()
 }
+*/

@@ -1,10 +1,11 @@
 package goap
 
+
 import (
 	"regexp"
-	"strings"
 )
 
+/*
 func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
 	re, _ := regexp.Compile(`{[a-z]+}`)
 	matches := re.FindAllStringSubmatch(path, -1)
@@ -19,15 +20,12 @@ func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler) *Route 
 	path += "$"
 	re, _ = regexp.Compile(path)
 
-	/*
 	   OnNewRoute
 	       Get all values between #{ }
 	       Construct New RegEx
 	           Create SubGroups
 	           Escape any RegEx Values
 	       Compile and Store Compiled RegEx
-
-	*/
 
 	r := &Route{
 		AutoAck: false,
@@ -40,6 +38,7 @@ func (s *Server) NewRoute(path string, method CoapCode, fn RouteHandler) *Route 
 
 	return r
 }
+*/
 
 type Route struct {
 	Path       string

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func NewCoapServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
+func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 
 	return &CoapServer{
 		remoteAddr: remoteAddr,
