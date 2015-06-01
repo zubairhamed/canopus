@@ -91,7 +91,7 @@ func (s *CoapServer) serveServer() {
 		IfErr(err)
 		s.conn = conn
 
-		log.Println("Started server ", conn.LocalAddr())
+		log.Println("Started CoAP Server ", conn.LocalAddr())
 
 		CallEvent(s.evtOnStartup, EmptyEventPayload())
 
