@@ -2,11 +2,11 @@ package goap
 
 import (
 	"bytes"
+	. "github.com/zubairhamed/go-commons/network"
 	"log"
 	"net"
 	"strconv"
 	"time"
-	. "github.com/zubairhamed/go-commons/network"
 )
 
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
@@ -84,31 +84,31 @@ func (s *CoapServer) Start() {
 }
 
 func (s *CoapServer) serveServer() {
-		s.messageIds = make(map[uint16]time.Time)
+	s.messageIds = make(map[uint16]time.Time)
 
-		conn, err := net.ListenUDP("udp", s.localAddr)
-		IfErr(err)
-		s.conn = conn
+	conn, err := net.ListenUDP("udp", s.localAddr)
+	IfErr(err)
+	s.conn = conn
 
-		log.Println("Started CoAP Server ", conn.LocalAddr())
+	log.Println("Started CoAP Server ", conn.LocalAddr())
 
-		CallEvent(s.evtOnStartup, EmptyEventPayload())
+	CallEvent(s.evtOnStartup, EmptyEventPayload())
 
-		s.handleMessageIdPurge()
+	s.handleMessageIdPurge()
 
-		readBuf := make([]byte, BUF_SIZE)
-		for {
-			len, addr, err := conn.ReadFromUDP(readBuf)
+	readBuf := make([]byte, BUF_SIZE)
+	for {
+		len, addr, err := conn.ReadFromUDP(readBuf)
 
-			if err == nil {
+		if err == nil {
 
-				msgBuf := make([]byte, len)
-				copy(msgBuf, readBuf)
+			msgBuf := make([]byte, len)
+			copy(msgBuf, readBuf)
 
-				// Look for route handler matching path and then dispatch
-				go s.handleMessage(msgBuf, conn, addr)
-			}
+			// Look for route handler matching path and then dispatch
+			go s.handleMessage(msgBuf, conn, addr)
 		}
+	}
 }
 
 func (s *CoapServer) handleMessageIdPurge() {
@@ -154,7 +154,6 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			}
 		}
 	}
-
 
 	route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
 	if err != nil {

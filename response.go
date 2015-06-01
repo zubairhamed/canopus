@@ -32,7 +32,7 @@ func (c *CoapResponse) GetError() error {
 	return c.err
 }
 
-func (c *CoapResponse) GetPayload() ([]byte) {
+func (c *CoapResponse) GetPayload() []byte {
 	return c.GetMessage().Payload.GetBytes()
 }
 

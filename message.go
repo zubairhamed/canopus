@@ -3,10 +3,10 @@ package goap
 import (
 	"bytes"
 	"encoding/binary"
+	. "github.com/zubairhamed/go-commons/network"
 	"log"
 	"strconv"
 	"strings"
-	. "github.com/zubairhamed/go-commons/network"
 )
 
 func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
@@ -421,21 +421,21 @@ func encodeInt(v uint32) []byte {
 	}
 }
 
-func  MethodString(c CoapCode) string {
+func MethodString(c CoapCode) string {
 	switch c {
-		case GET:
+	case GET:
 		return "GET"
 		break
 
-		case DELETE:
+	case DELETE:
 		return "DELETE"
 		break
 
-		case POST:
+	case POST:
 		return "POST"
 		break
 
-		case PUT:
+	case PUT:
 		return "PUT"
 		break
 	}
