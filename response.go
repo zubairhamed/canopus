@@ -32,6 +32,10 @@ func (c *CoapResponse) GetError() error {
 	return c.err
 }
 
+func (c *CoapResponse) GetPayload() ([]byte) {
+	return c.GetMessage().Payload.GetBytes()
+}
+
 func (c *CoapResponse) GetUriQuery(q string) string {
 	qs := c.GetMessage().GetOptionsAsString(OPTION_URI_QUERY)
 

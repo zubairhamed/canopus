@@ -3,6 +3,7 @@ package goap
 import (
 	"strconv"
 	"strings"
+	. "github.com/zubairhamed/go-commons/network"
 )
 
 func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) *CoapRequest {

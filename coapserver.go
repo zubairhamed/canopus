@@ -10,7 +10,6 @@ import (
 )
 
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
-
 	return &CoapServer{
 		remoteAddr: remoteAddr,
 		localAddr:  localAddr,
