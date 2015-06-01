@@ -51,8 +51,8 @@ const (
 	OPTION_SIZE1          OptionCode = 60
 )
 
+/*
 type MediaType int
-
 const (
 	MEDIATYPE_TEXT_PLAIN                  MediaType = 0
 	MEDIATYPE_TEXT_XML                    MediaType = 1
@@ -81,6 +81,7 @@ const (
 	MEDIATYPE_JSON_VND_OMA_LWM2M          MediaType = 1543
 	MEDIATYPE_OPAQUE_VND_OMA_LWM2M        MediaType = 1544
 )
+*/
 
 type CoapCode uint8
 
@@ -141,7 +142,6 @@ const BUF_SIZE = 1500
 const MESSAGEID_PURGE_DURATION = 60
 
 // ERRORS
-var ERR_NO_MATCHING_ROUTE = errors.New("No matching route found")
 var ERR_PACKET_LENGTH_LESS_THAN_4 = errors.New("Packet length less than 4 bytes")
 var ERR_INVALID_VERSION = errors.New("Invalid CoAP version. Should be 1.")
 var ERR_OPTION_LENGTH_USES_VALUE_15 = errors.New(("Message format error. Option length has reserved value of 15"))
@@ -149,12 +149,10 @@ var ERR_OPTION_DELTA_USES_VALUE_15 = errors.New(("Message format error. Option d
 var ERR_UNKNOWN_MESSAGE_TYPE = errors.New("Unknown message type")
 var ERR_INVALID_TOKEN_LENGTH = errors.New("Invalid Token Length ( > 8)")
 var ERR_UNKNOWN_CRITICAL_OPTION = errors.New("Unknown critical option encountered")
-var ERR_NO_MATCHING_METHOD = errors.New("No matching method")
-var ERR_UNSUPPORTED_CONTENT_FORMAT = errors.New("Unsupported Content-Format")
 var ERR_UNSUPPORTED_METHOD = errors.New("Unsupported Method")
 
 // Function Handlers
-type RouteHandler func(*CoapRequest) *CoapResponse
+// type RouteHandler func(*CoapRequest) *CoapResponse
 type MessageHandler func(*Message, error)
 type ResponseHandler func(*CoapResponse, error)
 type EventHandler func(*Event)

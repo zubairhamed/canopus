@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"log"
 	"net"
-	"regexp"
 	"strconv"
-	"strings"
 	"time"
+	. "github.com/zubairhamed/go-commons/network"
 )
 
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
@@ -34,8 +33,8 @@ type CoapServer struct {
 
 func (s *CoapServer) Start() {
 
-	var discoveryRoute RouteHandler = func(req *CoapRequest) *CoapResponse {
-		msg := req.GetMessage()
+	var discoveryRoute RouteHandler = func(req Request) Response {
+		msg := req.(*CoapRequest).GetMessage()
 
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
@@ -86,31 +85,31 @@ func (s *CoapServer) Start() {
 }
 
 func (s *CoapServer) serveServer() {
-	s.messageIds = make(map[uint16]time.Time)
+		s.messageIds = make(map[uint16]time.Time)
 
-	conn, err := net.ListenUDP("udp", s.localAddr)
-	IfErr(err)
-	s.conn = conn
+		conn, err := net.ListenUDP("udp", s.localAddr)
+		IfErr(err)
+		s.conn = conn
 
-	log.Println("Started server ", conn.LocalAddr())
+		log.Println("Started server ", conn.LocalAddr())
 
-	CallEvent(s.evtOnStartup, EmptyEventPayload())
+		CallEvent(s.evtOnStartup, EmptyEventPayload())
 
-	s.handleMessageIdPurge()
+		s.handleMessageIdPurge()
 
-	readBuf := make([]byte, BUF_SIZE)
-	for {
-		len, addr, err := conn.ReadFromUDP(readBuf)
+		readBuf := make([]byte, BUF_SIZE)
+		for {
+			len, addr, err := conn.ReadFromUDP(readBuf)
 
-		if err == nil {
+			if err == nil {
 
-			msgBuf := make([]byte, len)
-			copy(msgBuf, readBuf)
+				msgBuf := make([]byte, len)
+				copy(msgBuf, readBuf)
 
-			// Look for route handler matching path and then dispatch
-			go s.handleMessage(msgBuf, conn, addr)
+				// Look for route handler matching path and then dispatch
+				go s.handleMessage(msgBuf, conn, addr)
+			}
 		}
-	}
 }
 
 func (s *CoapServer) handleMessageIdPurge() {
@@ -157,7 +156,8 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 		}
 	}
 
-	route, attrs, err := MatchingRoute(msg, s.routes)
+
+	route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
 	if err != nil {
 		if err == ERR_NO_MATCHING_ROUTE {
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
@@ -215,7 +215,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 
 		req := NewRequestFromMessage(msg, attrs)
 
-		resp := route.Handler(req)
+		resp := route.Handler(req).(*CoapResponse)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
 		SendMessageTo(resp.GetMessage(), conn, addr)
@@ -223,39 +223,10 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 }
 
 func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
-	re, _ := regexp.Compile(`{[a-z]+}`)
-	matches := re.FindAllStringSubmatch(path, -1)
+	route := CreateNewRoute(path, MethodString(method), fn)
+	s.routes = append(s.routes, route)
 
-	path = "^" + path
-	for _, b := range matches {
-		origAttr := b[0]
-		attr := strings.Replace(strings.Replace(origAttr, "{", "", -1), "}", "", -1)
-		frag := `(?P<` + attr + `>\w+)`
-		path = strings.Replace(path, origAttr, frag, -1)
-	}
-	path += "$"
-	re, _ = regexp.Compile(path)
-
-	/*
-	   OnNewRoute
-	       Get all values between #{ }
-	       Construct New RegEx
-	           Create SubGroups
-	           Escape any RegEx Values
-	       Compile and Store Compiled RegEx
-
-	*/
-
-	r := &Route{
-		AutoAck: false,
-		Path:    path,
-		Method:  method,
-		Handler: fn,
-		RegEx:   re,
-	}
-	s.routes = append(s.routes, r)
-
-	return r
+	return route
 }
 
 func (c *CoapServer) Send(req *CoapRequest) (*CoapResponse, error) {

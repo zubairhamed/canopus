@@ -163,49 +163,6 @@ func MatchRoute(route string, match string) (error, map[string]string) {
 	}
 }
 
-func MatchingRoute(msg *Message, routes []*Route) (*Route, map[string]string, error) {
-	path := msg.GetUriPath()
-	method := msg.Code
-
-	foundPath := false
-	attrs := make(map[string]string)
-	for _, route := range routes {
-		match, att := route.Matches(path)
-		if match {
-			attrs = att
-			foundPath = true
-			if route.Method == method {
-				if len(route.MediaTypes) > 0 {
-
-					cf := msg.GetOption(OPTION_CONTENT_FORMAT)
-					if cf == nil {
-						return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
-					}
-
-					foundMediaType := false
-					for _, o := range route.MediaTypes {
-						if uint32(o) == cf.Value {
-							foundMediaType = true
-							break
-						}
-					}
-
-					if !foundMediaType {
-						return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
-					}
-				}
-				return route, attrs, nil
-			}
-		}
-	}
-
-	if foundPath {
-		return &Route{}, attrs, ERR_NO_MATCHING_METHOD
-	} else {
-		return &Route{}, attrs, ERR_NO_MATCHING_ROUTE
-	}
-}
-
 func IfErr(e error) {
 	if e != nil {
 		log.Println(e)

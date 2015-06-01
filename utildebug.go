@@ -88,7 +88,3 @@ func OptionNumberToString(o OptionCode) string {
 	}
 	return ""
 }
-
-/*
-
-*/

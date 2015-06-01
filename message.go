@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	. "github.com/zubairhamed/go-commons/network"
 )
 
 func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
@@ -418,4 +419,25 @@ func encodeInt(v uint32) []byte {
 		binary.BigEndian.PutUint32(rv, uint32(v))
 		return rv
 	}
+}
+
+func  MethodString(c CoapCode) string {
+	switch c {
+		case GET:
+		return "GET"
+		break
+
+		case DELETE:
+		return "DELETE"
+		break
+
+		case POST:
+		return "POST"
+		break
+
+		case PUT:
+		return "PUT"
+		break
+	}
+	return ""
 }
