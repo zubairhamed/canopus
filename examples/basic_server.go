@@ -63,12 +63,12 @@ func routeXml(req *CoapRequest) *CoapResponse {
 }
 
 /*
-	// goap.PrintMessage(msg)
+	// canopus.PrintMessage(msg)
 
-	fwOpt := msg.GetOption(goap.OPTION_PROXY_URI)
+	fwOpt := msg.GetOption(canopus.OPTION_PROXY_URI)
 	log.Println(fwOpt)
 
-	ack := goap.NewMessageOfType(goap.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+	ack := canopus.NewMessageOfType(canopus.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 
 	return ack
 

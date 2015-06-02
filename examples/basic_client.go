@@ -14,7 +14,7 @@ func main() {
 	client.Dial("udp", "127.0.0.1", 5683)
 
 	req := NewRequest(TYPE_CONFIRMABLE, GET, 50782)
-	req.SetStringPayload("Hello, GoAP")
+	req.SetStringPayload("Hello, canopus")
 	req.SetRequestURI("/0/1/2")
 
 	// Sync Client Test
