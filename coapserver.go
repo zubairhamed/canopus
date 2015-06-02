@@ -211,7 +211,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			SendMessageTo(ack, conn, addr)
 		}
 
-		req := NewRequestFromMessage(msg, attrs)
+		req := NewRequestFromMessage(msg, attrs, conn, addr)
 
 		resp := route.Handler(req).(*CoapResponse)
 

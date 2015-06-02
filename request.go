@@ -2,6 +2,7 @@ package goap
 
 import (
 	. "github.com/zubairhamed/go-commons/network"
+	"net"
 	"strconv"
 	"strings"
 )
@@ -15,16 +16,28 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) *Co
 	}
 }
 
-func NewRequestFromMessage(msg *Message, attrs map[string]string) *CoapRequest {
+func NewRequestFromMessage(msg *Message, attrs map[string]string, conn *net.UDPConn, addr *net.UDPAddr) *CoapRequest {
 	return &CoapRequest{
 		msg:   msg,
 		attrs: attrs,
+		conn:  conn,
+		addr:  addr,
 	}
 }
 
 type CoapRequest struct {
 	msg   *Message
 	attrs map[string]string
+	conn  *net.UDPConn
+	addr  *net.UDPAddr
+}
+
+func (c *CoapRequest) GetConnection() *net.UDPConn {
+	return c.conn
+}
+
+func (c *CoapRequest) GetAddress() *net.UDPAddr {
+	return c.addr
 }
 
 func (c *CoapRequest) GetAttributes() map[string]string {
