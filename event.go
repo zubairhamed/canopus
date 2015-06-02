@@ -1,4 +1,4 @@
-package goap
+package canopus
 
 type EventCode uint8
 

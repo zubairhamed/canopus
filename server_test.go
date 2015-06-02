@@ -1,4 +1,4 @@
-package goap
+package canopus
 
 import (
 	"sync"

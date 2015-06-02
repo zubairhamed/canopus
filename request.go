@@ -1,4 +1,4 @@
-package goap
+package canopus
 
 import (
 	. "github.com/zubairhamed/go-commons/network"

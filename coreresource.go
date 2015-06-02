@@ -1,4 +1,4 @@
-package goap
+package canopus
 
 func NewCoreAttribute(key string, value interface{}) *CoreAttribute {
 	return &CoreAttribute{

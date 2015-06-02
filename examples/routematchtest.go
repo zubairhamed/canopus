@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "github.com/zubairhamed/goap"
+	. "github.com/zubairhamed/canopus"
 	"log"
 	"regexp"
 )

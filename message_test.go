@@ -1,8 +1,8 @@
-package goap
+package canopus
 
 import (
 	"bytes"
-	. "github.com/zubairhamed/goap"
+	. "github.com/zubairhamed/canopus"
 	"testing"
 )
 
