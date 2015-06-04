@@ -1,9 +1,10 @@
-package canopus
+package tests
 
 import (
 	"bytes"
 	. "github.com/zubairhamed/canopus"
 	"testing"
+	. "github.com/zubairhamed/go-commons/network"
 )
 
 func TestInvalidMessage(t *testing.T) {
