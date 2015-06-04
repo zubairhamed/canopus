@@ -112,6 +112,7 @@ func (s *CoapServer) serveServer() {
 }
 
 func (s *CoapServer) handleMessageIdPurge() {
+
 	// Routine for clearing up message IDs which has expired
 	ticker := time.NewTicker(MESSAGEID_PURGE_DURATION * time.Second)
 	go func() {
@@ -240,17 +241,17 @@ func (c *CoapServer) OnStartup(eh EventHandler) {
 }
 
 func (c *CoapServer) OnClose(eh EventHandler) {
-	c.evtOnStartup = eh
+	c.evtOnClose = eh
 }
 
 func (c *CoapServer) OnDiscover(eh EventHandler) {
-	c.evtOnStartup = eh
+	c.evtOnDiscover = eh
 }
 
 func (c *CoapServer) OnError(eh EventHandler) {
-	c.evtOnStartup = eh
+	c.evtOnError = eh
 }
 
 func (c *CoapServer) OnMessage(eh EventHandler) {
-	c.evtOnStartup = eh
+	c.evtOnMessage = eh
 }
