@@ -32,14 +32,14 @@ func GenerateToken(l int) string {
 // Converts to CoRE Resources Object from a CoRE String
 func CoreResourcesFromString(str string) []*CoreResource {
 	var re = regexp.MustCompile(`(<[^>]+>\s*(;\s*\w+\s*(=\s*(\w+|"([^"\\]*(\\.[^"\\]*)*)")\s*)?)*)`)
-	var elemRe = regexp.MustCompile(`<\/[a-zA-Z0-9_%-]+>`)
+	var elemRe = regexp.MustCompile(`<\/[a-zA-Z0-9_%-\/]+>`)
 
 	var resources []*CoreResource
 	m := re.FindAllString(str, -1)
 
 	for _, match := range m {
 		elemMatch := elemRe.FindString(match)
-		target := elemMatch[1 : len(elemMatch)-1]
+		target := elemMatch[1:len(elemMatch)-1]
 
 		resource := NewCoreResource()
 		resource.Target = target
