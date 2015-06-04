@@ -32,7 +32,7 @@ func GenerateToken(l int) string {
 // Converts to CoRE Resources Object from a CoRE String
 func CoreResourcesFromString(str string) []*CoreResource {
 	var re = regexp.MustCompile(`(<[^>]+>\s*(;\s*\w+\s*(=\s*(\w+|"([^"\\]*(\\.[^"\\]*)*)")\s*)?)*)`)
-	var elemRe = regexp.MustCompile(`<\/[a-zA-Z0-9_%-\/]+>`)
+	var elemRe = regexp.MustCompile(`<[^>]*>`)
 
 	var resources []*CoreResource
 	m := re.FindAllString(str, -1)
@@ -44,14 +44,15 @@ func CoreResourcesFromString(str string) []*CoreResource {
 		resource := NewCoreResource()
 		resource.Target = target
 
-		attrs := strings.Split(match[len(elemMatch)+1:], ";")
+		if len(match) > len(elemMatch) {
+			attrs := strings.Split(match[len(elemMatch)+1:], ";")
 
-		for _, attr := range attrs {
-			pair := strings.Split(attr, "=")
+			for _, attr := range attrs {
+				pair := strings.Split(attr, "=")
 
-			resource.AddAttribute(pair[0], strings.Replace(pair[1], "\"", "", -1))
+				resource.AddAttribute(pair[0], strings.Replace(pair[1], "\"", "", -1))
+			}
 		}
-
 		resources = append(resources, resource)
 	}
 	return resources
