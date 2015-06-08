@@ -3,8 +3,8 @@ package tests
 import (
 	"bytes"
 	. "github.com/zubairhamed/canopus"
-	"testing"
 	. "github.com/zubairhamed/go-commons/network"
+	"testing"
 )
 
 func TestInvalidMessage(t *testing.T) {

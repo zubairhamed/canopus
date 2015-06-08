@@ -39,7 +39,7 @@ func CoreResourcesFromString(str string) []*CoreResource {
 
 	for _, match := range m {
 		elemMatch := elemRe.FindString(match)
-		target := elemMatch[1:len(elemMatch)-1]
+		target := elemMatch[1 : len(elemMatch)-1]
 
 		resource := NewCoreResource()
 		resource.Target = target
