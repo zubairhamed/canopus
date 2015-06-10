@@ -48,7 +48,7 @@ Converts bytes to a CoAP Message
 */
 func BytesToMessage(data []byte) (*Message, error) {
 	msg := &Message{}
-
+	
 	dataLen := len(data)
 	if dataLen < 4 {
 		return msg, ERR_PACKET_LENGTH_LESS_THAN_4
@@ -386,7 +386,11 @@ func valueToBytes(value interface{}) []byte {
 }
 
 func PayloadAsString(p MessagePayload) string {
-	return p.String()
+	if p == nil {
+		return ""
+	} else {
+		return p.String()
+	}
 }
 
 func decodeInt(b []byte) uint32 {
