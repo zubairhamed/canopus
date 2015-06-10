@@ -36,6 +36,7 @@ const (
 	OPTION_URI_HOST       OptionCode = 3
 	OPTION_ETAG           OptionCode = 4
 	OPTION_IF_NONE_MATCH  OptionCode = 5
+	OPTION_OBSERVE        OptionCode = 6
 	OPTION_URI_PORT       OptionCode = 7
 	OPTION_LOCATION_PATH  OptionCode = 8
 	OPTION_URI_PATH       OptionCode = 11

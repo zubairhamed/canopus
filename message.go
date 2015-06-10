@@ -48,7 +48,7 @@ Converts bytes to a CoAP Message
 */
 func BytesToMessage(data []byte) (*Message, error) {
 	msg := &Message{}
-	
+
 	dataLen := len(data)
 	if dataLen < 4 {
 		return msg, ERR_PACKET_LENGTH_LESS_THAN_4
@@ -125,8 +125,8 @@ func BytesToMessage(data []byte) (*Message, error) {
 		case 15:
 			return msg, ERR_OPTION_DELTA_USES_VALUE_15
 		}
-		lastOptionId += optionDelta
 
+		lastOptionId += optionDelta
 		switch optionLength {
 		case 13:
 			optionLengthExtended := int(tmp[0])
@@ -144,10 +144,9 @@ func BytesToMessage(data []byte) (*Message, error) {
 			return msg, ERR_OPTION_LENGTH_USES_VALUE_15
 		}
 
+		optCode := OptionCode(lastOptionId)
 		if optionLength > 0 {
 			optionValue := tmp[:optionLength]
-
-			optCode := OptionCode(lastOptionId)
 
 			switch optCode {
 			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1,
@@ -164,10 +163,14 @@ func BytesToMessage(data []byte) (*Message, error) {
 				if lastOptionId&0x01 == 1 {
 					log.Println("Unknown Critical Option id " + strconv.Itoa(lastOptionId))
 					return msg, ERR_UNKNOWN_CRITICAL_OPTION
+				} else {
+					log.Println("Unknown Option id " + strconv.Itoa(lastOptionId))
 				}
 				break
 			}
 			tmp = tmp[optionLength:]
+		} else {
+			msg.Options = append(msg.Options, NewOption(optCode, nil))
 		}
 	}
 	msg.Payload = NewBytesPayload(tmp)
