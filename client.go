@@ -9,10 +9,6 @@ type CoapClient struct {
 	localAddr  *net.UDPAddr
 	remoteAddr *net.UDPAddr
 	conn       *net.UDPConn
-
-	evtOnError   EventHandler
-	evtOnStartup EventHandler
-	evtOnClose   EventHandler
 }
 
 func (c CoapClient) Dial(host string) {
@@ -47,20 +43,4 @@ func (c *CoapClient) SendAsync(req *CoapRequest, fn ResponseHandler) {
 
 func (c *CoapClient) Close() {
 	c.conn.Close()
-}
-
-func (c *CoapClient) callEvent(eh EventHandler) {
-
-}
-
-func (c *CoapClient) OnStartup(eh EventHandler) {
-	c.evtOnStartup = eh
-}
-
-func (c *CoapClient) OnError(eh EventHandler) {
-	c.evtOnError = eh
-}
-
-func (c *CoapClient) OnClose(eh EventHandler) {
-	c.evtOnClose = eh
 }

@@ -176,8 +176,8 @@ func IfErrFatal(e error) {
 	}
 }
 
-func CallEvent(fn EventHandler, payload map[string]interface{}) {
+func CallEvent(e EventCode, fn FnCanopusEvent) {
 	if fn != nil {
-		fn(NewEvent(payload))
+		go fn()
 	}
 }

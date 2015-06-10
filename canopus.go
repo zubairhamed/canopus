@@ -29,6 +29,19 @@ const (
 	DATA_TOKEN_START = 4
 )
 
+type FnCanopusEvent func()
+type EventCode int
+
+const (
+	EVT_START          EventCode = 0
+	EVT_CLOSE          EventCode = 1
+	EVT_DISCOVER       EventCode = 2
+	EVT_MESSAGE        EventCode = 3
+	EVT_ERROR          EventCode = 4
+	EVT_OBSERVE        EventCode = 5
+	EVT_OBSERVE_CANCEL EventCode = 6
+)
+
 type OptionCode int
 
 const (

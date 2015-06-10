@@ -13,6 +13,7 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	return &CoapServer{
 		remoteAddr: remoteAddr,
 		localAddr:  localAddr,
+		events:     make(map[EventCode]FnCanopusEvent),
 	}
 }
 
@@ -22,12 +23,7 @@ type CoapServer struct {
 	conn       *net.UDPConn
 	messageIds map[uint16]time.Time
 	routes     []*Route
-
-	evtOnStartup  EventHandler
-	evtOnClose    EventHandler
-	evtOnDiscover EventHandler
-	evtOnError    EventHandler
-	evtOnMessage  EventHandler
+	events     map[EventCode]FnCanopusEvent
 }
 
 func (s *CoapServer) Start() {
@@ -90,9 +86,13 @@ func (s *CoapServer) serveServer() {
 	IfErr(err)
 	s.conn = conn
 
-	log.Println("Started CoAP Server ", conn.LocalAddr())
+	if conn == nil {
+		log.Fatal("An error occured starting up CoAP Server")
+	} else {
+		log.Println("Started CoAP Server ", conn.LocalAddr())
+	}
 
-	CallEvent(s.evtOnStartup, EmptyEventPayload())
+	CallEvent(EVT_START, s.events[EVT_START])
 
 	s.handleMessageIdPurge()
 
@@ -133,7 +133,7 @@ func (s *CoapServer) handleMessageIdPurge() {
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
 
-	CallEvent(s.evtOnMessage, EmptyEventPayload())
+	CallEvent(EVT_MESSAGE, s.events[EVT_MESSAGE])
 
 	// Unsupported Method
 	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
@@ -164,7 +164,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			ret.Token = msg.Token
 
 			SendMessageTo(ret, conn, addr)
-			CallEvent(s.evtOnError, EmptyEventPayload())
+			CallEvent(EVT_ERROR, s.events[EVT_ERROR])
 			return
 		}
 
@@ -173,7 +173,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessageTo(ret, conn, addr)
-			CallEvent(s.evtOnError, EmptyEventPayload())
+			CallEvent(EVT_ERROR, s.events[EVT_ERROR])
 			return
 		}
 
@@ -182,7 +182,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 			SendMessageTo(ret, conn, addr)
-			CallEvent(s.evtOnError, EmptyEventPayload())
+			CallEvent(EVT_ERROR, s.events[EVT_ERROR])
 			return
 		}
 	}
@@ -214,6 +214,11 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 
 		req := NewRequestFromMessage(msg, attrs, conn, addr)
 
+		if msg.GetOption(OPTION_OBSERVE) != nil {
+			// Register Observe Request & Fire OnObserve Event
+
+		}
+
 		resp := route.Handler(req).(*CoapResponse)
 
 		// TODO: Validate Message before sending (.e.g missing messageId)
@@ -236,22 +241,6 @@ func (c *CoapServer) SendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse,
 	return SendMessageTo(req.GetMessage(), c.conn, addr)
 }
 
-func (c *CoapServer) OnStartup(eh EventHandler) {
-	c.evtOnStartup = eh
-}
-
-func (c *CoapServer) OnClose(eh EventHandler) {
-	c.evtOnClose = eh
-}
-
-func (c *CoapServer) OnDiscover(eh EventHandler) {
-	c.evtOnDiscover = eh
-}
-
-func (c *CoapServer) OnError(eh EventHandler) {
-	c.evtOnError = eh
-}
-
-func (c *CoapServer) OnMessage(eh EventHandler) {
-	c.evtOnMessage = eh
+func (c *CoapServer) On(e EventCode, fn FnCanopusEvent) {
+	c.events[e] = fn
 }
