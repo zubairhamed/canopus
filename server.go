@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"time"
+	"github.com/zubairhamed/go-commons/logging"
 )
 
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
@@ -83,7 +84,8 @@ func (s *CoapServer) serveServer() {
 	s.messageIds = make(map[uint16]time.Time)
 
 	conn, err := net.ListenUDP("udp", s.localAddr)
-	IfErr(err)
+	logging.LogError(err)
+
 	s.conn = conn
 
 	if conn == nil {
@@ -133,96 +135,101 @@ func (s *CoapServer) handleMessageIdPurge() {
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
 
+	PrintMessage(msg)
+
 	CallEvent(EVT_MESSAGE, s.events[EVT_MESSAGE])
 
-	// Unsupported Method
-	if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-		ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
-		ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+	if msg.MessageType != TYPE_ACKNOWLEDGEMENT && msg.MessageType != TYPE_RESET {
+		// Unsupported Method
+		if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
+			log.Println("Unsupported Method ", msg.Code)
+			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
+			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-		SendMessageTo(ret, conn, addr)
-		return
-	}
+			SendMessageTo(ret, conn, addr)
+			return
+		}
 
-	if err != nil {
-		if err == ERR_UNKNOWN_CRITICAL_OPTION {
-			if msg.MessageType == TYPE_CONFIRMABLE {
-				SendError402BadOption(msg.MessageId, conn, addr)
+		if err != nil {
+			if err == ERR_UNKNOWN_CRITICAL_OPTION {
+				if msg.MessageType == TYPE_CONFIRMABLE {
+					SendError402BadOption(msg.MessageId, conn, addr)
+					return
+				} else {
+					// Ignore silently
+					return
+				}
+			}
+		}
+
+		route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
+		if err != nil {
+			if err == ERR_NO_MATCHING_ROUTE {
+				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
+				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+				ret.Token = msg.Token
+
+				SendMessageTo(ret, conn, addr)
+				CallEvent(EVT_ERROR, s.events[EVT_ERROR])
 				return
-			} else {
-				// Ignore silently
+			}
+
+			if err == ERR_NO_MATCHING_METHOD {
+				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
+				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+				SendMessageTo(ret, conn, addr)
+				CallEvent(EVT_ERROR, s.events[EVT_ERROR])
+				return
+			}
+
+			if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
+				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
+				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+				SendMessageTo(ret, conn, addr)
+				CallEvent(EVT_ERROR, s.events[EVT_ERROR])
 				return
 			}
 		}
-	}
 
-	route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
-	if err != nil {
-		if err == ERR_NO_MATCHING_ROUTE {
-			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
-			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-			ret.Token = msg.Token
+		// Duplicate Message ID Check
+		_, dupe := s.messageIds[msg.MessageId]
+		if dupe {
+			log.Println("Duplicate Message ID ", msg.MessageId)
+			if msg.MessageType == TYPE_CONFIRMABLE {
+				ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
+				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessageTo(ret, conn, addr)
-			CallEvent(EVT_ERROR, s.events[EVT_ERROR])
+				SendMessageTo(ret, conn, addr)
+			}
 			return
 		}
 
-		if err == ERR_NO_MATCHING_METHOD {
-			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
-			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+		if err == nil {
+			s.messageIds[msg.MessageId] = time.Now()
 
-			SendMessageTo(ret, conn, addr)
-			CallEvent(EVT_ERROR, s.events[EVT_ERROR])
-			return
+			// TODO: #47 - Forward Proxy
+
+			// Auto acknowledge
+			if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
+				ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+
+				SendMessageTo(ack, conn, addr)
+			}
+
+			req := NewRequestFromMessage(msg, attrs, conn, addr)
+
+			if msg.GetOption(OPTION_OBSERVE) != nil {
+				// Observe Request & Fire OnObserve Event
+				CallEvent(EVT_OBSERVE, s.events[EVT_OBSERVE])
+			}
+
+			resp := route.Handler(req).(*CoapResponse)
+
+			// TODO: Validate Message before sending (.e.g missing messageId)
+			SendMessageTo(resp.GetMessage(), conn, addr)
 		}
-
-		if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
-			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
-			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-			SendMessageTo(ret, conn, addr)
-			CallEvent(EVT_ERROR, s.events[EVT_ERROR])
-			return
-		}
-	}
-
-	// Duplicate Message ID Check
-	_, dupe := s.messageIds[msg.MessageId]
-	if dupe {
-		log.Println("Duplicate Message ID ", msg.MessageId)
-		if msg.MessageType == TYPE_CONFIRMABLE {
-			ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
-			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-			SendMessageTo(ret, conn, addr)
-		}
-		return
-	}
-
-	if err == nil {
-		s.messageIds[msg.MessageId] = time.Now()
-
-		// TODO: #47 - Forward Proxy
-
-		// Auto acknowledge
-		if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
-			ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-
-			SendMessageTo(ack, conn, addr)
-		}
-
-		req := NewRequestFromMessage(msg, attrs, conn, addr)
-
-		if msg.GetOption(OPTION_OBSERVE) != nil {
-			// Observe Request & Fire OnObserve Event
-			CallEvent(EVT_OBSERVE, s.events[EVT_OBSERVE])
-		}
-
-		resp := route.Handler(req).(*CoapResponse)
-
-		// TODO: Validate Message before sending (.e.g missing messageId)
-		SendMessageTo(resp.GetMessage(), conn, addr)
 	}
 }
 

@@ -2,7 +2,6 @@ package canopus
 
 import (
 	"errors"
-	"log"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -161,18 +160,6 @@ func MatchRoute(route string, match string) (error, map[string]string) {
 		return nil, result
 	} else {
 		return errors.New("No match for this route"), nil
-	}
-}
-
-func IfErr(e error) {
-	if e != nil {
-		log.Println(e)
-	}
-}
-
-func IfErrFatal(e error) {
-	if e != nil {
-		log.Fatal(e)
 	}
 }
 

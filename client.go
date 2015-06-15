@@ -3,6 +3,7 @@ package canopus
 import (
 	"log"
 	"net"
+	"github.com/zubairhamed/go-commons/logging"
 )
 
 type CoapClient struct {
@@ -13,11 +14,13 @@ type CoapClient struct {
 
 func (c CoapClient) Dial(host string) {
 	remAddr, err := net.ResolveUDPAddr("udp", host)
-	IfErr(err)
+	logging.LogError(err)
+
 	c.remoteAddr = remAddr
 
 	conn, err := net.DialUDP("udp", c.localAddr, c.remoteAddr)
-	IfErr(err)
+	logging.LogError(err)
+
 	c.conn = conn
 }
 
