@@ -32,6 +32,10 @@ type CoapRequest struct {
 	addr  *net.UDPAddr
 }
 
+func (c *CoapRequest) SetMediaType(mt MediaType) {
+	c.msg.AddOption(OPTION_CONTENT_FORMAT, mt)
+}
+
 func (c *CoapRequest) GetConnection() *net.UDPConn {
 	return c.conn
 }
