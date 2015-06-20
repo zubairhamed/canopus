@@ -2,12 +2,12 @@ package canopus
 
 import (
 	"bytes"
+	"github.com/zubairhamed/go-commons/logging"
 	. "github.com/zubairhamed/go-commons/network"
 	"log"
 	"net"
 	"strconv"
 	"time"
-	"github.com/zubairhamed/go-commons/logging"
 )
 
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {

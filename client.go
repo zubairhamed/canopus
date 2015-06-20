@@ -1,9 +1,9 @@
 package canopus
 
 import (
+	"github.com/zubairhamed/go-commons/logging"
 	"log"
 	"net"
-	"github.com/zubairhamed/go-commons/logging"
 )
 
 type CoapClient struct {
