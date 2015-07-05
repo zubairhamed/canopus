@@ -31,11 +31,6 @@ func routeParams(req *CoapRequest) *CoapResponse {
 	msg.SetStringPayload("Acknowledged")
 	res := NewResponse(msg, nil)
 
-	log.Println(req.GetAttributes())
-	log.Println("obj", req.GetAttribute("obj"))
-	log.Println("inst", req.GetAttribute("inst"))
-	log.Println("rsrc", req.GetAttribute("rsrc"))
-
 	return res
 }
 

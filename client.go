@@ -25,14 +25,12 @@ func (c CoapClient) Dial(host string) {
 }
 
 func (c *CoapClient) doSend(req *CoapRequest, conn *net.UDPConn) (*CoapResponse, error) {
-	log.Println(req, conn)
 	resp, err := SendMessage(req.GetMessage(), conn)
 
 	return resp, err
 }
 
 func (c *CoapClient) Send(req *CoapRequest) (*CoapResponse, error) {
-	log.Println("@@", req, c.conn)
 	return c.doSend(req, c.conn)
 }
 
