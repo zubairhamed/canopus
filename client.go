@@ -2,7 +2,6 @@ package canopus
 
 import (
 	"github.com/zubairhamed/go-commons/logging"
-	"log"
 	"net"
 )
 
