@@ -14,4 +14,3 @@ In FireFox, point to coap://localhost:5683/example
 
 [CuExt]: https://addons.mozilla.org/en-US/firefox/addon/copper-270430/
 
-# Licensed under The MIT License (MIT)
