@@ -16,7 +16,13 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) *Co
 	}
 }
 
-func NewRequestFromMessage(msg *Message, attrs map[string]string, conn *net.UDPConn, addr *net.UDPAddr) *CoapRequest {
+func NewRequestFromMessage(msg *Message) *CoapRequest {
+	return &CoapRequest{
+		msg:   msg,
+	}
+}
+
+func NewClientRequestFromMessage(msg *Message, attrs map[string]string, conn *net.UDPConn, addr *net.UDPAddr) *CoapRequest {
 	return &CoapRequest{
 		msg:   msg,
 		attrs: attrs,

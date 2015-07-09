@@ -1,6 +1,8 @@
 package canopus
 
-import "strings"
+import (
+	"strings"
+)
 
 /* Option */
 type Option struct {
@@ -41,11 +43,10 @@ func NewOption(optionNumber OptionCode, optionValue interface{}) *Option {
 
 func NewPathOptions(path string) []*Option {
 	opts := []*Option{}
-
 	ps := strings.Split(path, "/")
 	for _, p := range ps {
-		opt := NewOption(OPTION_URI_PATH, p)
-		opts = append(opts, opt)
+			opt := NewOption(OPTION_URI_PATH, p)
+			opts = append(opts, opt)
 	}
 
 	return opts

@@ -2,7 +2,7 @@ package main
 
 import (
 	. "github.com/zubairhamed/canopus"
-	"log"
+	"github.com/zubairhamed/go-commons/network"
 )
 
 func main() {
@@ -26,7 +26,8 @@ func main() {
 	server.Start()
 }
 
-func routeParams(req *CoapRequest) *CoapResponse {
+func routeParams(r network.Request) network.Response {
+	req := r.(*CoapRequest)
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
 	res := NewResponse(msg, nil)
@@ -34,7 +35,8 @@ func routeParams(req *CoapRequest) *CoapResponse {
 	return res
 }
 
-func routeBasic(req *CoapRequest) *CoapResponse {
+func routeBasic(r network.Request) network.Response {
+	req := r.(*CoapRequest)
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
 
@@ -43,14 +45,16 @@ func routeBasic(req *CoapRequest) *CoapResponse {
 	return res
 }
 
-func routeJson(req *CoapRequest) *CoapResponse {
+func routeJson(r network.Request) network.Response {
+	req := r.(*CoapRequest)
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	res := NewResponse(msg, nil)
 
 	return res
 }
 
-func routeXml(req *CoapRequest) *CoapResponse {
+func routeXml(r network.Request) network.Response {
+	req := r.(*CoapRequest)
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	res := NewResponse(msg, nil)
 

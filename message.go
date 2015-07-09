@@ -291,7 +291,9 @@ func (c Message) GetOptionsAsString(id OptionCode) []string {
 
 	var str []string
 	for _, o := range opts {
-		str = append(str, o.Value.(string))
+		if o.Value != nil {
+			str = append(str, o.Value.(string))
+		}
 	}
 	return str
 }

@@ -5,13 +5,24 @@ import (
 	"net"
 )
 
+func NewCoapClient(local string) *CoapClient {
+	localAddr, err := net.ResolveUDPAddr("udp", local)
+	if err != nil {
+		logging.LogError("Error starting CoAP Server: ", err)
+	}
+
+	return &CoapClient{
+		localAddr: localAddr,
+	}
+}
+
 type CoapClient struct {
 	localAddr  *net.UDPAddr
 	remoteAddr *net.UDPAddr
 	conn       *net.UDPConn
 }
 
-func (c CoapClient) Dial(host string) {
+func (c *CoapClient) Dial(host string) {
 	remAddr, err := net.ResolveUDPAddr("udp", host)
 	logging.LogError(err)
 

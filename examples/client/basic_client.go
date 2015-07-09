@@ -8,10 +8,10 @@ import (
 /*	To test this example, also run examples/test_server.go */
 func main() {
 	log.Println("Starting Client..")
-	client := NewClient(":64868")
+	client := NewCoapClient(":64868")
 	defer client.Close()
 
-	client.Dial("udp", "127.0.0.1", 5683)
+	client.Dial(":5683")
 
 	req := NewRequest(TYPE_CONFIRMABLE, GET, 50782)
 	req.SetStringPayload("Hello, canopus")

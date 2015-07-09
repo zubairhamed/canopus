@@ -10,6 +10,15 @@ import (
 	"time"
 )
 
+func NewLocalServer() *CoapServer {
+	localAddr, err := net.ResolveUDPAddr("udp", ":5683")
+	if err != nil {
+		logging.LogError("Error starting CoAP Server: ", err)
+	}
+
+	return NewServer(localAddr, nil)
+}
+
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	return &CoapServer{
 		remoteAddr: remoteAddr,
@@ -218,7 +227,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 				SendMessageTo(ack, conn, addr)
 			}
 
-			req := NewRequestFromMessage(msg, attrs, conn, addr)
+			req := NewClientRequestFromMessage(msg, attrs, conn, addr)
 
 			if msg.GetOption(OPTION_OBSERVE) != nil {
 				// Observe Request & Fire OnObserve Event
