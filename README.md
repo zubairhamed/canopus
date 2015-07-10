@@ -1,4 +1,5 @@
 # Canopus
+[![GoDoc](https://godoc.org/github.com/zubairhamed/canopus?status.svg)](https://godoc.org/github.com/zubairhamed/canopus)
 
 Canopus is a client/server implementation of the [Constrained Application Protocol][RFC7252]
 
