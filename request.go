@@ -32,10 +32,11 @@ func NewClientRequestFromMessage(msg *Message, attrs map[string]string, conn *ne
 }
 
 type CoapRequest struct {
-	msg   *Message
-	attrs map[string]string
-	conn  *net.UDPConn
-	addr  *net.UDPAddr
+	msg   	*Message
+	attrs 	map[string]string
+	conn  	*net.UDPConn
+	addr  	*net.UDPAddr
+	server 	*CoapServer
 }
 
 func (c *CoapRequest) SetMediaType(mt MediaType) {
@@ -133,4 +134,8 @@ func (c *CoapRequest) SetUriQuery(k string, v string) {
 
 func (c *CoapRequest) Observe() {
 	c.GetMessage().AddOption(OPTION_OBSERVE, "")
+}
+
+func (c *CoapRequest) GetServer() *CoapServer {
+	return c.server
 }

@@ -228,6 +228,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			}
 
 			req := NewClientRequestFromMessage(msg, attrs, conn, addr)
+			req.server = s
 
 			if msg.GetOption(OPTION_OBSERVE) != nil {
 				// Observe Request & Fire OnObserve Event

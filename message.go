@@ -208,7 +208,7 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 
 	// Sort Options
 	sort.Sort(SortOptions(msg.Options))
-	
+
 	for _, opt := range msg.Options {
 		b := valueToBytes(opt.Value)
 		optCode := opt.Code
