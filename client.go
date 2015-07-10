@@ -39,7 +39,7 @@ func (c *CoapClient) doSend(req *CoapRequest, conn *net.UDPConn, fn ResponseHand
 		resp, err = SendMessage(req.GetMessage(), conn)
 		return
 	} else {
-		go SendAsyncMessage(req.GetMessage(), conn, fn)
+		SendAsyncMessage(req.GetMessage(), conn, fn)
 		return
 	}
 }
@@ -53,7 +53,7 @@ func (c *CoapClient) SendTo(req *CoapRequest, conn *net.UDPConn) (*CoapResponse,
 }
 
 func (c *CoapClient) SendAsync(req *CoapRequest, fn ResponseHandler) {
-	return c.doSend(req, c.conn, fn)
+	c.doSend(req, c.conn, fn)
 }
 
 func (c *CoapClient) Close() {

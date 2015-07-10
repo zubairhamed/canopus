@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sort"
 )
 
 func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
@@ -179,6 +180,19 @@ func BytesToMessage(data []byte) (*Message, error) {
 	return msg, err
 }
 
+type SortOptions []*Option
+func (opts SortOptions) Len() int {
+	return len(opts)
+}
+
+func (opts SortOptions) Swap(i, j int) {
+	opts[i], opts[j] = opts[j], opts[i]
+}
+
+func (opts SortOptions) Less(i, j int) bool {
+	return opts[i].Code < opts[j].Code
+}
+
 func MessageToBytes(msg *Message) ([]byte, error) {
 	messageId := []byte{0, 0}
 	binary.BigEndian.PutUint16(messageId, msg.MessageId)
@@ -191,14 +205,19 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 	buf.Write(msg.Token)
 
 	lastOptionId := 0
+
+	// Sort Options
+	sort.Sort(SortOptions(msg.Options))
+	
 	for _, opt := range msg.Options {
 		b := valueToBytes(opt.Value)
 		optCode := opt.Code
 		bLen := len(b)
+
 		if bLen >= 15 {
-			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | 15, byte(bLen - 15)})
+			buf.Write([]byte{byte(int(optCode)-lastOptionId) << 4 | 15, byte(bLen - 15)})
 		} else {
-			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | byte(bLen)})
+			buf.Write([]byte{byte(int(optCode)-lastOptionId) << 4 | byte(bLen)})
 		}
 
 		if int(opt.Code)-lastOptionId > 15 {

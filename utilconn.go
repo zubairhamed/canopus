@@ -84,30 +84,30 @@ func SendMessage(msg *Message, conn *net.UDPConn) (*CoapResponse, error) {
 }
 
 func SendAsyncMessage(msg *Message, conn *net.UDPConn, fn ResponseHandler) {
-	b, _ := MessageToBytes(msg)
-	_, err := conn.Write(b)
-
-	if err != nil {
-		log.Println(err)
-
-		fn(nil, err)
-	}
-
-	if msg.MessageType == TYPE_NONCONFIRMABLE {
-		fn(nil, err)
-	} else {
-		var buf []byte = make([]byte, 1500)
-		conn.SetReadDeadline(time.Now().Add(time.Second * 2))
-		n, _, err := conn.ReadFromUDP(buf)
+		b, _ := MessageToBytes(msg)
+		_, err := conn.Write(b)
 
 		if err != nil {
-			return nil, err
+			log.Println(err)
+
+			fn(nil, err)
 		}
 
-		msg, err := BytesToMessage(buf[:n])
+		if msg.MessageType == TYPE_NONCONFIRMABLE {
+			fn(nil, err)
+		} else {
+			var buf []byte = make([]byte, 1500)
+			conn.SetReadDeadline(time.Now().Add(time.Second * 2))
+			n, _, err := conn.ReadFromUDP(buf)
 
-		resp := NewResponse(msg, err)
+			if err != nil {
+				fn(nil, err)
+			}
 
-		fn(resp, err)
-	}
+			msg, err := BytesToMessage(buf[:n])
+
+			resp := NewResponse(msg, err)
+
+			fn(resp, err)
+		}
 }
