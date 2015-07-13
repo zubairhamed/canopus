@@ -41,7 +41,7 @@ func main() {
 ```
 
 ### Server Example
-```
+```go
 	server := NewLocalServer()
 
 	server.NewRoute("hello", GET, func(r network.Request) network.Response {
@@ -59,7 +59,7 @@ func main() {
 ### Observe / Notify
 
 #### Server
-```
+```go
 package main
 import (
 	. "github.com/zubairhamed/canopus"
@@ -109,7 +109,7 @@ func routeHandler(r network.Request) network.Response {
 ```
 
 #### Client
-```
+```go
 package main
 
 import (
