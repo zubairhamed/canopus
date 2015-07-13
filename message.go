@@ -363,7 +363,12 @@ func (m *Message) AddOption(code OptionCode, value interface{}) {
 
 func (m *Message) AddOptions(opts []*Option) {
 	for _, opt := range opts {
-		m.Options = append(m.Options, opt)
+		if RepeatableOption(opt) {
+			m.Options = append(m.Options, opt)
+		} else {
+			m.RemoveOptions(opt.Code)
+			m.Options = append(m.Options, opt)
+		}
 	}
 }
 
