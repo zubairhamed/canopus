@@ -66,28 +66,8 @@ func (c *CoapRequest) GetAttributeAsInt(o string) int {
 	return i
 }
 
-func (c *CoapRequest) GetRequestURI() {
-
-}
-
-func (c *CoapRequest) GetOption() {
-
-}
-
-func (c *CoapRequest) GetOptions() {
-
-}
-
 func (c *CoapRequest) GetMessage() *Message {
 	return c.msg
-}
-
-func (c *CoapRequest) GetMethod() {
-
-}
-
-func (c *CoapRequest) GetError() {
-
 }
 
 func (c *CoapRequest) SetStringPayload(s string) {
