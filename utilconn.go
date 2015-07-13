@@ -25,8 +25,6 @@ func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAdd
 // Sends a CoAP Message to UDP address
 func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) (*CoapResponse, error) {
 	b, _ := MessageToBytes(msg)
-	log.Println(">>>>>>> OUTGOING <<<<<<<")
-	PrintMessage(msg)
 	_, err := conn.WriteToUDP(b, addr)
 
 	if err != nil {

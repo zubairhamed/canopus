@@ -156,7 +156,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 				break
 
 			case OPTION_URI_HOST, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY,
-				OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME:
+				OPTION_LOCATION_QUERY, OPTION_PROXY_URI, OPTION_PROXY_SCHEME, OPTION_OBSERVE:
 				msg.Options = append(msg.Options, NewOption(optCode, string(optionValue)))
 				break
 

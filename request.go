@@ -132,8 +132,13 @@ func (c *CoapRequest) SetUriQuery(k string, v string) {
 	c.GetMessage().AddOption(OPTION_URI_QUERY, k+"="+v)
 }
 
-func (c *CoapRequest) Observe() {
-	c.GetMessage().AddOption(OPTION_OBSERVE, "")
+func (c *CoapRequest) Observe(seq int) {
+	if seq != 0 {
+		c.GetMessage().AddOption(OPTION_OBSERVE, strconv.Itoa(seq))
+	} else {
+		c.GetMessage().AddOption(OPTION_OBSERVE, "")
+	}
+
 }
 
 func (c *CoapRequest) GetServer() *CoapServer {

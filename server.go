@@ -28,20 +28,21 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	return &CoapServer{
 		remoteAddr: remoteAddr,
 		localAddr:  localAddr,
-		events:     make(map[EventCode]FnCanopusEvent),
+		events:     NewCanopusEvents(),
 		observations: make(map[string][]*Observation),
 	}
 }
 
 type CoapServer struct {
 	localAddr  		*net.UDPAddr
-	localConn       *net.UDPConn
-
 	remoteAddr 		*net.UDPAddr
+
+	localConn       *net.UDPConn
 	remoteConn		*net.UDPConn
+
 	messageIds 		map[uint16]time.Time
 	routes     		[]*Route
-	events     		map[EventCode]FnCanopusEvent
+	events			*CanopusEvents
 	observations	map[string][]*Observation
 }
 
@@ -80,15 +81,6 @@ func (s *CoapServer) Start() {
 		}
 		ack.Payload = NewPlainTextPayload(buf.String())
 
-		/*
-		   if s.fnEventDiscover != nil {
-		       e := NewEvent()
-		       e.Message = ack
-
-		       ack = s.fnEventDiscover(e)
-		   }
-		*/
-
 		resp := NewResponseWithMessage(ack)
 
 		return resp
@@ -112,7 +104,7 @@ func (s *CoapServer) serveServer() {
 		log.Println("Started CoAP Server ", conn.LocalAddr())
 	}
 
-	CallEvent(EVT_START, s.events[EVT_START])
+	s.events.Started(s)
 
 	s.handleMessageIdPurge()
 
@@ -125,8 +117,6 @@ func (s *CoapServer) serveServer() {
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf)
 
-
-			log.Println("Handling MSG Buf", msgBuf)
 			// Look for route handler matching path and then dispatch
 			go s.handleMessage(msgBuf, conn, addr)
 		}
@@ -153,124 +143,133 @@ func (s *CoapServer) handleMessageIdPurge() {
 
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
-	log.Println(">>>>>>> INCOMING <<<<<<<")
-	PrintMessage(msg)
+	s.events.Message(msg, true)
 
-	CallEvent(EVT_MESSAGE, s.events[EVT_MESSAGE])
-
-	if msg.MessageType != TYPE_ACKNOWLEDGEMENT && msg.MessageType != TYPE_RESET {
-
+	if msg.MessageType == TYPE_ACKNOWLEDGEMENT {
 		if msg.GetOption(OPTION_OBSERVE) != nil {
-			log.Println("This is a response with a notification")
+
+			s.events.Notify(msg.GetUriPath(), msg.Payload, msg)
 			return
 		}
+	} else {
+		if msg.MessageType != TYPE_RESET {
+			// Unsupported Method
+			if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
+				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
+				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-		// Unsupported Method
-		if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-			log.Println("Unsupported Method ", msg.Code)
-			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
-			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+				s.events.Message(ret, false)
+				SendMessageTo(ret, conn, addr)
+				return
+			}
 
-			log.Println("Unsuppported 501 in response? ", msg.Code)
-			// SendMessageTo(ret, conn, addr)
-			return
-		}
+			if err != nil {
+				if err == ERR_UNKNOWN_CRITICAL_OPTION {
+					if msg.MessageType == TYPE_CONFIRMABLE {
+						SendError402BadOption(msg.MessageId, conn, addr)
+						return
+					} else {
+						// Ignore silently
+						return
+					}
+				}
+			}
 
-		if err != nil {
-			if err == ERR_UNKNOWN_CRITICAL_OPTION {
+			route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
+			if err != nil {
+				if err == ERR_NO_MATCHING_ROUTE {
+					ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
+					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+					ret.Token = msg.Token
+
+					s.events.Message(ret, false)
+					SendMessageTo(ret, conn, addr)
+
+					s.events.Error(err)
+					return
+				}
+
+				if err == ERR_NO_MATCHING_METHOD {
+					ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
+					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+					s.events.Message(ret, false)
+					SendMessageTo(ret, conn, addr)
+
+					s.events.Error(err)
+					return
+				}
+
+				if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
+					ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
+					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+					s.events.Message(ret, false)
+					SendMessageTo(ret, conn, addr)
+
+					s.events.Error(err)
+					return
+				}
+			}
+
+			// Duplicate Message ID Check
+			_, dupe := s.messageIds[msg.MessageId]
+			if dupe {
+				log.Println("Duplicate Message ID ", msg.MessageId)
 				if msg.MessageType == TYPE_CONFIRMABLE {
-					SendError402BadOption(msg.MessageId, conn, addr)
-					return
-				} else {
-					// Ignore silently
-					return
+					ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
+					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+
+					s.events.Message(ret, false)
+					SendMessageTo(ret, conn, addr)
+				}
+				return
+			}
+
+			if err == nil {
+				s.messageIds[msg.MessageId] = time.Now()
+
+				// TODO: #47 - Forward Proxy
+				// Auto acknowledge
+				if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
+					ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+
+					s.events.Message(ack, false)
+					SendMessageTo(ack, conn, addr)
+				}
+
+
+				req := NewClientRequestFromMessage(msg, attrs, conn, addr)
+				req.server = s
+
+				if msg.MessageType == TYPE_CONFIRMABLE {
+					if msg.GetOption(OPTION_OBSERVE) != nil {
+						// TODO: if server doesn't allow observing, return error
+
+						// Observe Request & Fire OnObserve Event
+						s.events.Observe(msg.GetUriPath(), msg)
+
+						// Register observation of client
+						s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
+						req.Observe(1)
+						req.SetConfirmable(false)
+						req.GetMessage().Code = COAPCODE_205_CONTENT
+
+						s.events.Message(req.GetMessage(), false)
+						SendMessageTo(req.GetMessage(), conn, addr)
+					}
+				}
+
+				resp := route.Handler(req).(*CoapResponse)
+				respMsg := resp.GetMessage()
+
+				// TODO: Validate Message before sending (.e.g missing messageId)
+				err := ValidateMessage(respMsg)
+				if err == nil {
+					s.events.Message(respMsg, false)
+					SendMessageTo(respMsg, conn, addr)
 				}
 			}
-		}
-
-		route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
-		if err != nil {
-			if err == ERR_NO_MATCHING_ROUTE {
-				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
-				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-				ret.Token = msg.Token
-
-				SendMessageTo(ret, conn, addr)
-				CallEvent(EVT_ERROR, s.events[EVT_ERROR])
-				return
-			}
-
-			if err == ERR_NO_MATCHING_METHOD {
-				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
-				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-				SendMessageTo(ret, conn, addr)
-				CallEvent(EVT_ERROR, s.events[EVT_ERROR])
-				return
-			}
-
-			if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
-				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
-				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-				SendMessageTo(ret, conn, addr)
-				CallEvent(EVT_ERROR, s.events[EVT_ERROR])
-				return
-			}
-		}
-
-		// Duplicate Message ID Check
-		_, dupe := s.messageIds[msg.MessageId]
-		if dupe {
-			log.Println("Duplicate Message ID ", msg.MessageId)
-			if msg.MessageType == TYPE_CONFIRMABLE {
-				ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
-				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-
-				SendMessageTo(ret, conn, addr)
-			}
-			return
-		}
-
-		if err == nil {
-			s.messageIds[msg.MessageId] = time.Now()
-
-			// TODO: #47 - Forward Proxy
-
-			// Auto acknowledge
-			if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
-				ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-
-				SendMessageTo(ack, conn, addr)
-			}
-
-
-			req := NewClientRequestFromMessage(msg, attrs, conn, addr)
-			req.server = s
-
-			if msg.MessageType == TYPE_CONFIRMABLE {
-				if msg.GetOption(OPTION_OBSERVE) != nil {
-					// TODO: if server doesn't allow observing, return error
-
-					// Observe Request & Fire OnObserve Event
-					CallEvent(EVT_OBSERVE, s.events[EVT_OBSERVE])
-
-					// Register observation of client
-					s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
-					req.Observe()
-					req.SetConfirmable(false)
-					req.GetMessage().Code = COAPCODE_205_CONTENT
-
-					SendMessageTo(req.GetMessage(), conn, addr)
-				}
-			} else {
-				log.Println("Non Confirmable Message .. check observation")
-			}
-
-			resp := route.Handler(req).(*CoapResponse)
-
-			// TODO: Validate Message before sending (.e.g missing messageId)
-			SendMessageTo(resp.GetMessage(), conn, addr)
 		}
 	}
 }
@@ -282,71 +281,93 @@ func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Ro
 	return route
 }
 
-func (c *CoapServer) ServerSend(req *CoapRequest) (*CoapResponse, error) {
-	return SendMessage(req.GetMessage(), c.localConn)
+func (c *CoapServer) Send(req *CoapRequest) (*CoapResponse, error) {
+	return SendMessageTo(req.GetMessage(), c.localConn, c.remoteAddr)
 }
 
-func (c *CoapServer) ServerSendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
+func (c *CoapServer) SendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
 	return SendMessageTo(req.GetMessage(), c.localConn, addr)
 }
 
-func (c *CoapServer) ClientSend(req *CoapRequest) (*CoapResponse, error) {
-	return SendMessage(req.GetMessage(), c.remoteConn)
-}
-
-func (c *CoapServer) ClientSendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
-	return SendMessageTo(req.GetMessage(), c.remoteConn, addr)
-}
-
-func (c *CoapServer) On(e EventCode, fn FnCanopusEvent) {
-	c.events[e] = fn
-}
-
-func (c *CoapServer) NotifyChange(resource, value string) {
+func (c *CoapServer) NotifyChange(resource, value string, confirm bool) {
 	t := c.observations[resource]
 
 	if t != nil {
-		req := NewRequest(TYPE_CONFIRMABLE, COAPCODE_205_CONTENT, GenerateMessageId())
-		req.Observe()
+		var req *CoapRequest
+
+		if confirm {
+			req = NewRequest(TYPE_CONFIRMABLE, COAPCODE_205_CONTENT, GenerateMessageId())
+		} else {
+			req = NewRequest(TYPE_ACKNOWLEDGEMENT, COAPCODE_205_CONTENT, GenerateMessageId())
+		}
 
 		for _, r := range t {
 			req.SetToken(r.Token)
 			req.SetStringPayload(value)
-			log.Println("NotifyChange", r.Token, req, r.Addr)
+			req.SetRequestURI(r.Resource)
+			r.NotifyCount++
+			req.Observe(r.NotifyCount)
 
-			go c.ServerSendTo(req, r.Addr)
+			go c.SendTo(req, r.Addr)
 		}
 	}
 }
 
 func (s *CoapServer) addObservation(resource, token string, addr *net.UDPAddr) {
-	s.observations[resource] = append(s.observations[resource], NewObservation(addr, token))
+	s.observations[resource] = append(s.observations[resource], NewObservation(addr, token, resource))
 }
 
 func (c *CoapServer) Dial(host string) {
-	localAddr, err := net.ResolveUDPAddr("udp", ":0")
-	log.Println("Local Address", localAddr)
-	logging.LogError(err)
-
-	remoteAddr, err := net.ResolveUDPAddr("udp", host)
-	logging.LogError(err)
-
-	remoteConn, err := net.DialUDP("udp", localAddr, remoteAddr)
-	logging.LogError(err)
+	remoteAddr, _ := net.ResolveUDPAddr("udp", host)
 
 	c.remoteAddr = remoteAddr
-	c.remoteConn = remoteConn
+}
+
+func (s *CoapServer) OnNotify(fn FnEventNotify) {
+	s.events.OnNotify(fn)
+}
+
+func (s *CoapServer) OnStart(fn FnEventStart) {
+	s.events.OnStart(fn)
+}
+
+func (s *CoapServer) OnClose(fn FnEventClose) {
+	s.events.OnClose(fn)
+}
+
+func (s *CoapServer) OnDiscover(fn FnEventDiscover) {
+	s.events.OnDiscover(fn)
+}
+
+func (s *CoapServer) OnError(fn FnEventError) {
+	s.events.OnError(fn)
+}
+
+func (s *CoapServer) OnObserve(fn FnEventObserve) {
+	s.events.OnObserve(fn)
+}
+
+func (s *CoapServer) OnObserveCancel(fn FnEventObserveCancel){
+	s.events.OnObserveCancel(fn)
+}
+
+func (s *CoapServer) OnMessage(fn FnEventMessage){
+	s.events.OnMessage(fn)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-func NewObservation (addr *net.UDPAddr, token string) *Observation {
+func NewObservation (addr *net.UDPAddr, token string, resource string) *Observation {
 	return &Observation{
 		Addr: addr,
 		Token: token,
+		Resource: resource,
+		NotifyCount: 0,
 	}
 }
 
 type Observation struct {
-	Addr 	*net.UDPAddr
-	Token 	string
+	Addr 		*net.UDPAddr
+	Token 		string
+	Resource 	string
+	NotifyCount	int
 }

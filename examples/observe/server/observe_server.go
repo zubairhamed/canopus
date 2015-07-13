@@ -12,8 +12,12 @@ func main() {
 
 	GenerateRandomChangeNotifications(server)
 
-	server.On(EVT_OBSERVE, func(){
-		log.Println("Observe requested")
+	server.OnMessage(func (msg *Message, inbound bool){
+		PrintMessage(msg)
+	})
+
+	server.OnObserve(func(resource string, msg *Message){
+		log.Println("Observe Requested for " + resource)
 	})
 
 	server.Start()
@@ -26,7 +30,7 @@ func GenerateRandomChangeNotifications(server *CoapServer) {
 			select {
 			case <-ticker.C:
 				log.Println("Notify Change..")
-				server.NotifyChange("watch/this", "Some new value")
+				server.NotifyChange("watch/this", "Some new value", false)
 			}
 		}
 	}()

@@ -3,35 +3,26 @@ package main
 import (
 	. "github.com/zubairhamed/canopus"
 	"log"
- 	"net"
 )
 
 func main() {
 	client := NewCoapServer(":0")
 
-	client.On(EVT_START, func() {
+	client.OnStart(func (server *CoapServer){
 		client.Dial("localhost:5683")
 		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
 		req.SetRequestURI("watch/this")
-		req.Observe()
+		req.Observe(0)
 
-		addr, err := net.ResolveUDPAddr("udp", "localhost:5683")
+		_, err := client.Send(req)
 		if err != nil {
 			log.Println(err)
-		}
-
-		resp, err := client.ServerSendTo(req, addr)
-		if err != nil {
-			log.Println(err)
-		} else {
-			log.Println("Got Synchronous Response:")
-			log.Println(CoapCodeToString(resp.GetMessage().Code))
-			log.Println(resp.GetMessage().Payload)
 		}
 	})
 
-	client.On(EVT_NOTIFY, func(){
-
+	client.OnNotify(func (resource string, value interface{}, msg *Message) {
+		PrintMessage(msg)
+		log.Println("Got Change Notification for resource and value: ", resource, value)
 	})
 
 	client.Start()
