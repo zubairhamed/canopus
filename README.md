@@ -9,7 +9,7 @@
 [RFC7252]: http://tools.ietf.org/html/rfc7252
 
 ### Example
-```
+```go
 package main
 
 import (
