@@ -123,6 +123,10 @@ func (s *CoapServer) serveServer() {
 	}
 }
 
+func (s *CoapServer) Stop() {
+
+}
+
 func (s *CoapServer) handleMessageIdPurge() {
 	// Routine for clearing up message IDs which has expired
 	ticker := time.NewTicker(MESSAGEID_PURGE_DURATION * time.Second)
