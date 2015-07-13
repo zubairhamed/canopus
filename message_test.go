@@ -1,8 +1,7 @@
-package tests
+package canopus
 
 import (
 	"bytes"
-	. "github.com/zubairhamed/canopus"
 	. "github.com/zubairhamed/go-commons/network"
 	"testing"
 )

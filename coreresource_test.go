@@ -1,8 +1,7 @@
-package tests
+package canopus
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/zubairhamed/canopus"
 	"testing"
 )
 
@@ -53,7 +52,7 @@ func TestCoreResourceParsing(t *testing.T) {
 	}
 
 	for _, c := range cases1 {
-		resources := canopus.CoreResourcesFromString(c.in)
+		resources := CoreResourcesFromString(c.in)
 		assert.Equal(t, len(resources), c.elemCount)
 
 		for i, o := range resources {
