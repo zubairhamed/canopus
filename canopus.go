@@ -6,14 +6,15 @@ import (
 	"time"
 )
 
+// Message ID Generator, global
 var MESSAGEID_CURR = 0
-
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	MESSAGEID_CURR = rand.Intn(65535)
 }
 
+// Types of Messages
 const (
 	TYPE_CONFIRMABLE     = 0
 	TYPE_NONCONFIRMABLE  = 1
