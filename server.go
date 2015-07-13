@@ -30,6 +30,7 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 		localAddr:  localAddr,
 		events:     NewCanopusEvents(),
 		observations: make(map[string][]*Observation),
+		allowObserve: true,
 	}
 }
 
@@ -44,6 +45,7 @@ type CoapServer struct {
 	routes     		[]*Route
 	events			*CanopusEvents
 	observations	map[string][]*Observation
+	allowObserve	bool
 }
 
 func (s *CoapServer) Start() {
@@ -125,6 +127,10 @@ func (s *CoapServer) serveServer() {
 
 func (s *CoapServer) Stop() {
 
+}
+
+func (s *CoapServer) AllowObserve(allow bool) {
+	s.allowObserve = allow
 }
 
 func (s *CoapServer) handleMessageIdPurge() {
@@ -248,22 +254,19 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 				if msg.MessageType == TYPE_CONFIRMABLE {
 					obsOpt := msg.GetOption(OPTION_OBSERVE)
 					if obsOpt != nil {
-						// TODO: if server doesn't allow observing, return error
 
-						if obsOpt.Value == nil {
+						if s.allowObserve {
+							if obsOpt.Value == nil {
 
-							// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
-							// Observe Request & Fire OnObserve Event
-							s.events.Observe(msg.GetUriPath(), msg)
+								// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
+								// Observe Request & Fire OnObserve Event
+								s.events.Observe(msg.GetUriPath(), msg)
 
-							// Register observation of client
-							s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
-							req.Observe(1)
-							// req.SetConfirmable(false)
-							// req.GetMessage().Code = COAPCODE_205_CONTENT
+								// Register observation of client
+								s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
 
-							// s.events.Message(req.GetMessage(), false)
-							// SendMessageTo(req.GetMessage(), conn, addr)
+								req.GetMessage().AddOption(OPTION_OBSERVE, 1)
+							}
 						}
 					}
 				}

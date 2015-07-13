@@ -7,14 +7,6 @@ import (
 	"github.com/zubairhamed/go-commons/logging"
 )
 
-/*
-SendInternalServerError()
-SendAcknowledge()
-SendConfirmable()
-SendNonConfirmable()
-SendContent()
-*/
-
 func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, messageId)
 	msg.SetStringPayload("Bad Option: An unknown option of type critical was encountered")
