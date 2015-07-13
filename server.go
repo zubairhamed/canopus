@@ -153,11 +153,17 @@ func (s *CoapServer) handleMessageIdPurge() {
 
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
+	log.Println(">>>>>>> INCOMING <<<<<<<")
 	PrintMessage(msg)
 
 	CallEvent(EVT_MESSAGE, s.events[EVT_MESSAGE])
 
 	if msg.MessageType != TYPE_ACKNOWLEDGEMENT && msg.MessageType != TYPE_RESET {
+
+		if msg.GetOption(OPTION_OBSERVE) != nil {
+			log.Println("This is a response with a notification")
+			return
+		}
 
 		// Unsupported Method
 		if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
@@ -165,7 +171,8 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
 			ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			SendMessageTo(ret, conn, addr)
+			log.Println("Unsuppported 501 in response? ", msg.Code)
+			// SendMessageTo(ret, conn, addr)
 			return
 		}
 
@@ -252,6 +259,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 					s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
 					req.Observe()
 					req.SetConfirmable(false)
+					req.GetMessage().Code = COAPCODE_205_CONTENT
 
 					SendMessageTo(req.GetMessage(), conn, addr)
 				}
@@ -298,7 +306,7 @@ func (c *CoapServer) NotifyChange(resource, value string) {
 	t := c.observations[resource]
 
 	if t != nil {
-		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+		req := NewRequest(TYPE_CONFIRMABLE, COAPCODE_205_CONTENT, GenerateMessageId())
 		req.Observe()
 
 		for _, r := range t {
