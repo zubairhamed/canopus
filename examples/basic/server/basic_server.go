@@ -8,21 +8,12 @@ import (
 func main() {
 	server := NewLocalServer()
 
-	server.NewRoute("{obj}/{inst}/{rsrc}", GET, routeParams)
+	server.NewRoute("hello", GET, routeParams)
 
 	server.NewRoute("basic", GET, routeBasic)
 	server.NewRoute("basic/json", GET, routeJson)
 	server.NewRoute("basic/xml", GET, routeXml)
 
-	/*
-	   server.OnDiscover(request, response) {
-
-	   }
-
-	   server.OnError(request, error, errorCode) {
-
-	   }
-	*/
 	server.Start()
 }
 
@@ -60,15 +51,3 @@ func routeXml(r network.Request) network.Response {
 
 	return res
 }
-
-/*
-	// canopus.PrintMessage(msg)
-
-	fwOpt := msg.GetOption(canopus.OPTION_PROXY_URI)
-	log.Println(fwOpt)
-
-	ack := canopus.NewMessageOfType(canopus.TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-
-	return ack
-
-*/

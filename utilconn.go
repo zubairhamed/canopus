@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"github.com/zubairhamed/go-commons/logging"
 )
 
 /*
@@ -21,15 +22,13 @@ func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAdd
 	SendMessageTo(msg, conn, addr)
 }
 
-// Sends a CoAP Message to a UDP Connection
-
 // Sends a CoAP Message to UDP address
 func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) (*CoapResponse, error) {
 	b, _ := MessageToBytes(msg)
 	_, err := conn.WriteToUDP(b, addr)
 
 	if err != nil {
-		log.Println(err)
+		logging.LogError(err)
 
 		return nil, err
 	}
@@ -54,6 +53,7 @@ func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) (*CoapRes
 	return nil, nil
 }
 
+// Sends a CoAP Message to a UDP Connection
 func SendMessage(msg *Message, conn *net.UDPConn) (*CoapResponse, error) {
 	b, _ := MessageToBytes(msg)
 	_, err := conn.Write(b)
@@ -81,4 +81,33 @@ func SendMessage(msg *Message, conn *net.UDPConn) (*CoapResponse, error) {
 
 		return resp, err
 	}
+}
+
+func SendAsyncMessage(msg *Message, conn *net.UDPConn, fn ResponseHandler) {
+		b, _ := MessageToBytes(msg)
+		_, err := conn.Write(b)
+
+		if err != nil {
+			log.Println(err)
+
+			fn(nil, err)
+		}
+
+		if msg.MessageType == TYPE_NONCONFIRMABLE {
+			fn(nil, err)
+		} else {
+			var buf []byte = make([]byte, 1500)
+			conn.SetReadDeadline(time.Now().Add(time.Second * 2))
+			n, _, err := conn.ReadFromUDP(buf)
+
+			if err != nil {
+				fn(nil, err)
+			}
+
+			msg, err := BytesToMessage(buf[:n])
+
+			resp := NewResponse(msg, err)
+
+			fn(resp, err)
+		}
 }

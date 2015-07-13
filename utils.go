@@ -162,9 +162,3 @@ func MatchRoute(route string, match string) (error, map[string]string) {
 		return errors.New("No match for this route"), nil
 	}
 }
-
-func CallEvent(e EventCode, fn FnCanopusEvent) {
-	if fn != nil {
-		go fn()
-	}
-}
