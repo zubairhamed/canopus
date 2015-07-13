@@ -1,5 +1,8 @@
 # Canopus
+
 [![GoDoc](https://godoc.org/github.com/zubairhamed/canopus?status.svg)](https://godoc.org/github.com/zubairhamed/canopus)
+[![Build Status](https://drone.io/github.com/zubairhamed/canopus/status.png)](https://drone.io/github.com/zubairhamed/canopus/latest)
+[![Coverage Status](https://coveralls.io/repos/zubairhamed/canopus/badge.svg?branch=master)](https://coveralls.io/r/zubairhamed/canopus?branch=master)
 
 Canopus is a client/server implementation of the [Constrained Application Protocol][RFC7252]
 
