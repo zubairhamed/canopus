@@ -238,25 +238,29 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 					SendMessageTo(ack, conn, addr)
 				}
 
-
 				req := NewClientRequestFromMessage(msg, attrs, conn, addr)
 				req.server = s
 
 				if msg.MessageType == TYPE_CONFIRMABLE {
-					if msg.GetOption(OPTION_OBSERVE) != nil {
+					obsOpt := msg.GetOption(OPTION_OBSERVE)
+					if obsOpt != nil {
 						// TODO: if server doesn't allow observing, return error
 
-						// Observe Request & Fire OnObserve Event
-						s.events.Observe(msg.GetUriPath(), msg)
+						if obsOpt.Value == nil {
 
-						// Register observation of client
-						s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
-						req.Observe(1)
-						req.SetConfirmable(false)
-						req.GetMessage().Code = COAPCODE_205_CONTENT
+							// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
+							// Observe Request & Fire OnObserve Event
+							s.events.Observe(msg.GetUriPath(), msg)
 
-						s.events.Message(req.GetMessage(), false)
-						SendMessageTo(req.GetMessage(), conn, addr)
+							// Register observation of client
+							s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
+							req.Observe(1)
+							// req.SetConfirmable(false)
+							// req.GetMessage().Code = COAPCODE_205_CONTENT
+
+							// s.events.Message(req.GetMessage(), false)
+							// SendMessageTo(req.GetMessage(), conn, addr)
+						}
 					}
 				}
 

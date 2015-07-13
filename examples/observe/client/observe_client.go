@@ -21,7 +21,7 @@ func main() {
 	})
 
 	client.OnNotify(func (resource string, value interface{}, msg *Message) {
-		PrintMessage(msg)
+		// PrintMessage(msg)
 		log.Println("Got Change Notification for resource and value: ", resource, value)
 	})
 

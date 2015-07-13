@@ -13,7 +13,7 @@ func main() {
 	GenerateRandomChangeNotifications(server)
 
 	server.OnMessage(func (msg *Message, inbound bool){
-		PrintMessage(msg)
+		// PrintMessage(msg)
 	})
 
 	server.OnObserve(func(resource string, msg *Message){
