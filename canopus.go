@@ -40,6 +40,7 @@ const (
 	EVT_ERROR          EventCode = 4
 	EVT_OBSERVE        EventCode = 5
 	EVT_OBSERVE_CANCEL EventCode = 6
+	EVT_NOTIFY		   EventCode = 7
 )
 
 type OptionCode int

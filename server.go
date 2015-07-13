@@ -15,6 +15,11 @@ func NewLocalServer() *CoapServer {
 	if err != nil {
 		logging.LogError("Error starting CoAP Server: ", err)
 	}
+	return NewServer(localAddr, nil)
+}
+
+func NewCoapServer(local string) *CoapServer {
+	localAddr, _ := net.ResolveUDPAddr("udp", local)
 
 	return NewServer(localAddr, nil)
 }
@@ -24,16 +29,20 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 		remoteAddr: remoteAddr,
 		localAddr:  localAddr,
 		events:     make(map[EventCode]FnCanopusEvent),
+		observations: make(map[string][]*Observation),
 	}
 }
 
 type CoapServer struct {
-	localAddr  *net.UDPAddr
-	remoteAddr *net.UDPAddr
-	conn       *net.UDPConn
-	messageIds map[uint16]time.Time
-	routes     []*Route
-	events     map[EventCode]FnCanopusEvent
+	localAddr  		*net.UDPAddr
+	localConn       *net.UDPConn
+
+	remoteAddr 		*net.UDPAddr
+	remoteConn		*net.UDPConn
+	messageIds 		map[uint16]time.Time
+	routes     		[]*Route
+	events     		map[EventCode]FnCanopusEvent
+	observations	map[string][]*Observation
 }
 
 func (s *CoapServer) Start() {
@@ -95,7 +104,7 @@ func (s *CoapServer) serveServer() {
 	conn, err := net.ListenUDP("udp", s.localAddr)
 	logging.LogError(err)
 
-	s.conn = conn
+	s.localConn = conn
 
 	if conn == nil {
 		log.Fatal("An error occured starting up CoAP Server")
@@ -116,6 +125,8 @@ func (s *CoapServer) serveServer() {
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf)
 
+
+			log.Println("Handling MSG Buf", msgBuf)
 			// Look for route handler matching path and then dispatch
 			go s.handleMessage(msgBuf, conn, addr)
 		}
@@ -123,7 +134,6 @@ func (s *CoapServer) serveServer() {
 }
 
 func (s *CoapServer) handleMessageIdPurge() {
-
 	// Routine for clearing up message IDs which has expired
 	ticker := time.NewTicker(MESSAGEID_PURGE_DURATION * time.Second)
 	go func() {
@@ -143,12 +153,12 @@ func (s *CoapServer) handleMessageIdPurge() {
 
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
-
 	PrintMessage(msg)
 
 	CallEvent(EVT_MESSAGE, s.events[EVT_MESSAGE])
 
 	if msg.MessageType != TYPE_ACKNOWLEDGEMENT && msg.MessageType != TYPE_RESET {
+
 		// Unsupported Method
 		if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
 			log.Println("Unsupported Method ", msg.Code)
@@ -227,12 +237,26 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 				SendMessageTo(ack, conn, addr)
 			}
 
+
 			req := NewClientRequestFromMessage(msg, attrs, conn, addr)
 			req.server = s
 
-			if msg.GetOption(OPTION_OBSERVE) != nil {
-				// Observe Request & Fire OnObserve Event
-				CallEvent(EVT_OBSERVE, s.events[EVT_OBSERVE])
+			if msg.MessageType == TYPE_CONFIRMABLE {
+				if msg.GetOption(OPTION_OBSERVE) != nil {
+					// TODO: if server doesn't allow observing, return error
+
+					// Observe Request & Fire OnObserve Event
+					CallEvent(EVT_OBSERVE, s.events[EVT_OBSERVE])
+
+					// Register observation of client
+					s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
+					req.Observe()
+					req.SetConfirmable(false)
+
+					SendMessageTo(req.GetMessage(), conn, addr)
+				}
+			} else {
+				log.Println("Non Confirmable Message .. check observation")
 			}
 
 			resp := route.Handler(req).(*CoapResponse)
@@ -250,14 +274,71 @@ func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Ro
 	return route
 }
 
-func (c *CoapServer) Send(req *CoapRequest) (*CoapResponse, error) {
-	return SendMessageTo(req.GetMessage(), c.conn, c.remoteAddr)
+func (c *CoapServer) ServerSend(req *CoapRequest) (*CoapResponse, error) {
+	return SendMessage(req.GetMessage(), c.localConn)
 }
 
-func (c *CoapServer) SendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
-	return SendMessageTo(req.GetMessage(), c.conn, addr)
+func (c *CoapServer) ServerSendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
+	return SendMessageTo(req.GetMessage(), c.localConn, addr)
+}
+
+func (c *CoapServer) ClientSend(req *CoapRequest) (*CoapResponse, error) {
+	return SendMessage(req.GetMessage(), c.remoteConn)
+}
+
+func (c *CoapServer) ClientSendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
+	return SendMessageTo(req.GetMessage(), c.remoteConn, addr)
 }
 
 func (c *CoapServer) On(e EventCode, fn FnCanopusEvent) {
 	c.events[e] = fn
+}
+
+func (c *CoapServer) NotifyChange(resource, value string) {
+	t := c.observations[resource]
+
+	if t != nil {
+		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+		req.Observe()
+
+		for _, r := range t {
+			req.SetToken(r.Token)
+			req.SetStringPayload(value)
+			log.Println("NotifyChange", r.Token, req, r.Addr)
+
+			go c.ServerSendTo(req, r.Addr)
+		}
+	}
+}
+
+func (s *CoapServer) addObservation(resource, token string, addr *net.UDPAddr) {
+	s.observations[resource] = append(s.observations[resource], NewObservation(addr, token))
+}
+
+func (c *CoapServer) Dial(host string) {
+	localAddr, err := net.ResolveUDPAddr("udp", ":0")
+	log.Println("Local Address", localAddr)
+	logging.LogError(err)
+
+	remoteAddr, err := net.ResolveUDPAddr("udp", host)
+	logging.LogError(err)
+
+	remoteConn, err := net.DialUDP("udp", localAddr, remoteAddr)
+	logging.LogError(err)
+
+	c.remoteAddr = remoteAddr
+	c.remoteConn = remoteConn
+}
+
+////////////////////////////////////////////////////////////////////////////////
+func NewObservation (addr *net.UDPAddr, token string) *Observation {
+	return &Observation{
+		Addr: addr,
+		Token: token,
+	}
+}
+
+type Observation struct {
+	Addr 	*net.UDPAddr
+	Token 	string
 }

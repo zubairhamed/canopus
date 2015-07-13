@@ -14,15 +14,6 @@ func main() {
 	server.NewRoute("basic/json", GET, routeJson)
 	server.NewRoute("basic/xml", GET, routeXml)
 
-	/*
-	   server.OnDiscover(request, response) {
-
-	   }
-
-	   server.OnError(request, error, errorCode) {
-
-	   }
-	*/
 	server.Start()
 }
 

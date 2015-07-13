@@ -17,6 +17,7 @@ func NewCoapClient(local string) *CoapClient {
 }
 
 type CoapClient struct {
+	server 		*CoapServer
 	localAddr  *net.UDPAddr
 	remoteAddr *net.UDPAddr
 	conn       *net.UDPConn
