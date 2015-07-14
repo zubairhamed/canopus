@@ -2,8 +2,8 @@ package canopus
 
 import (
 	"bytes"
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestMessage(t *testing.T) {

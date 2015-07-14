@@ -9,7 +9,7 @@ import (
 func main() {
 	client := NewCoapServer(":0")
 
-	client.OnStart(func (server *CoapServer){
+	client.OnStart(func(server *CoapServer) {
 		client.Dial("localhost:5683")
 
 		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
@@ -25,7 +25,7 @@ func main() {
 		}
 	})
 
-	client.OnMessage(func(msg *Message, inbound bool){
+	client.OnMessage(func(msg *Message, inbound bool) {
 		if inbound {
 			log.Println(">>>>> INBOUND <<<<<")
 		} else {

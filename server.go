@@ -25,24 +25,24 @@ func NewCoapServer(local string) *CoapServer {
 
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	return &CoapServer{
-		remoteAddr: remoteAddr,
-		localAddr:  localAddr,
-		events:     NewCanopusEvents(),
+		remoteAddr:   remoteAddr,
+		localAddr:    localAddr,
+		events:       NewCanopusEvents(),
 		observations: make(map[string][]*Observation),
 	}
 }
 
 type CoapServer struct {
-	localAddr  		*net.UDPAddr
-	remoteAddr 		*net.UDPAddr
+	localAddr  *net.UDPAddr
+	remoteAddr *net.UDPAddr
 
-	localConn       *net.UDPConn
-	remoteConn		*net.UDPConn
+	localConn  *net.UDPConn
+	remoteConn *net.UDPConn
 
-	messageIds 		map[uint16]time.Time
-	routes     		[]*Route
-	events			*CanopusEvents
-	observations	map[string][]*Observation
+	messageIds   map[uint16]time.Time
+	routes       []*Route
+	events       *CanopusEvents
+	observations map[string][]*Observation
 }
 
 func (s *CoapServer) Start() {
@@ -423,27 +423,27 @@ func (s *CoapServer) OnObserve(fn FnEventObserve) {
 	s.events.OnObserve(fn)
 }
 
-func (s *CoapServer) OnObserveCancel(fn FnEventObserveCancel){
+func (s *CoapServer) OnObserveCancel(fn FnEventObserveCancel) {
 	s.events.OnObserveCancel(fn)
 }
 
-func (s *CoapServer) OnMessage(fn FnEventMessage){
+func (s *CoapServer) OnMessage(fn FnEventMessage) {
 	s.events.OnMessage(fn)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-func NewObservation (addr *net.UDPAddr, token string, resource string) *Observation {
+func NewObservation(addr *net.UDPAddr, token string, resource string) *Observation {
 	return &Observation{
-		Addr: addr,
-		Token: token,
-		Resource: resource,
+		Addr:        addr,
+		Token:       token,
+		Resource:    resource,
 		NotifyCount: 0,
 	}
 }
 
 type Observation struct {
-	Addr 		*net.UDPAddr
-	Token 		string
-	Resource 	string
-	NotifyCount	int
+	Addr        *net.UDPAddr
+	Token       string
+	Resource    string
+	NotifyCount int
 }

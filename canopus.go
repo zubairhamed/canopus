@@ -8,6 +8,7 @@ import (
 
 // Message ID Generator, global
 var MESSAGEID_CURR = 0
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -106,6 +107,7 @@ type RouteHandler func(*Request) *Response
 type ResponseHandler func(*Response, error)
 
 type MediaType int
+
 const (
 	MEDIATYPE_TEXT_PLAIN                  MediaType = 0
 	MEDIATYPE_TEXT_XML                    MediaType = 1
@@ -136,12 +138,12 @@ const (
 )
 
 const (
-	METHOD_GET    	= "GET"
-	METHOD_PUT    	= "PUT"
-	METHOD_POST   	= "POST"
-	METHOD_DELETE 	= "DELETE"
-	METHOD_OPTIONS 	= "OPTIONS"
-	METHOD_PATCH  	= "PATCH"
+	METHOD_GET     = "GET"
+	METHOD_PUT     = "PUT"
+	METHOD_POST    = "POST"
+	METHOD_DELETE  = "DELETE"
+	METHOD_OPTIONS = "OPTIONS"
+	METHOD_PATCH   = "PATCH"
 )
 
 // ERRORS
@@ -156,4 +158,3 @@ var ERR_UNSUPPORTED_METHOD = errors.New("Unsupported Method")
 var ERR_NO_MATCHING_ROUTE = errors.New("No matching route found")
 var ERR_UNSUPPORTED_CONTENT_FORMAT = errors.New("Unsupported Content-Format")
 var ERR_NO_MATCHING_METHOD = errors.New("No matching method")
-

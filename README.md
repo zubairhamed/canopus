@@ -17,13 +17,14 @@ import (
 	"log"
 )
 
+/*	To test this example, also run examples/test_server.go */
 func main() {
 	client := NewCoapServer(":0")
 
 	client.OnStart(func (server *CoapServer){
 		client.Dial("localhost:5683")
 
-		req := NewRequest(TYPE_CONFIRMABLE, GET, 50782)
+		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
 		req.SetStringPayload("Hello, canopus")
 		req.SetRequestURI("/hello")
 
@@ -31,9 +32,19 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			log.Println("Got Synchronous Response:")
-			log.Println(CoapCodeToString(resp.GetMessage().Code))
+			log.Println("Got Response:")
+			log.Println(resp.GetMessage().Payload.String())
 		}
+	})
+
+	client.OnMessage(func(msg *Message, inbound bool){
+		if inbound {
+			log.Println(">>>>> INBOUND <<<<<")
+		} else {
+			log.Println(">>>>> OUTBOUND <<<<<")
+		}
+
+		PrintMessage(msg)
 	})
 
 	client.Start()
@@ -44,12 +55,11 @@ func main() {
 ```go
 	server := NewLocalServer()
 
-	server.NewRoute("hello", GET, func(r network.Request) network.Response {
-		req := r.(*CoapRequest)
+	server.Get("/hello", func(req *Request) *Response{
 		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-		msg.SetStringPayload("Acknowledged")
+		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
-                                      
+
 		return res
 	})
 
@@ -65,11 +75,13 @@ import (
 	. "github.com/zubairhamed/canopus"
 	"time"
 	"log"
+	"math/rand"
+	"strconv"
 )
 
 func main() {
 	server := NewLocalServer()
-	server.NewRoute("watch/this", GET, routeHandler)
+	server.Get("/watch/this", routeHandler)
 
 	GenerateRandomChangeNotifications(server)
 
@@ -85,20 +97,22 @@ func main() {
 }
 
 func GenerateRandomChangeNotifications(server *CoapServer) {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
+
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				log.Println("Notify Change..")
-				server.NotifyChange("watch/this", "Some new value", false)
+				changeVal := strconv.Itoa(rand.Int())
+				log.Println("Notify Change..", changeVal)
+
+				server.NotifyChange("/watch/this", changeVal, false)
 			}
 		}
 	}()
 }
 
-func routeHandler(r network.Request) network.Response {
-	req := r.(*CoapRequest)
+func routeHandler(req *Request) *Response {
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
 	res := NewResponse(msg, nil)
@@ -122,8 +136,8 @@ func main() {
 	client.OnStart(func (server *CoapServer){
 		client.Dial("localhost:5683")
 		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
-		req.SetRequestURI("watch/this")
-		req.Observe(0)
+		req.SetRequestURI("/watch/this")
+		req.GetMessage().AddOption(OPTION_OBSERVE, 0)
 
 		_, err := client.Send(req)
 		if err != nil {
@@ -131,9 +145,22 @@ func main() {
 		}
 	})
 
+	var notifyCount int = 0
 	client.OnNotify(func (resource string, value interface{}, msg *Message) {
-		// PrintMessage(msg)
-		log.Println("Got Change Notification for resource and value: ", resource, value)
+		if notifyCount < 4 {
+			notifyCount++
+			log.Println("Got Change Notification for resource and value: ", notifyCount, resource, value)
+		} else {
+			log.Println("Cancelling Observation after 4 notifications")
+			req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+			req.SetRequestURI("watch/this")
+			req.GetMessage().AddOption(OPTION_OBSERVE, 0)
+
+			_, err := client.Send(req)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 	})
 
 	client.Start()

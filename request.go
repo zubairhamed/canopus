@@ -17,7 +17,7 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) *Re
 
 func NewRequestFromMessage(msg *Message) *Request {
 	return &Request{
-		msg:   msg,
+		msg: msg,
 	}
 }
 
@@ -31,11 +31,11 @@ func NewClientRequestFromMessage(msg *Message, attrs map[string]string, conn *ne
 }
 
 type Request struct {
-	msg   	*Message
-	attrs 	map[string]string
-	conn  	*net.UDPConn
-	addr  	*net.UDPAddr
-	server 	*CoapServer
+	msg    *Message
+	attrs  map[string]string
+	conn   *net.UDPConn
+	addr   *net.UDPAddr
+	server *CoapServer
 }
 
 func (c *Request) SetMediaType(mt MediaType) {

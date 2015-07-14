@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
 func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
@@ -180,6 +180,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 }
 
 type SortOptions []*Option
+
 func (opts SortOptions) Len() int {
 	return len(opts)
 }
@@ -214,9 +215,9 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 		bLen := len(b)
 
 		if bLen >= 15 {
-			buf.Write([]byte{byte(int(optCode)-lastOptionId) << 4 | 15, byte(bLen - 15)})
+			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | 15, byte(bLen - 15)})
 		} else {
-			buf.Write([]byte{byte(int(optCode)-lastOptionId) << 4 | byte(bLen)})
+			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | byte(bLen)})
 		}
 
 		if int(opt.Code)-lastOptionId > 15 {

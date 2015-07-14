@@ -10,6 +10,7 @@ type FnEventObserveCancel func(string, *Message)
 type FnEventMessage func(*Message, bool)
 
 type EventCode int
+
 const (
 	EVT_START          EventCode = 0
 	EVT_CLOSE          EventCode = 1
@@ -18,30 +19,31 @@ const (
 	EVT_ERROR          EventCode = 4
 	EVT_OBSERVE        EventCode = 5
 	EVT_OBSERVE_CANCEL EventCode = 6
-	EVT_NOTIFY		   EventCode = 7
+	EVT_NOTIFY         EventCode = 7
 )
 
 func NewCanopusEvents() *CanopusEvents {
 	return &CanopusEvents{
-		evtFnNotify: 		[]FnEventNotify{},
-		evtFnStart: 		[]FnEventStart{},
-		evtFnClose: 		[]FnEventClose{},
-		evtFnDiscover: 		[]FnEventDiscover{},
-		evtFnError: 		[]FnEventError{},
-		evtFnObserve: 		[]FnEventObserve{},
+		evtFnNotify:        []FnEventNotify{},
+		evtFnStart:         []FnEventStart{},
+		evtFnClose:         []FnEventClose{},
+		evtFnDiscover:      []FnEventDiscover{},
+		evtFnError:         []FnEventError{},
+		evtFnObserve:       []FnEventObserve{},
 		evtFnObserveCancel: []FnEventObserveCancel{},
-		evtFnMessage: 		[]FnEventMessage{},
+		evtFnMessage:       []FnEventMessage{},
 	}
 }
+
 type CanopusEvents struct {
-	evtFnNotify 		[]FnEventNotify
-	evtFnStart			[]FnEventStart
-	evtFnClose			[]FnEventClose
-	evtFnDiscover		[]FnEventDiscover
-	evtFnError			[]FnEventError
-	evtFnObserve		[]FnEventObserve
-	evtFnObserveCancel	[]FnEventObserveCancel
-	evtFnMessage		[]FnEventMessage
+	evtFnNotify        []FnEventNotify
+	evtFnStart         []FnEventStart
+	evtFnClose         []FnEventClose
+	evtFnDiscover      []FnEventDiscover
+	evtFnError         []FnEventError
+	evtFnObserve       []FnEventObserve
+	evtFnObserveCancel []FnEventObserveCancel
+	evtFnMessage       []FnEventMessage
 }
 
 func (ce *CanopusEvents) OnNotify(fn FnEventNotify) {
@@ -68,60 +70,58 @@ func (ce *CanopusEvents) OnObserve(fn FnEventObserve) {
 	ce.evtFnObserve = append(ce.evtFnObserve, fn)
 }
 
-func (ce *CanopusEvents) OnObserveCancel(fn FnEventObserveCancel){
+func (ce *CanopusEvents) OnObserveCancel(fn FnEventObserveCancel) {
 	ce.evtFnObserveCancel = append(ce.evtFnObserveCancel, fn)
 }
 
-func (ce *CanopusEvents) OnMessage(fn FnEventMessage){
+func (ce *CanopusEvents) OnMessage(fn FnEventMessage) {
 	ce.evtFnMessage = append(ce.evtFnMessage, fn)
 }
 
-func (ce *CanopusEvents) Notify(resource string, value interface{}, msg *Message){
+func (ce *CanopusEvents) Notify(resource string, value interface{}, msg *Message) {
 	for _, fn := range ce.evtFnNotify {
 		fn(resource, value, msg)
 	}
 }
 
-func (ce *CanopusEvents) Started(server *CoapServer){
+func (ce *CanopusEvents) Started(server *CoapServer) {
 	for _, fn := range ce.evtFnStart {
 		fn(server)
 	}
 }
 
-func (ce *CanopusEvents) Closed(server *CoapServer){
+func (ce *CanopusEvents) Closed(server *CoapServer) {
 	for _, fn := range ce.evtFnClose {
 		fn(server)
 	}
 }
 
-func (ce *CanopusEvents) Discover(){
+func (ce *CanopusEvents) Discover() {
 	for _, fn := range ce.evtFnDiscover {
 		fn()
 	}
 }
 
-func (ce *CanopusEvents) Error(err error){
+func (ce *CanopusEvents) Error(err error) {
 	for _, fn := range ce.evtFnError {
 		fn(err)
 	}
 }
 
-func (ce *CanopusEvents) Observe(resource string, msg *Message){
+func (ce *CanopusEvents) Observe(resource string, msg *Message) {
 	for _, fn := range ce.evtFnObserve {
 		fn(resource, msg)
 	}
 }
 
-func (ce *CanopusEvents) ObserveCancelled(resource string, msg *Message){
+func (ce *CanopusEvents) ObserveCancelled(resource string, msg *Message) {
 	for _, fn := range ce.evtFnObserveCancel {
 		fn(resource, msg)
 	}
 }
 
-func (ce *CanopusEvents) Message(msg *Message, inbound bool){
+func (ce *CanopusEvents) Message(msg *Message, inbound bool) {
 	for _, fn := range ce.evtFnMessage {
 		fn(msg, inbound)
 	}
 }
-
-

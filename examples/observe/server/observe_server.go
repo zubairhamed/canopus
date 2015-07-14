@@ -1,10 +1,11 @@
 package main
+
 import (
 	. "github.com/zubairhamed/canopus"
-	"time"
 	"log"
 	"math/rand"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -13,11 +14,11 @@ func main() {
 
 	GenerateRandomChangeNotifications(server)
 
-	server.OnMessage(func (msg *Message, inbound bool){
+	server.OnMessage(func(msg *Message, inbound bool) {
 		// PrintMessage(msg)
 	})
 
-	server.OnObserve(func(resource string, msg *Message){
+	server.OnObserve(func(resource string, msg *Message) {
 		log.Println("Observe Requested for " + resource)
 	})
 

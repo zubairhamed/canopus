@@ -1,8 +1,8 @@
 package canopus
 
 import (
-	"regexp"
 	"fmt"
+	"regexp"
 )
 
 func CreateCompilableRoutePath(route string) (*regexp.Regexp, bool) {
@@ -64,10 +64,10 @@ func MatchesRoutePath(path string, re *regexp.Regexp) (bool, map[string]string) 
 }
 
 type Route struct {
-	Path 	string
-	Method 	string
-	Handler RouteHandler
-	RegEx 	*regexp.Regexp
+	Path       string
+	Method     string
+	Handler    RouteHandler
+	RegEx      *regexp.Regexp
 	AutoAck    bool
 	MediaTypes []MediaType
 }
@@ -75,7 +75,7 @@ type Route struct {
 func MatchingRoute(path string, method string, cf interface{}, routes []*Route) (*Route, map[string]string, error) {
 	for _, route := range routes {
 		if method == route.Method {
-			match, attrs :=  MatchesRoutePath(path, route.RegEx)
+			match, attrs := MatchesRoutePath(path, route.RegEx)
 
 			if match {
 				if len(route.MediaTypes) > 0 {
