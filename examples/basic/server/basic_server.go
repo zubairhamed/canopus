@@ -7,46 +7,36 @@ import (
 func main() {
 	server := NewLocalServer()
 
-//	server.Get("/hello", func (*Request) *CoapResponse {
-//
-//	})
+	server.Get("/hello", func(req *Request) *Response{
+		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
+		res := NewResponse(msg, nil)
 
-	server.NewRoute("hello", GET, routeParams)
+		return res
+	})
 
-	server.NewRoute("basic", GET, routeBasic)
-	server.NewRoute("basic/json", GET, routeJson)
-	server.NewRoute("basic/xml", GET, routeXml)
+	server.Get("/basic", func(req *Request) *Response{
+		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		msg.SetStringPayload("Acknowledged")
+
+		res := NewResponse(msg, nil)
+
+		return res
+	})
+
+	server.Get("/basic/json", func(req *Request) *Response{
+		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		res := NewResponse(msg, nil)
+
+		return res
+	})
+
+	server.Get("/basic/xml", func(req *Request) *Response{
+		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		res := NewResponse(msg, nil)
+
+		return res
+	})
 
 	server.Start()
-}
-
-func routeParams(req *Request) *Response {
-	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-	msg.SetStringPayload("Acknowledged")
-	res := NewResponse(msg, nil)
-
-	return res
-}
-
-func routeBasic(req *Request) *Response {
-	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-	msg.SetStringPayload("Acknowledged")
-
-	res := NewResponse(msg, nil)
-
-	return res
-}
-
-func routeJson(req *Request) *Response {
-	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-	res := NewResponse(msg, nil)
-
-	return res
-}
-
-func routeXml(req *Request) *Response {
-	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-	res := NewResponse(msg, nil)
-
-	return res
 }

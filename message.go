@@ -325,7 +325,7 @@ func (c *Message) GetLocationPath() string {
 func (c Message) GetUriPath() string {
 	opts := c.GetOptionsAsString(OPTION_URI_PATH)
 
-	return strings.Join(opts, "/")
+	return "/" + strings.Join(opts, "/")
 }
 
 func (c *Message) MethodString() string {

@@ -102,6 +102,7 @@ const BUF_SIZE = 1500
 
 const MESSAGEID_PURGE_DURATION = 60
 
+type RouteHandler func(*Request) *Response
 type ResponseHandler func(*Response, error)
 
 type MediaType int
@@ -132,6 +133,15 @@ const (
 	MEDIATYPE_TLV_VND_OMA_LWM2M           MediaType = 1542
 	MEDIATYPE_JSON_VND_OMA_LWM2M          MediaType = 1543
 	MEDIATYPE_OPAQUE_VND_OMA_LWM2M        MediaType = 1544
+)
+
+const (
+	METHOD_GET    	= "GET"
+	METHOD_PUT    	= "PUT"
+	METHOD_POST   	= "POST"
+	METHOD_DELETE 	= "DELETE"
+	METHOD_OPTIONS 	= "OPTIONS"
+	METHOD_PATCH  	= "PATCH"
 )
 
 // ERRORS

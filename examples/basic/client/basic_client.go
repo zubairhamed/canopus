@@ -12,7 +12,7 @@ func main() {
 	client.OnStart(func (server *CoapServer){
 		client.Dial("localhost:5683")
 
-		req := NewRequest(TYPE_CONFIRMABLE, GET, 50782)
+		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
 		req.SetStringPayload("Hello, canopus")
 		req.SetRequestURI("/hello")
 
@@ -20,8 +20,8 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			log.Println("Got Synchronous Response:")
-			log.Println(CoapCodeToString(resp.GetMessage().Code))
+			log.Println("Got Response:")
+			log.Println(resp.GetMessage().Payload.String())
 		}
 	})
 

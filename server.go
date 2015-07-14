@@ -85,7 +85,7 @@ func (s *CoapServer) Start() {
 		return resp
 	}
 
-	s.NewRoute(".well-known/core", GET, discoveryRoute)
+	s.NewRoute("/.well-known/core", GET, discoveryRoute)
 	s.serveServer()
 }
 
@@ -93,7 +93,9 @@ func (s *CoapServer) serveServer() {
 	s.messageIds = make(map[uint16]time.Time)
 
 	conn, err := net.ListenUDP("udp", s.localAddr)
-	log.Println(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	s.localConn = conn
 
@@ -258,11 +260,6 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 							// Register observation of client
 							s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
 							req.GetMessage().AddOption(OPTION_OBSERVE, 1)
-							// req.SetConfirmable(false)
-							// req.GetMessage().Code = COAPCODE_205_CONTENT
-
-							// s.events.Message(req.GetMessage(), false)
-							// SendMessageTo(req.GetMessage(), conn, addr)
 						}
 					}
 				}
@@ -279,6 +276,37 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			}
 		}
 	}
+}
+
+func (s *CoapServer) Get(path string, fn RouteHandler) *Route {
+	return s.add(METHOD_GET, path, fn)
+}
+
+func (s *CoapServer) Delete(path string, fn RouteHandler) *Route {
+	return s.add(METHOD_DELETE, path, fn)
+}
+
+func (s *CoapServer) Put(path string, fn RouteHandler) *Route {
+	return s.add(METHOD_PUT, path, fn)
+}
+
+func (s *CoapServer) Post(path string, fn RouteHandler) *Route {
+	return s.add(METHOD_POST, path, fn)
+}
+
+func (s *CoapServer) Options(path string, fn RouteHandler) *Route {
+	return s.add(METHOD_OPTIONS, path, fn)
+}
+
+func (s *CoapServer) Patch(path string, fn RouteHandler) *Route {
+	return s.add(METHOD_PATCH, path, fn)
+}
+
+func (s *CoapServer) add(method string, path string, fn RouteHandler) *Route {
+	route := CreateNewRoute(path, method, fn)
+	s.routes = append(s.routes, route)
+
+	return route
 }
 
 func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {

@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-type RouteHandler func(*Request) *Response
-
 func CreateCompilableRoutePath(route string) (*regexp.Regexp, bool) {
 	var re *regexp.Regexp
 	var isStatic bool
@@ -78,6 +76,7 @@ func MatchingRoute(path string, method string, cf interface{}, routes []*Route) 
 	for _, route := range routes {
 		if method == route.Method {
 			match, attrs :=  MatchesRoutePath(path, route.RegEx)
+
 			if match {
 				if len(route.MediaTypes) > 0 {
 					if cf == nil {
