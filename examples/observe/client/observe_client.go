@@ -12,7 +12,7 @@ func main() {
 		client.Dial("localhost:5683")
 		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
 		req.SetRequestURI("watch/this")
-		req.Observe(0)
+		req.GetMessage().AddOption(OPTION_OBSERVE, 0)
 
 		_, err := client.Send(req)
 		if err != nil {

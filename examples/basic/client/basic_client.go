@@ -25,5 +25,15 @@ func main() {
 		}
 	})
 
+	client.OnMessage(func(msg *Message, inbound bool){
+		if inbound {
+			log.Println(">>>>> INBOUND <<<<<")
+		} else {
+			log.Println(">>>>> OUTBOUND <<<<<")
+		}
+
+		PrintMessage(msg)
+	})
+
 	client.Start()
 }
