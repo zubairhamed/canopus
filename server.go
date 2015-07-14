@@ -258,7 +258,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 
 							// Register observation of client
 							s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
-							req.Observe(1)
+							req.GetMessage().AddOption(OPTION_OBSERVE, 1)
 							// req.SetConfirmable(false)
 							// req.GetMessage().Code = COAPCODE_205_CONTENT
 
@@ -290,7 +290,11 @@ func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Ro
 }
 
 func (c *CoapServer) Send(req *CoapRequest) (*CoapResponse, error) {
-	return SendMessageTo(req.GetMessage(), c.localConn, c.remoteAddr)
+	c.events.Message(req.GetMessage(), false)
+	response, err := SendMessageTo(req.GetMessage(), c.localConn, c.remoteAddr)
+	c.events.Message(response.GetMessage(), true)
+
+	return response, err
 }
 
 func (c *CoapServer) SendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
@@ -314,7 +318,7 @@ func (c *CoapServer) NotifyChange(resource, value string, confirm bool) {
 			req.SetStringPayload(value)
 			req.SetRequestURI(r.Resource)
 			r.NotifyCount++
-			req.Observe(r.NotifyCount)
+			req.GetMessage().AddOption(OPTION_OBSERVE, r.NotifyCount)
 
 			go c.SendTo(req, r.Addr)
 		}
