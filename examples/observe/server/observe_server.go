@@ -4,11 +4,12 @@ import (
 	"time"
 	"log"
 	"math/rand"
+	"strconv"
 )
 
 func main() {
 	server := NewLocalServer()
-	server.NewRoute("watch/this", GET, routeHandler)
+	server.Get("/watch/this", routeHandler)
 
 	GenerateRandomChangeNotifications(server)
 
@@ -30,10 +31,10 @@ func GenerateRandomChangeNotifications(server *CoapServer) {
 		for {
 			select {
 			case <-ticker.C:
-				log.Println("Notify Change..")
-				log.Println(rand.Float32())
+				changeVal := strconv.Itoa(rand.Int())
+				log.Println("Notify Change..", changeVal)
 
-				server.NotifyChange("watch/this", "Some new value", false)
+				server.NotifyChange("/watch/this", changeVal, false)
 			}
 		}
 	}()

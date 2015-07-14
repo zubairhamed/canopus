@@ -11,7 +11,7 @@ func main() {
 	client.OnStart(func (server *CoapServer){
 		client.Dial("localhost:5683")
 		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
-		req.SetRequestURI("watch/this")
+		req.SetRequestURI("/watch/this")
 		req.GetMessage().AddOption(OPTION_OBSERVE, 0)
 
 		_, err := client.Send(req)
@@ -22,7 +22,6 @@ func main() {
 
 	var notifyCount int = 0
 	client.OnNotify(func (resource string, value interface{}, msg *Message) {
-		// PrintMessage(msg)
 		if notifyCount < 4 {
 			notifyCount++
 			log.Println("Got Change Notification for resource and value: ", notifyCount, resource, value)
