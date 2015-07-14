@@ -259,11 +259,20 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 							if obsOpt.Value == nil {
 
 								// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
-								// Observe Request & Fire OnObserve Event
-								s.events.Observe(msg.GetUriPath(), msg)
+								resource := msg.GetUriPath()
+								if s.hasObservation(resource, addr) {
+									// Remove observation of client
+									s.removeObservation(resource, addr)
 
-								// Register observation of client
-								s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
+									// Observe Cancel Request & Fire OnObserveCancel Event
+									s.events.ObserveCancelled(resource, msg)
+								} else {
+									// Register observation of client
+									s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
+
+									// Observe Request & Fire OnObserve Event
+									s.events.Observe(resource, msg)
+								}
 
 								req.GetMessage().AddOption(OPTION_OBSERVE, 1)
 							}
@@ -326,6 +335,34 @@ func (c *CoapServer) NotifyChange(resource, value string, confirm bool) {
 
 func (s *CoapServer) addObservation(resource, token string, addr *net.UDPAddr) {
 	s.observations[resource] = append(s.observations[resource], NewObservation(addr, token, resource))
+}
+
+func (s *CoapServer) hasObservation(resource string, addr *net.UDPAddr) bool {
+	obs := s.observations[resource]
+	if obs == nil {
+		return false
+	}
+
+	for _, o := range obs {
+		if o.Addr.String() == addr.String() {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *CoapServer) removeObservation(resource string, addr *net.UDPAddr) {
+	obs := s.observations[resource]
+	if obs == nil {
+		return
+	}
+
+	for idx, o := range obs {
+		if o.Addr.String() == addr.String() {
+			s.observations[resource] = append(obs[:idx], obs[idx+1:]...)
+			return
+		}
+	}
 }
 
 func (c *CoapServer) Dial(host string) {

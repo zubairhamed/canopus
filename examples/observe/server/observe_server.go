@@ -4,6 +4,7 @@ import (
 	"github.com/zubairhamed/go-commons/network"
 	"time"
 	"log"
+	"math/rand"
 )
 
 func main() {
@@ -24,12 +25,15 @@ func main() {
 }
 
 func GenerateRandomChangeNotifications(server *CoapServer) {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
+
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				log.Println("Notify Change..")
+				log.Println(rand.Float32())
+
 				server.NotifyChange("watch/this", "Some new value", false)
 			}
 		}
