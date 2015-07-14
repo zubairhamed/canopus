@@ -20,9 +20,23 @@ func main() {
 		}
 	})
 
+	var notifyCount int = 0
 	client.OnNotify(func (resource string, value interface{}, msg *Message) {
 		// PrintMessage(msg)
-		log.Println("Got Change Notification for resource and value: ", resource, value)
+		if notifyCount < 4 {
+			notifyCount++
+			log.Println("Got Change Notification for resource and value: ", notifyCount, resource, value)
+		} else {
+			log.Println("Cancelling Observation after 4 notifications")
+			req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+			req.SetRequestURI("watch/this")
+			req.Observe(0)
+
+			_, err := client.Send(req)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 	})
 
 	client.Start()

@@ -1,11 +1,16 @@
-package tests
+package canopus
 
 import (
 	"bytes"
-	. "github.com/zubairhamed/canopus"
 	. "github.com/zubairhamed/go-commons/network"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestMessage(t *testing.T) {
+	assert.NotNil(t, NewMessage(TYPE_CONFIRMABLE, GET, 12345))
+	assert.NotNil(t, NewEmptyMessage(12345))
+}
 
 func TestInvalidMessage(t *testing.T) {
 	_, err := BytesToMessage(make([]byte, 0))
