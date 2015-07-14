@@ -30,7 +30,7 @@ func main() {
 			log.Println("Cancelling Observation after 4 notifications")
 			req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
 			req.SetRequestURI("watch/this")
-			req.Observe(0)
+			req.GetMessage().AddOption(OPTION_OBSERVE, 0)
 
 			_, err := client.Send(req)
 			if err != nil {

@@ -2,8 +2,8 @@ package canopus
 
 import "strings"
 
-func NewResponse(msg *Message, err error) *CoapResponse {
-	resp := &CoapResponse{
+func NewResponse(msg *Message, err error) *Response {
+	resp := &Response{
 		msg: msg,
 		err: err,
 	}
@@ -11,32 +11,32 @@ func NewResponse(msg *Message, err error) *CoapResponse {
 	return resp
 }
 
-func NewResponseWithMessage(msg *Message) *CoapResponse {
-	resp := &CoapResponse{
+func NewResponseWithMessage(msg *Message) *Response {
+	resp := &Response{
 		msg: msg,
 	}
 
 	return resp
 }
 
-type CoapResponse struct {
+type Response struct {
 	msg *Message
 	err error
 }
 
-func (c *CoapResponse) GetMessage() *Message {
+func (c *Response) GetMessage() *Message {
 	return c.msg
 }
 
-func (c *CoapResponse) GetError() error {
+func (c *Response) GetError() error {
 	return c.err
 }
 
-func (c *CoapResponse) GetPayload() []byte {
+func (c *Response) GetPayload() []byte {
 	return c.GetMessage().Payload.GetBytes()
 }
 
-func (c *CoapResponse) GetUriQuery(q string) string {
+func (c *Response) GetUriQuery(q string) string {
 	qs := c.GetMessage().GetOptionsAsString(OPTION_URI_QUERY)
 
 	for _, o := range qs {

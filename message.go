@@ -3,7 +3,6 @@ package canopus
 import (
 	"bytes"
 	"encoding/binary"
-	. "github.com/zubairhamed/go-commons/network"
 	"log"
 	"strconv"
 	"strings"

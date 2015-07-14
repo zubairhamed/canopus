@@ -7,7 +7,7 @@ import (
 )
 
 func TestRequest(t *testing.T) {
-	var req *CoapRequest
+	var req *Request
 	assert.NotNil(t, NewRequest(TYPE_CONFIRMABLE, GET, 12345))
 
 	msg := NewMessage(TYPE_CONFIRMABLE, GET, 12345)

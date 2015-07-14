@@ -63,7 +63,6 @@ func main() {
 package main
 import (
 	. "github.com/zubairhamed/canopus"
-	"github.com/zubairhamed/go-commons/network"
 	"time"
 	"log"
 )

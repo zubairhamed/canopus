@@ -3,7 +3,6 @@ package canopus
 //import (
 //	"sync"
 //	"testing"
-//	"github.com/zubairhamed/go-commons/network"
 //	"log"
 //)
 //

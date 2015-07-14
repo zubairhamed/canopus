@@ -2,8 +2,6 @@ package canopus
 
 import (
 	"bytes"
-	"github.com/zubairhamed/go-commons/logging"
-	. "github.com/zubairhamed/go-commons/network"
 	"log"
 	"net"
 	"strconv"
@@ -13,7 +11,8 @@ import (
 func NewLocalServer() *CoapServer {
 	localAddr, err := net.ResolveUDPAddr("udp", ":5683")
 	if err != nil {
-		logging.LogError("Error starting CoAP Server: ", err)
+		log.Fatal("Error starting CoAP Server: ", err)
+		return nil
 	}
 	return NewServer(localAddr, nil)
 }
@@ -48,8 +47,8 @@ type CoapServer struct {
 
 func (s *CoapServer) Start() {
 
-	var discoveryRoute RouteHandler = func(req Request) Response {
-		msg := req.(*CoapRequest).GetMessage()
+	var discoveryRoute RouteHandler = func(req *Request) *Response {
+		msg := req.GetMessage()
 
 		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
 		ack.Code = COAPCODE_205_CONTENT
@@ -94,7 +93,7 @@ func (s *CoapServer) serveServer() {
 	s.messageIds = make(map[uint16]time.Time)
 
 	conn, err := net.ListenUDP("udp", s.localAddr)
-	logging.LogError(err)
+	log.Println(err)
 
 	s.localConn = conn
 
@@ -268,7 +267,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 					}
 				}
 
-				resp := route.Handler(req).(*CoapResponse)
+				resp := route.Handler(req)
 				respMsg := resp.GetMessage()
 
 				// TODO: Validate Message before sending (.e.g missing messageId)
@@ -289,7 +288,7 @@ func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Ro
 	return route
 }
 
-func (c *CoapServer) Send(req *CoapRequest) (*CoapResponse, error) {
+func (c *CoapServer) Send(req *Request) (*Response, error) {
 	c.events.Message(req.GetMessage(), false)
 	response, err := SendMessageTo(req.GetMessage(), c.localConn, c.remoteAddr)
 	c.events.Message(response.GetMessage(), true)
@@ -297,7 +296,7 @@ func (c *CoapServer) Send(req *CoapRequest) (*CoapResponse, error) {
 	return response, err
 }
 
-func (c *CoapServer) SendTo(req *CoapRequest, addr *net.UDPAddr) (*CoapResponse, error) {
+func (c *CoapServer) SendTo(req *Request, addr *net.UDPAddr) (*Response, error) {
 	return SendMessageTo(req.GetMessage(), c.localConn, addr)
 }
 
@@ -305,7 +304,7 @@ func (c *CoapServer) NotifyChange(resource, value string, confirm bool) {
 	t := c.observations[resource]
 
 	if t != nil {
-		var req *CoapRequest
+		var req *Request
 
 		if confirm {
 			req = NewRequest(TYPE_CONFIRMABLE, COAPCODE_205_CONTENT, GenerateMessageId())

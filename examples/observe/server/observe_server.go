@@ -1,7 +1,6 @@
 package main
 import (
 	. "github.com/zubairhamed/canopus"
-	"github.com/zubairhamed/go-commons/network"
 	"time"
 	"log"
 	"math/rand"
@@ -40,8 +39,7 @@ func GenerateRandomChangeNotifications(server *CoapServer) {
 	}()
 }
 
-func routeHandler(r network.Request) network.Response {
-	req := r.(*CoapRequest)
+func routeHandler(req *Request) *Response {
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
 	res := NewResponse(msg, nil)

@@ -2,7 +2,6 @@ package canopus
 
 import (
 	"bytes"
-	. "github.com/zubairhamed/go-commons/network"
 	"testing"
 	"github.com/stretchr/testify/assert"
 )

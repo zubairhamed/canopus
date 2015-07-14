@@ -142,7 +142,7 @@ func CoapCodeToString(code CoapCode) string {
 	}
 }
 
-func ValidateResponse(req *CoapRequest, resp *CoapResponse) error {
+func ValidateResponse(req *Request, resp *Response) error {
 	return nil
 }
 

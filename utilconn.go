@@ -4,7 +4,6 @@ import (
 	"log"
 	"net"
 	"time"
-	"github.com/zubairhamed/go-commons/logging"
 )
 
 
@@ -17,12 +16,12 @@ func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAdd
 }
 
 // Sends a CoAP Message to UDP address
-func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) (*CoapResponse, error) {
+func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) (*Response, error) {
 	b, _ := MessageToBytes(msg)
 	_, err := conn.WriteToUDP(b, addr)
 
 	if err != nil {
-		logging.LogError(err)
+		log.Println(err)
 
 		return nil, err
 	}
@@ -48,7 +47,7 @@ func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) (*CoapRes
 }
 
 // Sends a CoAP Message to a UDP Connection
-func SendMessage(msg *Message, conn *net.UDPConn) (*CoapResponse, error) {
+func SendMessage(msg *Message, conn *net.UDPConn) (*Response, error) {
 	b, _ := MessageToBytes(msg)
 	_, err := conn.Write(b)
 
