@@ -13,14 +13,11 @@ func TestMessage(t *testing.T) {
 
 func TestInvalidMessage(t *testing.T) {
 	_, err := BytesToMessage(make([]byte, 0))
-	if err == nil {
-		t.Error("Message should be invalid")
-	}
+
+	assert.NotNil(t, err, "Message should be invalid")
 
 	_, err = BytesToMessage(make([]byte, 4))
-	if err == nil {
-		t.Error("Message should be invalid")
-	}
+	assert.NotNil(t, err, "Message should be invalid")
 }
 
 func TestMessagValidation(t *testing.T) {
@@ -38,25 +35,12 @@ func TestMessageConversion(t *testing.T) {
 
 	// Reconvert Back Bytes to Message
 	newMsg, err := BytesToMessage(b)
-	if err != nil {
-		t.Error("An error occured converting bytes to message: ", err)
-	}
+	assert.Nil(t, err, "An error occured converting bytes to message")
 
-	if newMsg.MessageType != TYPE_CONFIRMABLE {
-		t.Error("Type not the same after reconversion")
-	}
-
-	if bytes.NewBuffer(newMsg.Token).String() != "abcd1234" {
-		t.Error("Token String not the same after reconversion")
-	}
-
-	if newMsg.MessageId != 0xf0f0 {
-		t.Error("Message ID not the same after reconversion")
-	}
-
-	if len(newMsg.Options) == 0 {
-		t.Error("Options should not be 0")
-	}
+	assert.Equal(t, 0, int(newMsg.MessageType))	// 0x0: Type Confirmable
+	assert.Equal(t, "abcd1234", bytes.NewBuffer(newMsg.Token).String(), "Token String not the same after reconversion")
+	assert.Equal(t, 61680, int(newMsg.MessageId), "Message ID not the same after reconversion")
+	assert.NotEqual(t, 0, len(newMsg.Options), "Options should not be 0")
 }
 
 func TestMessageBadOptions(t *testing.T) {
@@ -66,38 +50,24 @@ func TestMessageBadOptions(t *testing.T) {
 	unk := OptionCode(99)
 	testMsg.AddOption(unk, 0)
 	testMsg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
-
 	_, err := MessageToBytes(testMsg)
-	if err == nil {
-		if err != ERR_UNKNOWN_CRITICAL_OPTION {
-			t.Error("Should throw ERR_UNKNOWN_CRITICAL_OPTION")
-		}
-	}
+	assert.NotNil(t, err, "Should throw ERR_UNKNOWN_CRITICAL_OPTION")
 }
 
 func TestMessageObject(t *testing.T) {
 	msg := &Message{}
 
-	if len(msg.Options) > 0 {
-		t.Error("Options expected = 0")
-	}
-
+	assert.Equal(t, 0, len(msg.Options))
 	msg.AddOptions(NewPathOptions("/example"))
 	msg.AddOption(OPTION_ACCEPT, MEDIATYPE_APPLICATION_XML)
 	msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_JSON)
-	if len(msg.Options) != 4 {
-		t.Error("Options expected == 4")
-	}
+	assert.Equal(t, 3, len(msg.Options))
 
 	opt := msg.GetOption(OPTION_ACCEPT)
-	if opt == nil {
-		t.Error("Expect ACCEPT option")
-	}
+	assert.NotNil(t, opt)
 
 	msg.RemoveOptions(OPTION_URI_PATH)
-	if len(msg.Options) > 2 {
-		t.Error("Options expected = 0")
-	}
+	assert.Equal(t, 2, len(msg.Options))
 }
 
 func NewBasicConfirmableMessage() *Message {
