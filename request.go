@@ -38,6 +38,10 @@ type Request struct {
 	server *CoapServer
 }
 
+func (c *Request) SetProxyUri(uri string) {
+	c.msg.AddOption(OPTION_PROXY_URI, uri)
+}
+
 func (c *Request) SetMediaType(mt MediaType) {
 	c.msg.AddOption(OPTION_CONTENT_FORMAT, mt)
 }

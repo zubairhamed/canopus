@@ -100,10 +100,36 @@ func TestMessageObject(t *testing.T) {
 	}
 }
 
+func TestOptionConversion(t *testing.T) {
+	preMsg := NewBasicConfirmableMessage()
+
+	// preMsg.Code = TYPE_NONCONFIRMABLE
+
+	preMsg.AddOption(OPTION_IF_MATCH, "")
+	preMsg.AddOptions(NewPathOptions("/test"))
+	preMsg.AddOption(OPTION_ETAG, "1234567890")
+	preMsg.AddOption(OPTION_IF_NONE_MATCH, nil)
+	preMsg.AddOption(OPTION_OBSERVE, 0)
+	preMsg.AddOption(OPTION_URI_PORT, 1234)
+	preMsg.AddOption(OPTION_LOCATION_PATH, "/aaa")
+	preMsg.AddOption(OPTION_CONTENT_FORMAT, 1)
+	preMsg.AddOption(OPTION_MAX_AGE, 1)
+	preMsg.AddOption(OPTION_PROXY_URI, "http://www.google.com")
+	preMsg.AddOption(OPTION_PROXY_SCHEME, "http://proxy.scheme")
+
+	converted, _ := MessageToBytes(preMsg)
+
+	postMsg, _ := BytesToMessage(converted)
+
+	PrintMessage(postMsg)
+
+}
+
 func NewBasicConfirmableMessage() *Message {
 	msg := NewMessageOfType(TYPE_CONFIRMABLE, 0xf0f0)
 	msg.Code = GET
 	msg.Token = []byte("abcd1234")
+	msg.SetStringPayload("xxxxx")
 
 	return msg
 }

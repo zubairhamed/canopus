@@ -29,6 +29,8 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 		localAddr:    localAddr,
 		events:       NewCanopusEvents(),
 		observations: make(map[string][]*Observation),
+		fnHandleCoapCoapProxy: NullProxyHandler,
+		fnHandleCoapHttpProxy: NullProxyHandler,
 	}
 }
 
@@ -43,6 +45,9 @@ type CoapServer struct {
 	routes       []*Route
 	events       *CanopusEvents
 	observations map[string][]*Observation
+
+	fnHandleCoapHttpProxy	ProxyHandler
+	fnHandleCoapCoapProxy	ProxyHandler
 }
 
 func (s *CoapServer) Start() {
@@ -118,7 +123,6 @@ func (s *CoapServer) serveServer() {
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf)
 
-			// Look for route handler matching path and then dispatch
 			go s.handleMessage(msgBuf, conn, addr)
 		}
 	}
@@ -180,107 +184,118 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 				}
 			}
 
-			route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
-			if err != nil {
-				if err == ERR_NO_MATCHING_ROUTE {
-					ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
-					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
-					ret.Token = msg.Token
-
-					s.events.Message(ret, false)
-					SendMessageTo(ret, conn, addr)
-
-					s.events.Error(err)
-					return
+			// Proxy
+			if IsProxyRequest(msg) {
+				if IsCoapUri(msg) {
+					s.fnHandleCoapCoapProxy(msg, conn, addr)
+				} else
+				if IsHttpUri(msg.GetOption(OPTION_PROXY_URI).StringValue()) {
+					s.fnHandleCoapHttpProxy(msg, conn, addr)
+				} else {
+					// Unknown URI
 				}
+			} else {
+				route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
+				if err != nil {
+					if err == ERR_NO_MATCHING_ROUTE {
+						ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
+						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+						ret.Token = msg.Token
 
-				if err == ERR_NO_MATCHING_METHOD {
-					ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
-					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+						s.events.Message(ret, false)
+						SendMessageTo(ret, conn, addr)
 
-					s.events.Message(ret, false)
-					SendMessageTo(ret, conn, addr)
+						s.events.Error(err)
+						return
+					}
 
-					s.events.Error(err)
-					return
-				}
+					if err == ERR_NO_MATCHING_METHOD {
+						ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
+						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-				if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
-					ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
-					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+						s.events.Message(ret, false)
+						SendMessageTo(ret, conn, addr)
 
-					s.events.Message(ret, false)
-					SendMessageTo(ret, conn, addr)
+						s.events.Error(err)
+						return
+					}
 
-					s.events.Error(err)
-					return
-				}
-			}
+					if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
+						ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
+						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-			// Duplicate Message ID Check
-			_, dupe := s.messageIds[msg.MessageId]
-			if dupe {
-				log.Println("Duplicate Message ID ", msg.MessageId)
-				if msg.MessageType == TYPE_CONFIRMABLE {
-					ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
-					ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
+						s.events.Message(ret, false)
+						SendMessageTo(ret, conn, addr)
 
-					s.events.Message(ret, false)
-					SendMessageTo(ret, conn, addr)
-				}
-				return
-			}
-
-			if err == nil {
-				s.messageIds[msg.MessageId] = time.Now()
-
-				// TODO: #47 - Forward Proxy
-				// Auto acknowledge
-				if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
-					ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-
-					s.events.Message(ack, false)
-					SendMessageTo(ack, conn, addr)
-				}
-
-				req := NewClientRequestFromMessage(msg, attrs, conn, addr)
-				req.server = s
-
-				if msg.MessageType == TYPE_CONFIRMABLE {
-					obsOpt := msg.GetOption(OPTION_OBSERVE)
-					if obsOpt != nil {
-						// TODO: if server doesn't allow observing, return error
-
-						if obsOpt.Value == nil {
-							// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
-							resource := msg.GetUriPath()
-							if s.hasObservation(resource, addr) {
-								// Remove observation of client
-								s.removeObservation(resource, addr)
-
-								// Observe Cancel Request & Fire OnObserveCancel Event
-								s.events.ObserveCancelled(resource, msg)
-							} else {
-								// Register observation of client
-								s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
-
-								// Observe Request & Fire OnObserve Event
-								s.events.Observe(resource, msg)
-							}
-
-							req.GetMessage().AddOption(OPTION_OBSERVE, 1)
-						}
+						s.events.Error(err)
+						return
 					}
 				}
 
-				resp := route.Handler(req)
-				respMsg := resp.GetMessage()
+				// Duplicate Message ID Check
+				_, dupe := s.messageIds[msg.MessageId]
+				if dupe {
+					log.Println("Duplicate Message ID ", msg.MessageId)
+					if msg.MessageType == TYPE_CONFIRMABLE {
+						ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
+						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
-				// TODO: Validate Message before sending (.e.g missing messageId)
-				err := ValidateMessage(respMsg)
+						s.events.Message(ret, false)
+						SendMessageTo(ret, conn, addr)
+					}
+					return
+				}
+
 				if err == nil {
-					s.events.Message(respMsg, false)
-					SendMessageTo(respMsg, conn, addr)
+					s.messageIds[msg.MessageId] = time.Now()
+
+					// Auto acknowledge
+					if msg.MessageType == TYPE_CONFIRMABLE && route.AutoAck {
+						ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
+
+						s.events.Message(ack, false)
+						SendMessageTo(ack, conn, addr)
+					}
+
+					req := NewClientRequestFromMessage(msg, attrs, conn, addr)
+					req.server = s
+
+					if msg.MessageType == TYPE_CONFIRMABLE {
+						obsOpt := msg.GetOption(OPTION_OBSERVE)
+						if obsOpt != nil {
+							// TODO: if server doesn't allow observing, return error
+
+							if obsOpt.Value == nil {
+								// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
+								resource := msg.GetUriPath()
+								if s.hasObservation(resource, addr) {
+									// Remove observation of client
+									s.removeObservation(resource, addr)
+
+									// Observe Cancel Request & Fire OnObserveCancel Event
+									s.events.ObserveCancelled(resource, msg)
+								} else {
+									// Register observation of client
+									s.addObservation(msg.GetUriPath(), string(msg.Token), addr)
+
+									// Observe Request & Fire OnObserve Event
+									s.events.Observe(resource, msg)
+								}
+
+								req.GetMessage().AddOption(OPTION_OBSERVE, 1)
+							}
+						}
+					}
+
+					resp := route.Handler(req)
+					respMsg := resp.GetMessage()
+
+					// TODO: Validate Message before sending (e.g missing messageId)
+					err := ValidateMessage(respMsg)
+					if err == nil {
+						s.events.Message(respMsg, false)
+						SendMessageTo(respMsg, conn, addr)
+					}
 				}
 			}
 		}
@@ -429,6 +444,29 @@ func (s *CoapServer) OnObserveCancel(fn FnEventObserveCancel) {
 
 func (s *CoapServer) OnMessage(fn FnEventMessage) {
 	s.events.OnMessage(fn)
+}
+
+type ProxyType int
+const (
+	PROXY_COAP_HTTP ProxyType = 0
+	PROXY_COAP_COAP ProxyType = 1
+)
+
+func (s *CoapServer) SetProxy(t ProxyType, enabled bool) {
+	if t == PROXY_COAP_HTTP {
+		if enabled {
+			s.fnHandleCoapHttpProxy = CoapHttpProxyHandler
+		} else {
+			s.fnHandleCoapHttpProxy = NullProxyHandler
+		}
+	} else
+	if t == PROXY_COAP_COAP {
+		if enabled {
+			s.fnHandleCoapCoapProxy = CoapHttpProxyHandler
+		} else {
+			s.fnHandleCoapCoapProxy = NullProxyHandler
+		}
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
