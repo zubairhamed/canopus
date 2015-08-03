@@ -1,4 +1,5 @@
 package main
+
 import . "github.com/zubairhamed/canopus"
 
 func main() {
@@ -7,6 +8,7 @@ func main() {
 
 	server.Start()
 }
+
 /*
 	- if request contains 'Proxy-Uri' or 'Proxy-Scheme' option with http or https uri
 	- if proxy is unwilling, return 5.05 - Proxying Not Supported
@@ -57,4 +59,4 @@ func main() {
 			throw 5.05 not supported
 
 
- */
+*/

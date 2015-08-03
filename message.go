@@ -3,11 +3,11 @@ package canopus
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"log"
 	"sort"
 	"strconv"
 	"strings"
-	"errors"
 )
 
 func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
@@ -205,7 +205,6 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 	buf.Write([]byte{messageId[1]})
 	buf.Write(msg.Token)
 
-
 	// Sort Options
 	sort.Sort(SortOptions(msg.Options))
 
@@ -220,23 +219,21 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 		optLength := valueLength
 		optLengthValue, _ := getOptionHeaderValue(optLength)
 
-		buf.Write([]byte{ byte(optDeltaValue << 4 |  optLengthValue) })
+		buf.Write([]byte{byte(optDeltaValue<<4 | optLengthValue)})
 
 		if optDeltaValue == 13 {
-			buf.Write([]byte { byte(optDelta - 13) })
-		} else
-		if optDeltaValue == 14 {
+			buf.Write([]byte{byte(optDelta - 13)})
+		} else if optDeltaValue == 14 {
 			tmpBuf := new(bytes.Buffer)
-			binary.Write(tmpBuf, binary.BigEndian, uint16(optDelta - 269))
+			binary.Write(tmpBuf, binary.BigEndian, uint16(optDelta-269))
 			buf.Write(tmpBuf.Bytes())
 		}
 
 		if optLengthValue == 13 {
-			buf.Write([]byte { byte(optLength - 13) })
-		} else
-		if optLengthValue == 14 {
+			buf.Write([]byte{byte(optLength - 13)})
+		} else if optLengthValue == 14 {
 			tmpBuf := new(bytes.Buffer)
-			binary.Write(tmpBuf, binary.BigEndian, uint16(optLength - 269))
+			binary.Write(tmpBuf, binary.BigEndian, uint16(optLength-269))
 			buf.Write(tmpBuf.Bytes())
 		}
 
@@ -403,7 +400,6 @@ func (m *Message) SetStringPayload(s string) {
 	m.Payload = NewPlainTextPayload(s)
 }
 
-
 /* Helpers */
 func IsProxyRequest(msg *Message) bool {
 	if msg.GetOption(OPTION_PROXY_SCHEME) != nil || msg.GetOption(OPTION_PROXY_URI) != nil {
@@ -482,14 +478,14 @@ func encodeInt(v uint32) []byte {
 func IsCoapUri(msg *Message) bool {
 	uri := msg.GetUriPath()
 
-	if strings.HasPrefix(uri, "coap") || strings.HasPrefix(uri, "coaps")  {
+	if strings.HasPrefix(uri, "coap") || strings.HasPrefix(uri, "coaps") {
 		return true
 	}
 	return false
 }
 
 func IsHttpUri(uri string) bool {
-	if strings.HasPrefix(uri, "http") || strings.HasPrefix(uri, "http")  {
+	if strings.HasPrefix(uri, "http") || strings.HasPrefix(uri, "http") {
 		return true
 	}
 	return false

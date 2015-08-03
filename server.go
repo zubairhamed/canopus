@@ -25,10 +25,10 @@ func NewCoapServer(local string) *CoapServer {
 
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	return &CoapServer{
-		remoteAddr:   remoteAddr,
-		localAddr:    localAddr,
-		events:       NewCanopusEvents(),
-		observations: make(map[string][]*Observation),
+		remoteAddr:            remoteAddr,
+		localAddr:             localAddr,
+		events:                NewCanopusEvents(),
+		observations:          make(map[string][]*Observation),
 		fnHandleCoapCoapProxy: NullProxyHandler,
 		fnHandleCoapHttpProxy: NullProxyHandler,
 	}
@@ -46,8 +46,8 @@ type CoapServer struct {
 	events       *CanopusEvents
 	observations map[string][]*Observation
 
-	fnHandleCoapHttpProxy	ProxyHandler
-	fnHandleCoapCoapProxy	ProxyHandler
+	fnHandleCoapHttpProxy ProxyHandler
+	fnHandleCoapCoapProxy ProxyHandler
 }
 
 func (s *CoapServer) Start() {
@@ -188,8 +188,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			if IsProxyRequest(msg) {
 				if IsCoapUri(msg) {
 					s.fnHandleCoapCoapProxy(msg, conn, addr)
-				} else
-				if IsHttpUri(msg.GetOption(OPTION_PROXY_URI).StringValue()) {
+				} else if IsHttpUri(msg.GetOption(OPTION_PROXY_URI).StringValue()) {
 					s.fnHandleCoapHttpProxy(msg, conn, addr)
 				} else {
 					// Unknown URI
@@ -447,6 +446,7 @@ func (s *CoapServer) OnMessage(fn FnEventMessage) {
 }
 
 type ProxyType int
+
 const (
 	PROXY_COAP_HTTP ProxyType = 0
 	PROXY_COAP_COAP ProxyType = 1
@@ -459,8 +459,7 @@ func (s *CoapServer) SetProxy(t ProxyType, enabled bool) {
 		} else {
 			s.fnHandleCoapHttpProxy = NullProxyHandler
 		}
-	} else
-	if t == PROXY_COAP_COAP {
+	} else if t == PROXY_COAP_COAP {
 		if enabled {
 			s.fnHandleCoapCoapProxy = CoapHttpProxyHandler
 		} else {

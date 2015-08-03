@@ -1,23 +1,23 @@
 package canopus
 
 import (
-	"net"
-	"log"
-	"net/http"
 	"io/ioutil"
+	"log"
+	"net"
+	"net/http"
 )
 
 type ProxyHandler func(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
 
 func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	log.Println("Null Proxy Handler")
+	SendMessageTo(NotProxyingSupportedMessage(msg.MessageId), conn, addr)
 }
 
 func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	log.Println("CoapCoapProxyHandler Proxy Handler")
 }
 
-func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr){
+func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	proxyUri := msg.GetOption(OPTION_PROXY_URI).StringValue()
 
 	client := &http.Client{}
