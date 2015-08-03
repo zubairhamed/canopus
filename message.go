@@ -3,6 +3,7 @@ package canopus
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"log"
 	"sort"
 	"strconv"
@@ -125,8 +126,8 @@ func BytesToMessage(data []byte) (*Message, error) {
 		case 15:
 			return msg, ERR_OPTION_DELTA_USES_VALUE_15
 		}
-
 		lastOptionId += optionDelta
+
 		switch optionLength {
 		case 13:
 			optionLengthExtended := int(tmp[0])
@@ -204,28 +205,40 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 	buf.Write([]byte{messageId[1]})
 	buf.Write(msg.Token)
 
-	lastOptionId := 0
-
 	// Sort Options
 	sort.Sort(SortOptions(msg.Options))
 
+	lastOptionCode := 0
 	for _, opt := range msg.Options {
-		b := valueToBytes(opt.Value)
-		optCode := opt.Code
-		bLen := len(b)
+		optCode := int(opt.Code)
+		optDelta := optCode - lastOptionCode
+		optDeltaValue, _ := getOptionHeaderValue(optDelta)
 
-		if bLen >= 15 {
-			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | 15, byte(bLen - 15)})
-		} else {
-			buf.Write([]byte{byte(int(optCode)-lastOptionId)<<4 | byte(bLen)})
+		byteValue := valueToBytes(opt.Value)
+		valueLength := len(byteValue)
+		optLength := valueLength
+		optLengthValue, _ := getOptionHeaderValue(optLength)
+
+		buf.Write([]byte{byte(optDeltaValue<<4 | optLengthValue)})
+
+		if optDeltaValue == 13 {
+			buf.Write([]byte{byte(optDelta - 13)})
+		} else if optDeltaValue == 14 {
+			tmpBuf := new(bytes.Buffer)
+			binary.Write(tmpBuf, binary.BigEndian, uint16(optDelta-269))
+			buf.Write(tmpBuf.Bytes())
 		}
 
-		if int(opt.Code)-lastOptionId > 15 {
-			return nil, ERR_UNKNOWN_CRITICAL_OPTION
+		if optLengthValue == 13 {
+			buf.Write([]byte{byte(optLength - 13)})
+		} else if optLengthValue == 14 {
+			tmpBuf := new(bytes.Buffer)
+			binary.Write(tmpBuf, binary.BigEndian, uint16(optLength-269))
+			buf.Write(tmpBuf.Bytes())
 		}
 
-		buf.Write(b)
-		lastOptionId = int(opt.Code)
+		buf.Write(byteValue)
+		lastOptionCode = int(optCode)
 	}
 
 	if msg.Payload != nil {
@@ -235,6 +248,23 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 		buf.Write(msg.Payload.GetBytes())
 	}
 	return buf.Bytes(), nil
+}
+
+func getOptionHeaderValue(optValue int) (int, error) {
+	switch true {
+	case optValue <= 12:
+		return optValue, nil
+		break
+
+	case optValue <= 268:
+		return 13, nil
+		break
+
+	case optValue <= 65804:
+		return 14, nil
+		break
+	}
+	return 0, errors.New("Invalid Option Delta")
 }
 
 func ValidateMessage(msg *Message) error {
@@ -251,7 +281,7 @@ func ValidateMessage(msg *Message) error {
 		opts := msg.GetOptions(opt.Code)
 
 		if len(opts) > 1 {
-			if !RepeatableOption(opts[0]) {
+			if !IsRepeatableOption(opts[0]) {
 				if opts[0].Code&0x01 == 1 {
 					return ERR_UNKNOWN_CRITICAL_OPTION
 				}
@@ -329,31 +359,9 @@ func (c Message) GetUriPath() string {
 	return "/" + strings.Join(opts, "/")
 }
 
-func (c *Message) MethodString() string {
-
-	switch c.Code {
-	case GET:
-		return "GET"
-		break
-
-	case DELETE:
-		return "DELETE"
-		break
-
-	case POST:
-		return "POST"
-		break
-
-	case PUT:
-		return "PUT"
-		break
-	}
-	return ""
-}
-
 func (m *Message) AddOption(code OptionCode, value interface{}) {
 	opt := NewOption(code, value)
-	if RepeatableOption(opt) {
+	if IsRepeatableOption(opt) {
 		m.Options = append(m.Options, opt)
 	} else {
 		m.RemoveOptions(code)
@@ -363,7 +371,7 @@ func (m *Message) AddOption(code OptionCode, value interface{}) {
 
 func (m *Message) AddOptions(opts []*Option) {
 	for _, opt := range opts {
-		if RepeatableOption(opt) {
+		if IsRepeatableOption(opt) {
 			m.Options = append(m.Options, opt)
 		} else {
 			m.RemoveOptions(opt.Code)
@@ -393,6 +401,13 @@ func (m *Message) SetStringPayload(s string) {
 }
 
 /* Helpers */
+func IsProxyRequest(msg *Message) bool {
+	if msg.GetOption(OPTION_PROXY_SCHEME) != nil || msg.GetOption(OPTION_PROXY_URI) != nil {
+		return true
+	}
+	return false
+}
+
 func valueToBytes(value interface{}) []byte {
 	var v uint32
 
@@ -458,6 +473,23 @@ func encodeInt(v uint32) []byte {
 		binary.BigEndian.PutUint32(rv, uint32(v))
 		return rv
 	}
+}
+
+func IsCoapUri(msg *Message) bool {
+	uri := msg.GetUriPath()
+
+	if strings.HasPrefix(uri, "coap") || strings.HasPrefix(uri, "coaps") {
+		return true
+	}
+	return false
+}
+
+func IsHttpUri(uri string) bool {
+	if strings.HasPrefix(uri, "http") || strings.HasPrefix(uri, "http") {
+		return true
+	}
+	return false
+
 }
 
 func MethodString(c CoapCode) string {
