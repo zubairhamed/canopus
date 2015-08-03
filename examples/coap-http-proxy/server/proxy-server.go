@@ -59,4 +59,9 @@ func main() {
 			throw 5.05 not supported
 
 
+	if proxy-uri is set, ignore Uri-Path and Uri-Query, forward to proxy-uri
+	if proxy-scheme is used, forward to: Proxy-Scheme + URI-Host + URI-Port, URi-Path + URi-Query
+
+
+
 */

@@ -14,6 +14,16 @@ func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 }
 
 func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	/*
+		Get value from Proxy-URI
+		Resolve Host Address
+		Construct CoAP message with Request URI
+		Send
+
+		Return response to client
+
+	 */
+
 	log.Println("CoapCoapProxyHandler Proxy Handler")
 }
 
