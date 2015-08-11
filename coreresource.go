@@ -27,3 +27,12 @@ type CoreResource struct {
 func (c *CoreResource) AddAttribute(key string, value interface{}) {
 	c.Attributes = append(c.Attributes, NewCoreAttribute(key, value))
 }
+
+func (c *CoreResource) GetAttribute(key string) *CoreAttribute {
+	for _, attr := range c.Attributes {
+		if attr.Key == key {
+			return attr
+		}
+	}
+	return nil
+}

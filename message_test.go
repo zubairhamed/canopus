@@ -73,8 +73,6 @@ func TestMessageObject(t *testing.T) {
 func TestOptionConversion(t *testing.T) {
 	preMsg := NewBasicConfirmableMessage()
 
-	// preMsg.Code = TYPE_NONCONFIRMABLE
-
 	preMsg.AddOption(OPTION_IF_MATCH, "")
 	preMsg.AddOptions(NewPathOptions("/test"))
 	preMsg.AddOption(OPTION_ETAG, "1234567890")
@@ -95,100 +93,41 @@ func TestOptionConversion(t *testing.T) {
 }
 
 func TestNewMessageHelpers(t *testing.T) {
-	var msg *Message
 	var messageId uint16 = 12345
 
-	msg = EmptyMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_0_EMPTY, msg.Code)
+	test_data := []struct {
+		msg 	*Message
+		code 	CoapCode
+	}{
+		{ EmptyMessage(messageId), COAPCODE_0_EMPTY },
+		{ CreatedMessage(messageId), COAPCODE_201_CREATED },
+		{ DeletedMessage(messageId),  COAPCODE_202_DELETED },
+		{ ValidMessage(messageId), COAPCODE_203_VALID },
+		{ ChangedMessage(messageId),  COAPCODE_204_CHANGED },
+		{ ContentMessage(messageId),  COAPCODE_205_CONTENT },
+		{ BadRequestMessage(messageId), COAPCODE_400_BAD_REQUEST },
+		{ UnauthorizedMessage(messageId),  COAPCODE_401_UNAUTHORIZED },
+		{ BadOptionMessage(messageId),  COAPCODE_402_BAD_OPTION },
+		{ ForbiddenMessage(messageId), COAPCODE_403_FORBIDDEN },
+		{ NotFoundMessage(messageId),  COAPCODE_404_NOT_FOUND },
+		{ MethodNotAllowedMessage(messageId),  COAPCODE_405_METHOD_NOT_ALLOWED },
+		{ NotAcceptableMessage(messageId),  COAPCODE_406_NOT_ACCEPTABLE },
+		{ ConflictMessage(messageId),  COAPCODE_409_CONFLICT },
+		{ PreconditionFailedMessage(messageId),  COAPCODE_412_PRECONDITION_FAILED },
+		{ RequestEntityTooLargeMessage(messageId),  COAPCODE_413_REQUEST_ENTITY_TOO_LARGE },
+		{ UnsupportedContentFormatMessage(messageId),  COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT },
+		{ InternalServerErrorMessage(messageId),  COAPCODE_500_INTERNAL_SERVER_ERROR },
+		{ NotImplementedMessage(messageId),  COAPCODE_501_NOT_IMPLEMENTED },
+		{ BadGatewayMessage(messageId),  COAPCODE_502_BAD_GATEWAY },
+		{ ServiceUnavailableMessage(messageId),  COAPCODE_503_SERVICE_UNAVAILABLE },
+		{ GatewayTimeoutMessage(messageId),  COAPCODE_504_GATEWAY_TIMEOUT },
+		{ ProxyingNotSupportedMessage(messageId),  COAPCODE_505_PROXYING_NOT_SUPPORTED },
+	}
 
-	msg = CreatedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_201_CREATED, msg.Code)
-
-	msg = DeletedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_202_DELETED, msg.Code)
-
-	msg = ValidMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_203_VALID, msg.Code)
-
-	msg = ChangedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_204_CHANGED, msg.Code)
-
-	msg = ContentMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_205_CONTENT, msg.Code)
-
-	msg = BadRequestMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_400_BAD_REQUEST, msg.Code)
-
-	msg = UnauthorizedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_401_UNAUTHORIZED, msg.Code)
-
-	msg = BadOptionMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_402_BAD_OPTION, msg.Code)
-
-	msg = ForbiddenMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_403_FORBIDDEN, msg.Code)
-
-	msg = NotFoundMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_404_NOT_FOUND, msg.Code)
-
-	msg = MethodNotAllowedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_405_METHOD_NOT_ALLOWED, msg.Code)
-
-	msg = NotAcceptableMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_406_NOT_ACCEPTABLE, msg.Code)
-
-	msg = ConflictMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_409_CONFLICT, msg.Code)
-
-	msg = PreconditionFailedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_412_PRECONDITION_FAILED, msg.Code)
-
-	msg = RequestEntityTooLargeMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_413_REQUEST_ENTITY_TOO_LARGE, msg.Code)
-
-	msg = UnsupportedContentFormatMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.Code)
-
-	msg = InternalServerErrorMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_500_INTERNAL_SERVER_ERROR, msg.Code)
-
-	msg = NotImplementedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_501_NOT_IMPLEMENTED, msg.Code)
-
-	msg = BadGatewayMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_502_BAD_GATEWAY, msg.Code)
-
-	msg = ServiceUnavailableMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_503_SERVICE_UNAVAILABLE, msg.Code)
-
-	msg = GatewayTimeoutMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_504_GATEWAY_TIMEOUT, msg.Code)
-
-	msg = ProxyingNotSupportedMessage(messageId)
-	assert.NotNil(t, msg)
-	assert.Equal(t, COAPCODE_505_PROXYING_NOT_SUPPORTED, msg.Code)
+	for _, td := range test_data {
+		assert.NotNil(t, td.msg)
+		assert.Equal(t, td.code, td.msg.Code)
+	}
 }
 
 func NewBasicConfirmableMessage() *Message {
