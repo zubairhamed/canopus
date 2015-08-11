@@ -92,7 +92,103 @@ func TestOptionConversion(t *testing.T) {
 	postMsg, _ := BytesToMessage(converted)
 
 	PrintMessage(postMsg)
+}
 
+func TestNewMessageHelpers(t *testing.T) {
+	var msg *Message
+	var messageId uint16 = 12345
+
+	msg = EmptyMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_0_EMPTY, msg.Code)
+
+	msg = CreatedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_201_CREATED, msg.Code)
+
+	msg = DeletedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_202_DELETED, msg.Code)
+
+	msg = ValidMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_203_VALID, msg.Code)
+
+	msg = ChangedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_204_CHANGED, msg.Code)
+
+	msg = ContentMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_205_CONTENT, msg.Code)
+
+	msg = BadRequestMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_400_BAD_REQUEST, msg.Code)
+
+	msg = UnauthorizedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_401_UNAUTHORIZED, msg.Code)
+
+	msg = BadOptionMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_402_BAD_OPTION, msg.Code)
+
+	msg = ForbiddenMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_403_FORBIDDEN, msg.Code)
+
+	msg = NotFoundMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_404_NOT_FOUND, msg.Code)
+
+	msg = MethodNotAllowedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_405_METHOD_NOT_ALLOWED, msg.Code)
+
+	msg = NotAcceptableMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_406_NOT_ACCEPTABLE, msg.Code)
+
+	msg = ConflictMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_409_CONFLICT, msg.Code)
+
+	msg = PreconditionFailedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_412_PRECONDITION_FAILED, msg.Code)
+
+	msg = RequestEntityTooLargeMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_413_REQUEST_ENTITY_TOO_LARGE, msg.Code)
+
+	msg = UnsupportedContentFormatMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.Code)
+
+	msg = InternalServerErrorMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_500_INTERNAL_SERVER_ERROR, msg.Code)
+
+	msg = NotImplementedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_501_NOT_IMPLEMENTED, msg.Code)
+
+	msg = BadGatewayMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_502_BAD_GATEWAY, msg.Code)
+
+	msg = ServiceUnavailableMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_503_SERVICE_UNAVAILABLE, msg.Code)
+
+	msg = GatewayTimeoutMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_504_GATEWAY_TIMEOUT, msg.Code)
+
+	msg = ProxyingNotSupportedMessage(messageId)
+	assert.NotNil(t, msg)
+	assert.Equal(t, COAPCODE_505_PROXYING_NOT_SUPPORTED, msg.Code)
 }
 
 func NewBasicConfirmableMessage() *Message {
