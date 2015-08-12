@@ -26,6 +26,7 @@ func SendMessageTo(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) (*Respons
 	}
 
 	b, _ := MessageToBytes(msg)
+
 	_, err := conn.WriteToUDP(b, addr)
 
 	if err != nil {
