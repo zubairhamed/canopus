@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 // Sends a 402 Error - Bad Option
 func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, messageId)

@@ -515,107 +515,93 @@ func MethodString(c CoapCode) string {
 
 // Response Code Messages
 func EmptyMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_0_EMPTY	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_0_EMPTY, messageId)
 }
 
 func CreatedMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_201_CREATED	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_201_CREATED, messageId)
 }
 
 func DeletedMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_202_DELETED	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_202_DELETED, messageId)
 }
 
 func ValidMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_203_VALID	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_203_VALID, messageId)
 }
 
 func ChangedMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_204_CHANGED	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_204_CHANGED, messageId)
 }
 
 func ContentMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_205_CONTENT	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_205_CONTENT, messageId)
 }
 
 func BadRequestMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_400_BAD_REQUEST	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_400_BAD_REQUEST, messageId)
 }
 
 func UnauthorizedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_401_UNAUTHORIZED, messageId)
 }
 
-
 func BadOptionMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_402_BAD_OPTION, messageId)
 }
-
 
 func ForbiddenMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_403_FORBIDDEN, messageId)
 }
 
-
 func NotFoundMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, messageId)
 }
-
 
 func MethodNotAllowedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, messageId)
 }
 
-
 func NotAcceptableMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_406_NOT_ACCEPTABLE, messageId)
 }
-
 
 func ConflictMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_409_CONFLICT, messageId)
 }
 
-
 func PreconditionFailedMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_412_PRECONDITION_FAILED	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_412_PRECONDITION_FAILED, messageId)
 }
-
 
 func RequestEntityTooLargeMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_413_REQUEST_ENTITY_TOO_LARGE, messageId)
 }
 
-
 func UnsupportedContentFormatMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, messageId)
 }
-
 
 func InternalServerErrorMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_500_INTERNAL_SERVER_ERROR	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_500_INTERNAL_SERVER_ERROR, messageId)
 }
-
 
 func NotImplementedMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, messageId)
 }
-
 
 func BadGatewayMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_502_BAD_GATEWAY	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_502_BAD_GATEWAY, messageId)
 }
-
 
 func ServiceUnavailableMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_503_SERVICE_UNAVAILABLE	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_503_SERVICE_UNAVAILABLE, messageId)
 }
-
 
 func GatewayTimeoutMessage(messageId uint16) *Message {
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_504_GATEWAY_TIMEOUT	, messageId)
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_504_GATEWAY_TIMEOUT, messageId)
 }
 
-func ProxyingNotSupportedMessage(messageId uint16) *Message{
-	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_505_PROXYING_NOT_SUPPORTED	, messageId)
+func ProxyingNotSupportedMessage(messageId uint16) *Message {
+	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_505_PROXYING_NOT_SUPPORTED, messageId)
 }

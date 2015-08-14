@@ -37,21 +37,21 @@ func TestMessageConversion(t *testing.T) {
 	newMsg, err := BytesToMessage(b)
 	assert.Nil(t, err, "An error occured converting bytes to message")
 
-	assert.Equal(t, 0, int(newMsg.MessageType))	// 0x0: Type Confirmable
+	assert.Equal(t, 0, int(newMsg.MessageType)) // 0x0: Type Confirmable
 	assert.Equal(t, "abcd1234", bytes.NewBuffer(newMsg.Token).String(), "Token String not the same after reconversion")
 	assert.Equal(t, 61680, int(newMsg.MessageId), "Message ID not the same after reconversion")
 	assert.NotEqual(t, 0, len(newMsg.Options), "Options should not be 0")
 }
 
 func TestMessageBadOptions(t *testing.T) {
-//	testMsg := NewBasicConfirmableMessage()
+	//	testMsg := NewBasicConfirmableMessage()
 
 	// Unknown Critical Option
-//	unk := OptionCode(99)
-//	testMsg.AddOption(unk, 0)
-//	testMsg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
-//	_, err := MessageToBytes(testMsg)
-//	assert.NotNil(t, err, "Should throw ERR_UNKNOWN_CRITICAL_OPTION")
+	//	unk := OptionCode(99)
+	//	testMsg.AddOption(unk, 0)
+	//	testMsg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
+	//	_, err := MessageToBytes(testMsg)
+	//	assert.NotNil(t, err, "Should throw ERR_UNKNOWN_CRITICAL_OPTION")
 }
 
 func TestMessageObject(t *testing.T) {
@@ -96,32 +96,32 @@ func TestNewMessageHelpers(t *testing.T) {
 	var messageId uint16 = 12345
 
 	test_data := []struct {
-		msg 	*Message
-		code 	CoapCode
+		msg  *Message
+		code CoapCode
 	}{
-		{ EmptyMessage(messageId), COAPCODE_0_EMPTY },
-		{ CreatedMessage(messageId), COAPCODE_201_CREATED },
-		{ DeletedMessage(messageId),  COAPCODE_202_DELETED },
-		{ ValidMessage(messageId), COAPCODE_203_VALID },
-		{ ChangedMessage(messageId),  COAPCODE_204_CHANGED },
-		{ ContentMessage(messageId),  COAPCODE_205_CONTENT },
-		{ BadRequestMessage(messageId), COAPCODE_400_BAD_REQUEST },
-		{ UnauthorizedMessage(messageId),  COAPCODE_401_UNAUTHORIZED },
-		{ BadOptionMessage(messageId),  COAPCODE_402_BAD_OPTION },
-		{ ForbiddenMessage(messageId), COAPCODE_403_FORBIDDEN },
-		{ NotFoundMessage(messageId),  COAPCODE_404_NOT_FOUND },
-		{ MethodNotAllowedMessage(messageId),  COAPCODE_405_METHOD_NOT_ALLOWED },
-		{ NotAcceptableMessage(messageId),  COAPCODE_406_NOT_ACCEPTABLE },
-		{ ConflictMessage(messageId),  COAPCODE_409_CONFLICT },
-		{ PreconditionFailedMessage(messageId),  COAPCODE_412_PRECONDITION_FAILED },
-		{ RequestEntityTooLargeMessage(messageId),  COAPCODE_413_REQUEST_ENTITY_TOO_LARGE },
-		{ UnsupportedContentFormatMessage(messageId),  COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT },
-		{ InternalServerErrorMessage(messageId),  COAPCODE_500_INTERNAL_SERVER_ERROR },
-		{ NotImplementedMessage(messageId),  COAPCODE_501_NOT_IMPLEMENTED },
-		{ BadGatewayMessage(messageId),  COAPCODE_502_BAD_GATEWAY },
-		{ ServiceUnavailableMessage(messageId),  COAPCODE_503_SERVICE_UNAVAILABLE },
-		{ GatewayTimeoutMessage(messageId),  COAPCODE_504_GATEWAY_TIMEOUT },
-		{ ProxyingNotSupportedMessage(messageId),  COAPCODE_505_PROXYING_NOT_SUPPORTED },
+		{EmptyMessage(messageId), COAPCODE_0_EMPTY},
+		{CreatedMessage(messageId), COAPCODE_201_CREATED},
+		{DeletedMessage(messageId), COAPCODE_202_DELETED},
+		{ValidMessage(messageId), COAPCODE_203_VALID},
+		{ChangedMessage(messageId), COAPCODE_204_CHANGED},
+		{ContentMessage(messageId), COAPCODE_205_CONTENT},
+		{BadRequestMessage(messageId), COAPCODE_400_BAD_REQUEST},
+		{UnauthorizedMessage(messageId), COAPCODE_401_UNAUTHORIZED},
+		{BadOptionMessage(messageId), COAPCODE_402_BAD_OPTION},
+		{ForbiddenMessage(messageId), COAPCODE_403_FORBIDDEN},
+		{NotFoundMessage(messageId), COAPCODE_404_NOT_FOUND},
+		{MethodNotAllowedMessage(messageId), COAPCODE_405_METHOD_NOT_ALLOWED},
+		{NotAcceptableMessage(messageId), COAPCODE_406_NOT_ACCEPTABLE},
+		{ConflictMessage(messageId), COAPCODE_409_CONFLICT},
+		{PreconditionFailedMessage(messageId), COAPCODE_412_PRECONDITION_FAILED},
+		{RequestEntityTooLargeMessage(messageId), COAPCODE_413_REQUEST_ENTITY_TOO_LARGE},
+		{UnsupportedContentFormatMessage(messageId), COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT},
+		{InternalServerErrorMessage(messageId), COAPCODE_500_INTERNAL_SERVER_ERROR},
+		{NotImplementedMessage(messageId), COAPCODE_501_NOT_IMPLEMENTED},
+		{BadGatewayMessage(messageId), COAPCODE_502_BAD_GATEWAY},
+		{ServiceUnavailableMessage(messageId), COAPCODE_503_SERVICE_UNAVAILABLE},
+		{GatewayTimeoutMessage(messageId), COAPCODE_504_GATEWAY_TIMEOUT},
+		{ProxyingNotSupportedMessage(messageId), COAPCODE_505_PROXYING_NOT_SUPPORTED},
 	}
 
 	for _, td := range test_data {

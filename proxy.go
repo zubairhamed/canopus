@@ -22,7 +22,7 @@ func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 
 		Return response to client
 
-	 */
+	*/
 
 	log.Println("CoapCoapProxyHandler Proxy Handler")
 }
@@ -39,7 +39,6 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if etag != nil {
 		req.Header.Add("ETag", etag.StringValue())
 	}
-
 
 	// TODO: Set timeout handler, and on timeout return 5.04
 	resp, err := client.Do(req)
@@ -69,6 +68,3 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 func HttpCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	log.Println("HttpCoapProxyHandler Proxy Handler")
 }
-
-
-

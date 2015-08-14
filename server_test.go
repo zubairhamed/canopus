@@ -1,9 +1,9 @@
 package canopus
-import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-)
 
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestServerInstantiate(t *testing.T) {
 	var s *CoapServer
