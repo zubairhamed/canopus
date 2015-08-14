@@ -42,6 +42,8 @@ func TestCoreResourceUtil(t *testing.T) {
 	assert.Equal(t, "/sensors/temp", resource1.Target)
 	assert.Equal(t, 3, len(resource1.Attributes))
 
+	assert.Nil(t, resource1.GetAttribute("invalid_attr"))
+
 	assert.NotNil(t, resource1.GetAttribute("ct"))
 	assert.Equal(t, "ct", resource1.GetAttribute("ct").Key)
 	assert.Equal(t, "41", resource1.GetAttribute("ct").Value)
