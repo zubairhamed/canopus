@@ -18,6 +18,7 @@ func GenerateMessageId() uint16 {
 }
 
 var genChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+
 // Generates a random token by a given length
 func GenerateToken(l int) string {
 	rand.Seed(time.Now().UTC().UnixNano())

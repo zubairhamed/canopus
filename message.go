@@ -188,6 +188,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 
 // type to sort the coap options list (which is mandatory) prior to transmission
 type SortOptions []*Option
+
 func (opts SortOptions) Len() int {
 	return len(opts)
 }

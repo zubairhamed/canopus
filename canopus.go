@@ -23,6 +23,7 @@ const (
 	TYPE_RESET           = 3
 )
 
+// Fragments/parts of a CoAP Message packet
 const (
 	DATA_HEADER      = 0
 	DATA_CODE        = 1
@@ -31,6 +32,7 @@ const (
 	DATA_TOKEN_START = 4
 )
 
+// Option Codes
 type OptionCode int
 
 const (
@@ -54,6 +56,7 @@ const (
 	OPTION_SIZE1          OptionCode = 60
 )
 
+// Valid CoAP Codes
 type CoapCode uint8
 
 const (
@@ -101,11 +104,13 @@ const COAPS_DEFAULT_PORT = 5684
 const PAYLOAD_MARKER = 0xff
 const BUF_SIZE = 1500
 
+// Number of seconds before a MessageID Purge is initiated
 const MESSAGEID_PURGE_DURATION = 60
 
 type RouteHandler func(*Request) *Response
 type ResponseHandler func(*Response, error)
 
+// Supported Media Types
 type MediaType int
 
 const (

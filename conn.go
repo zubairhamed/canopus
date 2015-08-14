@@ -1,9 +1,9 @@
 package canopus
 
 import (
+	"errors"
 	"net"
 	"time"
-	"errors"
 )
 
 // A simple wrapper interface around a connection
@@ -33,8 +33,8 @@ func NewCanopusUDPConnectionWithAddr(c *net.UDPConn, a net.Addr) *CanopusUDPConn
 }
 
 type CanopusUDPConnection struct {
-	conn 	net.Conn
-	addr 	net.Addr
+	conn net.Conn
+	addr net.Addr
 }
 
 func (c *CanopusUDPConnection) GetConnection() net.Conn {
@@ -51,13 +51,13 @@ func (c *CanopusUDPConnection) SetReadDeadline(t time.Time) error {
 
 func (c *CanopusUDPConnection) Read() (buf []byte, n int, err error) {
 	buf = make([]byte, 1500)
-	n, _,err = c.conn.(*net.UDPConn).ReadFromUDP(buf)
+	n, _, err = c.conn.(*net.UDPConn).ReadFromUDP(buf)
 
 	return
 }
 
 func (c *CanopusUDPConnection) WriteTo(b []byte, addr net.Addr) (n int, err error) {
-	n,err = c.conn.(*net.UDPConn).WriteToUDP(b, addr.(*net.UDPAddr))
+	n, err = c.conn.(*net.UDPConn).WriteToUDP(b, addr.(*net.UDPAddr))
 
 	return
 }
@@ -67,15 +67,14 @@ func NewMockCanopusUDPConnection(code CoapCode, writeErr bool, readErr bool) *Mo
 	return &MockCanopusUDPConnection{
 		coapCode: code,
 		writeErr: writeErr,
-		readErr: readErr,
+		readErr:  readErr,
 	}
 }
 
-
 type MockCanopusUDPConnection struct {
-	coapCode 	CoapCode
-	writeErr 	bool
-	readErr 	bool
+	coapCode CoapCode
+	writeErr bool
+	readErr  bool
 }
 
 func (c *MockCanopusUDPConnection) GetConnection() net.Conn {
@@ -114,4 +113,3 @@ func (c *MockCanopusUDPConnection) WriteTo(b []byte, addr net.Addr) (n int, err 
 	}
 	return
 }
-
