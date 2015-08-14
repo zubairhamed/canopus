@@ -116,14 +116,14 @@ func (ce *CanopusEvents) Discover() {
 	}
 }
 
-// Fires the "OnError" event
+// Fires the "OnError" event given an error object
 func (ce *CanopusEvents) Error(err error) {
 	for _, fn := range ce.evtFnError {
 		fn(err)
 	}
 }
 
-// Fires the "OnObserve" event
+// Fires the "OnObserve" event for a given resource
 func (ce *CanopusEvents) Observe(resource string, msg *Message) {
 	for _, fn := range ce.evtFnObserve {
 		fn(resource, msg)

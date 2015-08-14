@@ -9,6 +9,7 @@ import (
 
 type ProxyHandler func(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
 
+// The default handler when proxying is disabled
 func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId), NewCanopusUDPConnection(conn), addr)
 }
@@ -27,6 +28,7 @@ func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	log.Println("CoapCoapProxyHandler Proxy Handler")
 }
 
+// Handles requests for proxying from CoAP to HTTP
 func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	proxyUri := msg.GetOption(OPTION_PROXY_URI).StringValue()
 	requestMethod := msg.Code
@@ -65,6 +67,7 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	SendMessageTo(respMsg.GetMessage(), NewCanopusUDPConnection(conn), addr)
 }
 
+// Handles requests for proxying from HTTP to CoAP
 func HttpCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	log.Println("HttpCoapProxyHandler Proxy Handler")
 }

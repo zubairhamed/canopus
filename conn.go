@@ -6,15 +6,15 @@ import (
 	"errors"
 )
 
+// A simple wrapper interface around a connection
+// This was primarily concieved so that mocks could be
+// created to unit test connection code
 type CanopusConnection interface {
 	GetConnection() net.Conn
 	Write(b []byte) (int, error)
 	SetReadDeadline(t time.Time) error
 	Read() (buf []byte, n int, err error)
 	WriteTo(b []byte, addr net.Addr) (int, error)
-
-	// Send(*Message)(*Response, error)
-	// SendTo(*Message, net.Addr)(*Response, error)
 }
 
 // ----------------------------------------------------------------

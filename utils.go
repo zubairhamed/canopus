@@ -1,13 +1,13 @@
 package canopus
 
 import (
-	"errors"
 	"math/rand"
 	"regexp"
 	"strings"
 	"time"
 )
 
+// Generate a uint16 Message ID
 func GenerateMessageId() uint16 {
 	if MESSAGEID_CURR != 65535 {
 		MESSAGEID_CURR++
@@ -18,7 +18,7 @@ func GenerateMessageId() uint16 {
 }
 
 var genChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-
+// Generates a random token by a given length
 func GenerateToken(l int) string {
 	rand.Seed(time.Now().UTC().UnixNano())
 	token := make([]rune, l)
@@ -142,27 +142,6 @@ func CoapCodeToString(code CoapCode) string {
 	}
 }
 
-func ValidateResponse(req *Request, resp *Response) error {
-	return nil
-}
-
-func MatchRoute(route string, match string) (error, map[string]string) {
-	re, _ := regexp.Compile(match)
-
-	matched := re.FindAllStringSubmatch(route, -1)
-	if len(matched) > 0 {
-		result := make(map[string]string)
-
-		for i, name := range re.SubexpNames() {
-			result[name] = matched[0][i]
-		}
-
-		return nil, result
-	} else {
-		return errors.New("No match for this route"), nil
-	}
-}
-
 func ValidCoapMediaTypeCode(mt MediaType) bool {
 	switch mt {
 	case MEDIATYPE_TEXT_PLAIN, MEDIATYPE_TEXT_XML, MEDIATYPE_TEXT_CSV, MEDIATYPE_TEXT_HTML, MEDIATYPE_IMAGE_GIF,
@@ -176,9 +155,4 @@ func ValidCoapMediaTypeCode(mt MediaType) bool {
 	}
 
 	return false
-}
-
-// TODO: Fix
-func AcceptableCoapMediaType(mt string) bool {
-	return true
 }

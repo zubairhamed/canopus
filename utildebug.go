@@ -4,6 +4,7 @@ import (
 	"log"
 )
 
+// Pretty prints out a given Message's options
 func PrintOptions(msg *Message) {
 	opts := msg.Options
 	log.Println(" - - - OPTIONS - - - ")
@@ -16,6 +17,7 @@ func PrintOptions(msg *Message) {
 	}
 }
 
+// Pretty prints out a given Message
 func PrintMessage(msg *Message) {
 	log.Println("= = = = = = = = = = = = = = = = ")
 	log.Println("Code: ", msg.Code)
@@ -30,6 +32,7 @@ func PrintMessage(msg *Message) {
 
 }
 
+// Returns the string representation of a given Option Code
 func OptionNumberToString(o OptionCode) string {
 	switch o {
 	case OPTION_IF_MATCH:

@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-/* Option */
+// Represents an Option for a CoAP Message
 type Option struct {
 	Code  OptionCode
 	Value interface{}
@@ -14,6 +14,7 @@ func (o *Option) Name() string {
 	return "Name of option"
 }
 
+// Determines if an option is elective
 func (o *Option) IsElective() bool {
 	if (int(o.Code) % 2) != 0 {
 		return false
@@ -21,6 +22,7 @@ func (o *Option) IsElective() bool {
 	return true
 }
 
+// Determines if an option is critical
 func (o *Option) IsCritical() bool {
 	if (int(o.Code) % 2) != 0 {
 		return true
@@ -28,12 +30,12 @@ func (o *Option) IsCritical() bool {
 	return false
 }
 
+// Returns the string value of an option
 func (o *Option) StringValue() string {
 	return o.Value.(string)
 }
 
-////////////////////////////////////////
-
+// Instantiates a New Option
 func NewOption(optionNumber OptionCode, optionValue interface{}) *Option {
 	return &Option{
 		Code:  optionNumber,
@@ -41,6 +43,7 @@ func NewOption(optionNumber OptionCode, optionValue interface{}) *Option {
 	}
 }
 
+// Creates an array of options decomposed from a given path
 func NewPathOptions(path string) []*Option {
 	opts := []*Option{}
 	ps := strings.Split(path, "/")
@@ -54,6 +57,7 @@ func NewPathOptions(path string) []*Option {
 	return opts
 }
 
+// Checks if an option is repeatable
 func IsRepeatableOption(opt *Option) bool {
 	switch opt.Code {
 
@@ -66,6 +70,7 @@ func IsRepeatableOption(opt *Option) bool {
 	}
 }
 
+// Checks if an option/option code is recognizable/valid
 func IsValidOption(opt *Option) bool {
 	switch opt.Code {
 
@@ -80,6 +85,7 @@ func IsValidOption(opt *Option) bool {
 	}
 }
 
+// Determines if an option is elective
 func IsElectiveOption(opt *Option) bool {
 	i := int(opt.Code)
 
@@ -89,6 +95,7 @@ func IsElectiveOption(opt *Option) bool {
 	return true
 }
 
+// Determines if an option is critical
 func IsCriticalOption(opt *Option) bool {
 	return !IsElectiveOption(opt)
 }

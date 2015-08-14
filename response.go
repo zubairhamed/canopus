@@ -2,6 +2,7 @@ package canopus
 
 import "strings"
 
+// Creates a new Response object with a Message object and any error messages
 func NewResponse(msg *Message, err error) *Response {
 	resp := &Response{
 		msg: msg,
@@ -11,6 +12,7 @@ func NewResponse(msg *Message, err error) *Response {
 	return resp
 }
 
+// Creates a new response object with a Message object
 func NewResponseWithMessage(msg *Message) *Response {
 	resp := &Response{
 		msg: msg,

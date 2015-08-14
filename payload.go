@@ -6,18 +6,21 @@ import (
 	"log"
 )
 
+// Represents the payload/content of a CoAP Message
 type MessagePayload interface {
 	GetBytes() []byte
 	Length() int
 	String() string
 }
 
+// Instantiates a new message payload of type string
 func NewPlainTextPayload(s string) MessagePayload {
 	return &PlainTextPayload{
 		content: s,
 	}
 }
 
+// Represents a message payload containing string value
 type PlainTextPayload struct {
 	content string
 }
@@ -34,6 +37,7 @@ func (p *PlainTextPayload) String() string {
 	return p.content
 }
 
+// Represents a message payload containing core-link format values
 type CoreLinkFormatPayload struct {
 }
 
@@ -49,6 +53,7 @@ func (p *CoreLinkFormatPayload) String() string {
 	return ""
 }
 
+// Represents a message payload containing an array of bytes
 func NewBytesPayload(v []byte) MessagePayload {
 	return &BytesPayload{
 		content: v,
@@ -71,6 +76,7 @@ func (p *BytesPayload) String() string {
 	return string(p.content)
 }
 
+// Represents a message payload containing XML String
 type XmlPayload struct {
 }
 
@@ -78,6 +84,7 @@ func NewEmptyPayload() MessagePayload {
 	return &EmptyPayload{}
 }
 
+// Represents an empty message payload
 type EmptyPayload struct {
 }
 
@@ -99,6 +106,7 @@ func NewJsonPayload(obj interface{}) MessagePayload {
 	}
 }
 
+// Represents a message payload containing JSON String
 type JsonPayload struct {
 	obj interface{}
 }

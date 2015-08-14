@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Creates a New Request Instance
 func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) *Request {
 	msg := NewMessage(messageType, messageMethod, messageId)
 	msg.Token = []byte(GenerateToken(8))
@@ -15,6 +16,7 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) *Re
 	}
 }
 
+// Creates a new request messages from a CoAP Message
 func NewRequestFromMessage(msg *Message) *Request {
 	return &Request{
 		msg: msg,
@@ -30,6 +32,8 @@ func NewClientRequestFromMessage(msg *Message, attrs map[string]string, conn *ne
 	}
 }
 
+// Wraps a CoAP Message as a Request
+// Provides various methods which proxies the Message object methods
 type Request struct {
 	msg    *Message
 	attrs  map[string]string

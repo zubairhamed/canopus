@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// Instantiates a new message object
+// messageType (e.g. Confirm/Non-Confirm)
+// CoAP code	404 - Not found etc
+// Message ID	uint16 unique id
 func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
 	return &Message{
 		MessageType: messageType,
@@ -18,12 +22,14 @@ func NewMessage(messageType uint8, code CoapCode, messageId uint16) *Message {
 	}
 }
 
+// Instantiates an empty message with a given message id
 func NewEmptyMessage(id uint16) *Message {
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, id)
 
 	return msg
 }
 
+// Instantiates an empty message of a specific type and message id
 func NewMessageOfType(t uint8, id uint16) *Message {
 	return &Message{
 		MessageType: t,
@@ -44,9 +50,9 @@ func NewMessageOfType(t uint8, id uint16) *Message {
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-/**
-Converts bytes to a CoAP Message
-*/
+
+// Converts an array of bytes to a Mesasge object.
+// An error is returned if a parsing error occurs
 func BytesToMessage(data []byte) (*Message, error) {
 	msg := &Message{}
 
@@ -180,8 +186,8 @@ func BytesToMessage(data []byte) (*Message, error) {
 	return msg, err
 }
 
+// type to sort the coap options list (which is mandatory) prior to transmission
 type SortOptions []*Option
-
 func (opts SortOptions) Len() int {
 	return len(opts)
 }
@@ -194,6 +200,7 @@ func (opts SortOptions) Less(i, j int) bool {
 	return opts[i].Code < opts[j].Code
 }
 
+// Converts a message object to a byte array. Typically done prior to transmission
 func MessageToBytes(msg *Message) ([]byte, error) {
 	messageId := []byte{0, 0}
 	binary.BigEndian.PutUint16(messageId, msg.MessageId)
@@ -267,6 +274,7 @@ func getOptionHeaderValue(optValue int) (int, error) {
 	return 0, errors.New("Invalid Option Delta")
 }
 
+// Validates a message object and returns any error upon validation failure
 func ValidateMessage(msg *Message) error {
 	if msg.MessageType > 3 {
 		return ERR_UNKNOWN_MESSAGE_TYPE
@@ -292,6 +300,7 @@ func ValidateMessage(msg *Message) error {
 	return nil
 }
 
+// A Message object represents a CoAP payload
 type Message struct {
 	MessageType uint8
 	Code        CoapCode
@@ -316,6 +325,7 @@ func (c Message) GetTokenLength() uint8 {
 	return uint8(len(c.Token))
 }
 
+// Returns an array of options given an option code
 func (c Message) GetOptions(id OptionCode) []*Option {
 	var opts []*Option
 	for _, val := range c.Options {
@@ -326,6 +336,7 @@ func (c Message) GetOptions(id OptionCode) []*Option {
 	return opts
 }
 
+// Returns the first option found for a given option code
 func (c Message) GetOption(id OptionCode) *Option {
 	for _, val := range c.Options {
 		if val.Code == id {
@@ -335,6 +346,7 @@ func (c Message) GetOption(id OptionCode) *Option {
 	return nil
 }
 
+// Attempts to return the string value of an Option
 func (c Message) GetOptionsAsString(id OptionCode) []string {
 	opts := c.GetOptions(id)
 
@@ -347,18 +359,22 @@ func (c Message) GetOptionsAsString(id OptionCode) []string {
 	return str
 }
 
+// Returns the string value of the Location Path Options by joining and defining a / separator
 func (c *Message) GetLocationPath() string {
 	opts := c.GetOptionsAsString(OPTION_LOCATION_PATH)
 
 	return strings.Join(opts, "/")
 }
 
+// Returns the string value of the Uri Path Options by joining and defining a / separator
 func (c Message) GetUriPath() string {
 	opts := c.GetOptionsAsString(OPTION_URI_PATH)
 
 	return "/" + strings.Join(opts, "/")
 }
 
+// Add an Option to the message. If an option is not repeatable, it will replace
+// any existing defined Option of the same type
 func (m *Message) AddOption(code OptionCode, value interface{}) {
 	opt := NewOption(code, value)
 	if IsRepeatableOption(opt) {
@@ -369,6 +385,8 @@ func (m *Message) AddOption(code OptionCode, value interface{}) {
 	}
 }
 
+// Add an array of Options to the message. If an option is not repeatable, it will replace
+// any existing defined Option of the same type
 func (m *Message) AddOptions(opts []*Option) {
 	for _, opt := range opts {
 		if IsRepeatableOption(opt) {
@@ -380,12 +398,14 @@ func (m *Message) AddOptions(opts []*Option) {
 	}
 }
 
+// Copies the given list of options from another message to this one
 func (m *Message) CloneOptions(cm *Message, opts ...OptionCode) {
 	for _, opt := range opts {
 		m.AddOptions(cm.GetOptions(opt))
 	}
 }
 
+// Removes an Option
 func (m *Message) RemoveOptions(id OptionCode) {
 	var opts []*Option
 	for _, opt := range m.Options {
@@ -396,11 +416,13 @@ func (m *Message) RemoveOptions(id OptionCode) {
 	m.Options = opts
 }
 
+// Adds a string payload
 func (m *Message) SetStringPayload(s string) {
 	m.Payload = NewPlainTextPayload(s)
 }
 
 /* Helpers */
+// Determines if a message contains options for proxying (i.e. Proxy-Scheme or Proxy-Uri)
 func IsProxyRequest(msg *Message) bool {
 	if msg.GetOption(OPTION_PROXY_SCHEME) != nil || msg.GetOption(OPTION_PROXY_URI) != nil {
 		return true
@@ -435,6 +457,7 @@ func valueToBytes(value interface{}) []byte {
 	return encodeInt(v)
 }
 
+// Returns the string value for a Message Payload
 func PayloadAsString(p MessagePayload) string {
 	if p == nil {
 		return ""
@@ -475,6 +498,7 @@ func encodeInt(v uint32) []byte {
 	}
 }
 
+// Determines if a message contains URI targetting a CoAP resource
 func IsCoapUri(msg *Message) bool {
 	uri := msg.GetUriPath()
 
@@ -484,6 +508,7 @@ func IsCoapUri(msg *Message) bool {
 	return false
 }
 
+// Determines if a message contains URI targetting an HTTP resource
 func IsHttpUri(uri string) bool {
 	if strings.HasPrefix(uri, "http") || strings.HasPrefix(uri, "http") {
 		return true
@@ -492,6 +517,7 @@ func IsHttpUri(uri string) bool {
 
 }
 
+// Gets the string representation of a CoAP Method code (e.g. GET, PUT, DELETE etc)
 func MethodString(c CoapCode) string {
 	switch c {
 	case GET:
@@ -514,94 +540,117 @@ func MethodString(c CoapCode) string {
 }
 
 // Response Code Messages
+// Creates a Non-Confirmable Empty Message
 func EmptyMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_0_EMPTY, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 201 - Created
 func CreatedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_201_CREATED, messageId)
 }
 
+// // Creates a Non-Confirmable with CoAP Code 202 - Deleted
 func DeletedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_202_DELETED, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 203 - Valid
 func ValidMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_203_VALID, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 204 - Changed
 func ChangedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_204_CHANGED, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 205 - Content
 func ContentMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_205_CONTENT, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 400 - Bad Request
 func BadRequestMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_400_BAD_REQUEST, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 401 - Unauthorized
 func UnauthorizedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_401_UNAUTHORIZED, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 402 - Bad Option
 func BadOptionMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_402_BAD_OPTION, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 403 - Forbidden
 func ForbiddenMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_403_FORBIDDEN, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 404 - Not Found
 func NotFoundMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 405 - Method Not Allowed
 func MethodNotAllowedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 406 - Not Acceptable
 func NotAcceptableMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_406_NOT_ACCEPTABLE, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 409 - Conflict
 func ConflictMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_409_CONFLICT, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 412 - Precondition Failed
 func PreconditionFailedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_412_PRECONDITION_FAILED, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 413 - Request Entity Too Large
 func RequestEntityTooLargeMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_413_REQUEST_ENTITY_TOO_LARGE, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 415 - Unsupported Content Format
 func UnsupportedContentFormatMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 500 - Internal Server Error
 func InternalServerErrorMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_500_INTERNAL_SERVER_ERROR, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 501 - Not Implemented
 func NotImplementedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 502 - Bad Gateway
 func BadGatewayMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_502_BAD_GATEWAY, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 503 - Service Unavailable
 func ServiceUnavailableMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_503_SERVICE_UNAVAILABLE, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 504 - Gateway Timeout
 func GatewayTimeoutMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_504_GATEWAY_TIMEOUT, messageId)
 }
 
+// Creates a Non-Confirmable with CoAP Code 505 - Proxying Not Supported
 func ProxyingNotSupportedMessage(messageId uint16) *Message {
 	return NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_505_PROXYING_NOT_SUPPORTED, messageId)
 }
