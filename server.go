@@ -175,7 +175,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			if err != nil {
 				if err == ERR_UNKNOWN_CRITICAL_OPTION {
 					if msg.MessageType == TYPE_CONFIRMABLE {
-						SendError402BadOption(msg.MessageId, conn, addr)
+						SendMessageTo(BadOptionMessage(msg.MessageId), NewCanopusUDPConnection(conn), addr)
 						return
 					} else {
 						// Ignore silently

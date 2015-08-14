@@ -23,8 +23,17 @@ func TestSendMessages(t *testing.T) {
 	assert.Equal(t, ERR_NIL_ADDR, err)
 
 	addr := &net.UDPAddr{}
-	conn = NewMockCanopusUDPConnection(COAPCODE_201_CREATED)
+	conn = NewMockCanopusUDPConnection(COAPCODE_201_CREATED, false, false)
 	msg := NewBasicConfirmableMessage()
 	_, err = SendMessageTo(msg, conn, addr)
 	assert.Nil(t, err)
+
+	msg.MessageType = TYPE_NONCONFIRMABLE
+	_, err = SendMessageTo(msg, conn, addr)
+	assert.Nil(t, err)
+
+	conn = NewMockCanopusUDPConnection(COAPCODE_201_CREATED, false, true)
+	msg.MessageType = TYPE_CONFIRMABLE
+	_, err = SendMessageTo(msg, conn, addr)
+	assert.NotNil(t, err)
 }

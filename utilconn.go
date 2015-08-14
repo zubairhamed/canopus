@@ -6,14 +6,6 @@ import (
 	"time"
 )
 
-// Sends a 402 Error - Bad Option
-func SendError402BadOption(messageId uint16, conn *net.UDPConn, addr *net.UDPAddr) {
-	msg := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, messageId)
-	msg.SetStringPayload("Bad Option: An unknown option of type critical was encountered")
-
-	SendMessageTo(msg, NewCanopusUDPConnection(conn), addr)
-}
-
 // Sends a CoAP Message to UDP address
 func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (*Response, error) {
 	if conn == nil {
@@ -105,9 +97,7 @@ func SendAsyncMessage(msg *Message, conn *net.UDPConn, fn ResponseHandler) {
 		}
 
 		msg, err := BytesToMessage(buf[:n])
-
 		resp := NewResponse(msg, err)
-
 		fn(resp, err)
 	}
 }
