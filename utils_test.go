@@ -15,6 +15,10 @@ func TestGenerateMessageId(t *testing.T) {
 		assert.NotEqual(t, 65535, id)
 		assert.Equal(t, id2, id)
 	}
+
+	MESSAGEID_CURR = 65535
+	id = GenerateMessageId()
+	assert.Equal(t, uint16(1), id)
 }
 
 func TestGenerateToken(t *testing.T) {
