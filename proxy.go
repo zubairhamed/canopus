@@ -10,7 +10,7 @@ import (
 type ProxyHandler func(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
 
 func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId), conn, addr)
+	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId), NewCanopusUDPConnection(conn), addr)
 }
 
 func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
@@ -48,7 +48,7 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 
 	if err != nil {
 		log.Println(err)
-		SendMessageTo(BadGatewayMessage(msg.MessageId), conn, addr)
+		SendMessageTo(BadGatewayMessage(msg.MessageId), NewCanopusUDPConnection(conn), addr)
 	}
 
 	contents, _ := ioutil.ReadAll(resp.Body)
@@ -62,7 +62,7 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 		}
 	}
 
-	SendMessageTo(respMsg.GetMessage(), conn, addr)
+	SendMessageTo(respMsg.GetMessage(), NewCanopusUDPConnection(conn), addr)
 }
 
 func HttpCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
