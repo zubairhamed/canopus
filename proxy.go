@@ -11,7 +11,7 @@ type ProxyHandler func(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
 
 // The default handler when proxying is disabled
 func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId), NewCanopusUDPConnection(conn), addr)
+	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
 }
 
 func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
@@ -50,7 +50,7 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 
 	if err != nil {
 		log.Println(err)
-		SendMessageTo(BadGatewayMessage(msg.MessageId), NewCanopusUDPConnection(conn), addr)
+		SendMessageTo(BadGatewayMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
 	}
 
 	contents, _ := ioutil.ReadAll(resp.Body)

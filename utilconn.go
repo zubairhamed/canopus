@@ -6,7 +6,7 @@ import (
 )
 
 // Sends a CoAP Message to UDP address
-func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (*Response, error) {
+func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (Response, error) {
 	if conn == nil {
 		return nil, ERR_NIL_CONN
 	}
@@ -27,7 +27,7 @@ func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (*Re
 	}
 
 	if msg.MessageType == TYPE_NONCONFIRMABLE {
-		return nil, err
+		return NewResponse(NewEmptyMessage(msg.MessageId), err), err
 	} else {
 		// conn.SetReadDeadline(time.Now().Add(time.Second * 2))
 		buf, n, err := conn.Read()
@@ -43,7 +43,7 @@ func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (*Re
 }
 
 // Sends a CoAP Message to a UDP Connection
-func SendMessage(msg *Message, conn CanopusConnection) (*Response, error) {
+func SendMessage(msg *Message, conn CanopusConnection) (Response, error) {
 	if conn == nil {
 		return nil, ERR_NIL_CONN
 	}

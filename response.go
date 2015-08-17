@@ -2,9 +2,40 @@ package canopus
 
 import "strings"
 
+func NoResponse() Response {
+	return NilResponse{}
+}
+
+type Response interface {
+	GetMessage() *Message
+	GetError() error
+	GetPayload() []byte
+	GetUriQuery(q string) string
+}
+
+type NilResponse struct {
+
+}
+
+func (c NilResponse) GetMessage() *Message {
+	return nil
+}
+
+func (c NilResponse) GetError() error {
+	return nil
+}
+
+func (c NilResponse) GetPayload() []byte {
+	return nil
+}
+
+func (c NilResponse) GetUriQuery(q string) string {
+	return ""
+}
+
 // Creates a new Response object with a Message object and any error messages
-func NewResponse(msg *Message, err error) *Response {
-	resp := &Response{
+func NewResponse(msg *Message, err error) Response {
+	resp := &DefaultResponse{
 		msg: msg,
 		err: err,
 	}
@@ -13,32 +44,32 @@ func NewResponse(msg *Message, err error) *Response {
 }
 
 // Creates a new response object with a Message object
-func NewResponseWithMessage(msg *Message) *Response {
-	resp := &Response{
+func NewResponseWithMessage(msg *Message) Response {
+	resp := &DefaultResponse{
 		msg: msg,
 	}
 
 	return resp
 }
 
-type Response struct {
+type DefaultResponse struct {
 	msg *Message
 	err error
 }
 
-func (c *Response) GetMessage() *Message {
+func (c *DefaultResponse) GetMessage() *Message {
 	return c.msg
 }
 
-func (c *Response) GetError() error {
+func (c *DefaultResponse) GetError() error {
 	return c.err
 }
 
-func (c *Response) GetPayload() []byte {
+func (c *DefaultResponse) GetPayload() []byte {
 	return c.GetMessage().Payload.GetBytes()
 }
 
-func (c *Response) GetUriQuery(q string) string {
+func (c *DefaultResponse) GetUriQuery(q string) string {
 	qs := c.GetMessage().GetOptionsAsString(OPTION_URI_QUERY)
 
 	for _, o := range qs {

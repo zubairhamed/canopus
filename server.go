@@ -52,11 +52,10 @@ type CoapServer struct {
 
 func (s *CoapServer) Start() {
 
-	var discoveryRoute RouteHandler = func(req *Request) *Response {
+	var discoveryRoute RouteHandler = func(req *Request) Response {
 		msg := req.GetMessage()
 
-		ack := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, msg.MessageId)
-		ack.Code = COAPCODE_205_CONTENT
+		ack := ContentMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
 
 		var buf bytes.Buffer
@@ -162,9 +161,10 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 		}
 	} else {
 		if msg.MessageType != TYPE_RESET {
+			log.Println("Code == ", msg.Code)
 			// Unsupported Method
 			if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
-				ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_501_NOT_IMPLEMENTED, msg.MessageId)
+				ret := NotImplementedMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
 				ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 				s.events.Message(ret, false)
@@ -175,7 +175,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			if err != nil {
 				if err == ERR_UNKNOWN_CRITICAL_OPTION {
 					if msg.MessageType == TYPE_CONFIRMABLE {
-						SendMessageTo(BadOptionMessage(msg.MessageId), NewCanopusUDPConnection(conn), addr)
+						SendMessageTo(BadOptionMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
 						return
 					} else {
 						// Ignore silently
@@ -197,7 +197,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 				route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
 				if err != nil {
 					if err == ERR_NO_MATCHING_ROUTE {
-						ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_404_NOT_FOUND, msg.MessageId)
+						ret := NotFoundMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
 						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 						ret.Token = msg.Token
 
@@ -209,7 +209,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 					}
 
 					if err == ERR_NO_MATCHING_METHOD {
-						ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_405_METHOD_NOT_ALLOWED, msg.MessageId)
+						ret := MethodNotAllowedMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
 						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 						s.events.Message(ret, false)
@@ -220,7 +220,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 					}
 
 					if err == ERR_UNSUPPORTED_CONTENT_FORMAT {
-						ret := NewMessage(TYPE_NONCONFIRMABLE, COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, msg.MessageId)
+						ret := UnsupportedContentFormatMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
 						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 						s.events.Message(ret, false)
@@ -236,7 +236,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 				if dupe {
 					log.Println("Duplicate Message ID ", msg.MessageId)
 					if msg.MessageType == TYPE_CONFIRMABLE {
-						ret := NewMessage(TYPE_RESET, COAPCODE_0_EMPTY, msg.MessageId)
+						ret := EmptyMessage(msg.MessageId, TYPE_RESET)
 						ret.CloneOptions(msg, OPTION_URI_PATH, OPTION_CONTENT_FORMAT)
 
 						s.events.Message(ret, false)
@@ -287,13 +287,16 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 					}
 
 					resp := route.Handler(req)
-					respMsg := resp.GetMessage()
+					_, nilresponse := resp.(NilResponse)
+					if !nilresponse {
+						respMsg := resp.GetMessage()
 
-					// TODO: Validate Message before sending (e.g missing messageId)
-					err := ValidateMessage(respMsg)
-					if err == nil {
-						s.events.Message(respMsg, false)
-						SendMessageTo(respMsg, NewCanopusUDPConnection(conn), addr)
+						// TODO: Validate Message before sending (e.g missing messageId)
+						err := ValidateMessage(respMsg)
+						if err == nil {
+							s.events.Message(respMsg, false)
+							SendMessageTo(respMsg, NewCanopusUDPConnection(conn), addr)
+						}
 					}
 				}
 			}
@@ -339,15 +342,19 @@ func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Ro
 	return route
 }
 
-func (c *CoapServer) Send(req *Request) (*Response, error) {
+func (c *CoapServer) Send(req *Request) (Response, error) {
 	c.events.Message(req.GetMessage(), false)
 	response, err := SendMessageTo(req.GetMessage(), NewCanopusUDPConnection(c.localConn), c.remoteAddr)
+
+	if err != nil {
+		log.Println(err)
+	}
 	c.events.Message(response.GetMessage(), true)
 
 	return response, err
 }
 
-func (c *CoapServer) SendTo(req *Request, addr *net.UDPAddr) (*Response, error) {
+func (c *CoapServer) SendTo(req *Request, addr *net.UDPAddr) (Response, error) {
 	return SendMessageTo(req.GetMessage(), NewCanopusUDPConnection(c.localConn), addr)
 }
 
@@ -412,6 +419,13 @@ func (c *CoapServer) Dial(host string) {
 
 	c.remoteAddr = remoteAddr
 }
+
+func (c *CoapServer) Dial6(host string) {
+	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
+
+	c.remoteAddr = remoteAddr
+}
+
 
 func (s *CoapServer) OnNotify(fn FnEventNotify) {
 	s.events.OnNotify(fn)

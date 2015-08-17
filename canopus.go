@@ -32,9 +32,8 @@ const (
 	DATA_TOKEN_START = 4
 )
 
-// Option Codes
+// OptionCode type represents a valid CoAP Option Code
 type OptionCode int
-
 const (
 	OPTION_IF_MATCH       OptionCode = 1
 	OPTION_URI_HOST       OptionCode = 3
@@ -90,6 +89,7 @@ const (
 	COAPCODE_505_PROXYING_NOT_SUPPORTED     CoapCode = 165
 )
 
+// Default Acknowledgement Timeout
 const DEFAULT_ACK_TIMEOUT = 2
 const DEFAULT_ACK_RANDOM_FACTOR = 1.5
 const DEFAULT_MAX_RETRANSMIT = 4
@@ -107,7 +107,7 @@ const BUF_SIZE = 1500
 // Number of seconds before a MessageID Purge is initiated
 const MESSAGEID_PURGE_DURATION = 60
 
-type RouteHandler func(*Request) *Response
+type RouteHandler func(*Request) Response
 type ResponseHandler func(*Response, error)
 
 // Supported Media Types
