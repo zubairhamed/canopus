@@ -41,7 +41,7 @@ func GenerateRandomChangeNotifications(server *CoapServer) {
 	}()
 }
 
-func routeHandler(req *Request) *Response {
+func routeHandler(req *Request) Response {
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
 	res := NewResponse(msg, nil)
