@@ -19,13 +19,13 @@ type CanopusConnection interface {
 
 // ----------------------------------------------------------------
 
-func NewCanopusUDPConnection(c *net.UDPConn) *CanopusUDPConnection {
+func NewCanopusUDPConnection(c *net.UDPConn) CanopusConnection {
 	return &CanopusUDPConnection{
 		conn: c,
 	}
 }
 
-func NewCanopusUDPConnectionWithAddr(c *net.UDPConn, a net.Addr) *CanopusUDPConnection {
+func NewCanopusUDPConnectionWithAddr(c *net.UDPConn, a net.Addr) CanopusConnection {
 	return &CanopusUDPConnection{
 		conn: c,
 		addr: a,

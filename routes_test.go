@@ -24,5 +24,4 @@ func TestRoutes(t *testing.T) {
 	assert.False(t, static)
 	assert.True(t, re.MatchString("/test.abc/abc"))
 	assert.False(t, re.MatchString("/test.abc/abc/def"))
-
 }

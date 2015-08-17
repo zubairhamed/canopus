@@ -107,8 +107,8 @@ const BUF_SIZE = 1500
 // Number of seconds before a MessageID Purge is initiated
 const MESSAGEID_PURGE_DURATION = 60
 
-type RouteHandler func(*Request) Response
-type ResponseHandler func(*Response, error)
+type RouteHandler func(CoapRequest) CoapResponse
+// type ResponseHandler func(CoapRespose, error)
 
 // Supported Media Types
 type MediaType int

@@ -2,11 +2,11 @@ package canopus
 
 import "strings"
 
-func NoResponse() Response {
+func NoResponse() CoapResponse {
 	return NilResponse{}
 }
 
-type Response interface {
+type CoapResponse interface {
 	GetMessage() *Message
 	GetError() error
 	GetPayload() []byte
@@ -34,7 +34,7 @@ func (c NilResponse) GetUriQuery(q string) string {
 }
 
 // Creates a new Response object with a Message object and any error messages
-func NewResponse(msg *Message, err error) Response {
+func NewResponse(msg *Message, err error) CoapResponse {
 	resp := &DefaultResponse{
 		msg: msg,
 		err: err,
@@ -44,7 +44,7 @@ func NewResponse(msg *Message, err error) Response {
 }
 
 // Creates a new response object with a Message object
-func NewResponseWithMessage(msg *Message) Response {
+func NewResponseWithMessage(msg *Message) CoapResponse {
 	resp := &DefaultResponse{
 		msg: msg,
 	}

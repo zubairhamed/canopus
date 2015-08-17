@@ -7,7 +7,7 @@ import (
 func main() {
 	server := NewLocalServer()
 
-	server.Get("/hello", func(req *Request) Response {
+	server.Get("/hello", func(req CoapRequest) CoapResponse {
 		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
@@ -15,7 +15,7 @@ func main() {
 		return res
 	})
 
-	server.Get("/basic", func(req *Request) Response {
+	server.Get("/basic", func(req CoapRequest) CoapResponse {
 		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 		msg.SetStringPayload("Acknowledged")
 
@@ -24,14 +24,14 @@ func main() {
 		return res
 	})
 
-	server.Get("/basic/json", func(req *Request) Response {
+	server.Get("/basic/json", func(req CoapRequest) CoapResponse {
 		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 		res := NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.Get("/basic/xml", func(req *Request) Response {
+	server.Get("/basic/xml", func(req CoapRequest) CoapResponse {
 		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 		res := NewResponse(msg, nil)
 

@@ -6,7 +6,7 @@ import (
 )
 
 // Sends a CoAP Message to UDP address
-func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (Response, error) {
+func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (CoapResponse, error) {
 	if conn == nil {
 		return nil, ERR_NIL_CONN
 	}
@@ -43,7 +43,7 @@ func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (Res
 }
 
 // Sends a CoAP Message to a UDP Connection
-func SendMessage(msg *Message, conn CanopusConnection) (Response, error) {
+func SendMessage(msg *Message, conn CanopusConnection) (CoapResponse, error) {
 	if conn == nil {
 		return nil, ERR_NIL_CONN
 	}
