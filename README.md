@@ -55,7 +55,7 @@ func main() {
 ```go
 	server := NewLocalServer()
 
-	server.Get("/hello", func(req *Request) *Response{
+	server.Get("/hello", func(req CoapRequest) CoapResponse{
 		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
@@ -112,7 +112,7 @@ func GenerateRandomChangeNotifications(server *CoapServer) {
 	}()
 }
 
-func routeHandler(req *Request) *Response {
+func routeHandler(req CoapRequest) CoapResponse {
 	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
 	res := NewResponse(msg, nil)
