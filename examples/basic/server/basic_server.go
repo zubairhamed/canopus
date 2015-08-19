@@ -3,7 +3,6 @@ package main
 import (
 	. "github.com/zubairhamed/canopus"
 	"log"
-	"time"
 )
 
 func main() {
