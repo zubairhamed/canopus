@@ -2,13 +2,17 @@ package main
 
 import (
 	. "github.com/zubairhamed/canopus"
+	"log"
+	"time"
 )
 
 func main() {
 	server := NewLocalServer()
 
 	server.Get("/hello", func(req CoapRequest) CoapResponse {
-		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		log.Println("Hello Called")
+		PrintMessage(req.GetMessage())
+		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
 

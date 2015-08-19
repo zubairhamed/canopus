@@ -14,7 +14,6 @@ type CoapResponse interface {
 }
 
 type NilResponse struct {
-
 }
 
 func (c NilResponse) GetMessage() *Message {

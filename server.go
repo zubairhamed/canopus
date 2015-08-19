@@ -161,7 +161,6 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 		}
 	} else {
 		if msg.MessageType != TYPE_RESET {
-			log.Println("Code == ", msg.Code)
 			// Unsupported Method
 			if msg.Code != GET && msg.Code != POST && msg.Code != PUT && msg.Code != DELETE {
 				ret := NotImplementedMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
@@ -424,7 +423,6 @@ func (c *CoapServer) Dial6(host string) {
 
 	c.remoteAddr = remoteAddr
 }
-
 
 func (s *CoapServer) OnNotify(fn FnEventNotify) {
 	s.events.OnNotify(fn)

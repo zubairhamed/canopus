@@ -34,6 +34,7 @@ const (
 
 // OptionCode type represents a valid CoAP Option Code
 type OptionCode int
+
 const (
 	OPTION_IF_MATCH       OptionCode = 1
 	OPTION_URI_HOST       OptionCode = 3
@@ -108,6 +109,7 @@ const BUF_SIZE = 1500
 const MESSAGEID_PURGE_DURATION = 60
 
 type RouteHandler func(CoapRequest) CoapResponse
+
 // type ResponseHandler func(CoapRespose, error)
 
 // Supported Media Types
