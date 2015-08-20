@@ -86,6 +86,9 @@ func OptionNumberToString(o OptionCode) string {
 	case OPTION_SIZE1:
 		return "Size1"
 
+	case OPTION_SIZE2:
+		return "Size2"
+
 	default:
 		return ""
 	}

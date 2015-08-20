@@ -9,7 +9,7 @@ import (
 )
 
 func NewLocalServer() *CoapServer {
-	localAddr, err := net.ResolveUDPAddr("udp", ":5683")
+	localAddr, err := net.ResolveUDPAddr("udp6", ":5683")
 	if err != nil {
 		log.Fatal("Error starting CoAP Server: ", err)
 		return nil
@@ -128,7 +128,7 @@ func (s *CoapServer) serveServer() {
 }
 
 func (s *CoapServer) Stop() {
-
+	s.localConn.Close()
 }
 
 func (s *CoapServer) handleMessageIdPurge() {
@@ -413,7 +413,7 @@ func (s *CoapServer) removeObservation(resource string, addr *net.UDPAddr) {
 }
 
 func (c *CoapServer) Dial(host string) {
-	remoteAddr, _ := net.ResolveUDPAddr("udp", host)
+	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
 
 	c.remoteAddr = remoteAddr
 }
