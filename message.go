@@ -154,7 +154,6 @@ func BytesToMessage(data []byte) (*Message, error) {
 		optCode := OptionCode(lastOptionId)
 		if optionLength > 0 {
 			optionValue := tmp[:optionLength]
-			log.Println("Option Code == ", optCode)
 
 			switch optCode {
 			case OPTION_URI_PORT, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_ACCEPT, OPTION_SIZE1,
@@ -310,6 +309,12 @@ type Message struct {
 	Payload     MessagePayload
 	Token       []byte
 	Options     []*Option
+}
+
+func (c *Message) GetAcceptedContent() MediaType {
+	mediaTypeCode := c.GetOption(OPTION_ACCEPT).IntValue()
+
+	return MediaType(mediaTypeCode)
 }
 
 func (c Message) GetCodeString() string {

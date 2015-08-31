@@ -25,6 +25,11 @@ func main() {
 		}
 	})
 
+	client.OnError(func(err error){
+		log.Println("An error occured")
+		log.Println(err)
+	})
+
 	client.OnMessage(func(msg *Message, inbound bool) {
 		if inbound {
 			log.Println(">>>>> INBOUND <<<<<")

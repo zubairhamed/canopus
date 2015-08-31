@@ -35,6 +35,10 @@ func (o *Option) StringValue() string {
 	return o.Value.(string)
 }
 
+func (o *Option) IntValue() int {
+	return o.Value.(int)
+}
+
 // Instantiates a New Option
 func NewOption(optionNumber OptionCode, optionValue interface{}) *Option {
 	return &Option{

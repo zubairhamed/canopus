@@ -98,6 +98,7 @@ func (s *CoapServer) serveServer() {
 
 	conn, err := net.ListenUDP("udp", s.localAddr)
 	if err != nil {
+		s.events.Error(err)
 		log.Fatal(err)
 	}
 
@@ -172,6 +173,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 			}
 
 			if err != nil {
+				s.events.Error(err)
 				if err == ERR_UNKNOWN_CRITICAL_OPTION {
 					if msg.MessageType == TYPE_CONFIRMABLE {
 						SendMessageTo(BadOptionMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
@@ -345,7 +347,8 @@ func (c *CoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	response, err := SendMessageTo(req.GetMessage(), NewCanopusUDPConnection(c.localConn), c.remoteAddr)
 
 	if err != nil {
-		log.Println(err)
+		c.events.Error(err)
+		return response, err
 	}
 	c.events.Message(response.GetMessage(), true)
 
