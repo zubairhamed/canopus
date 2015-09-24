@@ -332,6 +332,10 @@ func (c Message) GetTokenLength() uint8 {
 	return uint8(len(c.Token))
 }
 
+func (c *Message) GetTokenString() string {
+	return string(c.Token[:len(c.Token)])
+}
+
 // Returns an array of options given an option code
 func (c Message) GetOptions(id OptionCode) []*Option {
 	var opts []*Option

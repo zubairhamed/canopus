@@ -31,6 +31,7 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 		observations:          make(map[string][]*Observation),
 		fnHandleCoapCoapProxy: NullProxyHandler,
 		fnHandleCoapHttpProxy: NullProxyHandler,
+		stopChannel: make(chan int),
 	}
 }
 
@@ -48,6 +49,8 @@ type CoapServer struct {
 
 	fnHandleCoapHttpProxy ProxyHandler
 	fnHandleCoapCoapProxy ProxyHandler
+
+	stopChannel 	chan int
 }
 
 func (s *CoapServer) Start() {
@@ -119,6 +122,14 @@ func (s *CoapServer) serveServer() {
 
 	readBuf := make([]byte, BUF_SIZE)
 	for {
+		select {
+		case <- s.stopChannel:
+			return
+
+		default:
+			// continue
+		}
+
 		len, addr, err := conn.ReadFromUDP(readBuf)
 
 		if err == nil {
@@ -133,6 +144,7 @@ func (s *CoapServer) serveServer() {
 
 func (s *CoapServer) Stop() {
 	s.localConn.Close()
+	close(s.stopChannel)
 }
 
 func (s *CoapServer) handleMessageIdPurge() {
