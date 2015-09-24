@@ -23,6 +23,13 @@ func NewCoapServer(local string) *CoapServer {
 	return NewServer(localAddr, nil)
 }
 
+func NewCoapClient() *CoapServer {
+	localAddr, _ := net.ResolveUDPAddr("udp", ":0")
+
+	return NewServer(localAddr, nil)
+}
+
+
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	return &CoapServer{
 		remoteAddr:            remoteAddr,
@@ -305,12 +312,15 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 					_, nilresponse := resp.(NilResponse)
 					if !nilresponse {
 						respMsg := resp.GetMessage()
+						respMsg.Token = req.GetMessage().Token
 
 						// TODO: Validate Message before sending (e.g missing messageId)
 						err := ValidateMessage(respMsg)
 						if err == nil {
 							s.events.Message(respMsg, false)
 							SendMessageTo(respMsg, NewCanopusUDPConnection(conn), addr)
+						} else {
+
 						}
 					}
 				}

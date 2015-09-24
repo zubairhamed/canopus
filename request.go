@@ -16,6 +16,16 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) Coa
 	}
 }
 
+func NewConfirmableGetRequest() CoapRequest {
+	msg := NewMessage(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+	msg.Token = []byte(GenerateToken(8))
+
+	return &DefaultCoapRequest{
+		msg: msg,
+	}
+}
+
+
 // Creates a new request messages from a CoAP Message
 func NewRequestFromMessage(msg *Message) CoapRequest {
 	return &DefaultCoapRequest{

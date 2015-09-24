@@ -24,7 +24,7 @@ func TestDiscoveryService(t *testing.T) {
 	assert.Equal(t, "udp", server.localAddr.Network())
 
 	go server.Start()
-	client := NewCoapServer(":0")
+	client := NewCoapClient()
 	client.OnStart(func(server *CoapServer) {
 		tok := "abc123"
 		client.Dial("localhost:5683")
@@ -36,6 +36,49 @@ func TestDiscoveryService(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, tok, resp.GetMessage().GetTokenString())
+		client.Stop()
+	})
+	client.Start()
+}
+
+func TestBasicClientServer(t *testing.T) {
+	server := NewLocalServer()
+
+	server.Get("/ep", func (req CoapRequest) CoapResponse {
+		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
+		msg.SetStringPayload("ACK GET")
+		res := NewResponse(msg, nil)
+
+		return res
+	})
+	go server.Start()
+
+	client := NewCoapClient()
+
+	client.OnStart(func(server *CoapServer) {
+		client.Dial("localhost:5683")
+		token := "tok1234"
+
+		var req CoapRequest
+		var resp CoapResponse
+		var err error
+
+		req = NewConfirmableGetRequest()
+		req.SetToken(token)
+		req.SetRequestURI("ep-404")
+		resp, err = client.Send(req)
+
+		assert.Equal(t, COAPCODE_404_NOT_FOUND, resp.GetMessage().Code)
+
+		req = NewConfirmableGetRequest()
+		req.SetToken(token)
+		req.SetRequestURI("ep")
+		resp, err = client.Send(req)
+
+		assert.Nil(t, err)
+		assert.Equal(t, "ACK GET", resp.GetMessage().Payload.String())
+		assert.Equal(t, token, resp.GetMessage().GetTokenString())
+
 		client.Stop()
 	})
 	client.Start()
