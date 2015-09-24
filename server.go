@@ -54,8 +54,11 @@ func (s *CoapServer) Start() {
 
 	var discoveryRoute RouteHandler = func(req CoapRequest) CoapResponse {
 		msg := req.GetMessage()
-
+		
 		ack := ContentMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
+		ack.Token = make([]byte, len(msg.Token))
+		copy(ack.Token, msg.Token)
+
 		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
 
 		var buf bytes.Buffer
