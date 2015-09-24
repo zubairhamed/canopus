@@ -41,7 +41,7 @@ func TestDiscoveryService(t *testing.T) {
 	client.Start()
 }
 
-func TestBasicClientServer(t *testing.T) {
+func TestClientServerRequestResponse(t *testing.T) {
 	server := NewLocalServer()
 
 	server.Get("/ep", func (req CoapRequest) CoapResponse {
@@ -63,6 +63,7 @@ func TestBasicClientServer(t *testing.T) {
 		var resp CoapResponse
 		var err error
 
+		// 404 Test
 		req = NewConfirmableGetRequest()
 		req.SetToken(token)
 		req.SetRequestURI("ep-404")
@@ -70,6 +71,7 @@ func TestBasicClientServer(t *testing.T) {
 
 		assert.Equal(t, COAPCODE_404_NOT_FOUND, resp.GetMessage().Code)
 
+		// Test for Token
 		req = NewConfirmableGetRequest()
 		req.SetToken(token)
 		req.SetRequestURI("ep")
@@ -78,6 +80,15 @@ func TestBasicClientServer(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, "ACK GET", resp.GetMessage().Payload.String())
 		assert.Equal(t, token, resp.GetMessage().GetTokenString())
+
+		// Test default token set
+		req = NewConfirmableGetRequest()
+		req.SetRequestURI("ep")
+		resp, err = client.Send(req)
+
+		assert.Nil(t, err)
+		assert.Equal(t, "ACK GET", resp.GetMessage().Payload.String())
+		assert.NotEmpty(t, resp.GetMessage().GetTokenString())
 
 		client.Stop()
 	})
