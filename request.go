@@ -25,6 +25,33 @@ func NewConfirmableGetRequest() CoapRequest {
 	}
 }
 
+func NewConfirmablePostRequest() CoapRequest {
+	msg := NewMessage(TYPE_CONFIRMABLE, POST, GenerateMessageId())
+	msg.Token = []byte(GenerateToken(8))
+
+	return &DefaultCoapRequest{
+		msg: msg,
+	}
+}
+
+func NewConfirmablePutRequest() CoapRequest {
+	msg := NewMessage(TYPE_CONFIRMABLE, PUT, GenerateMessageId())
+	msg.Token = []byte(GenerateToken(8))
+
+	return &DefaultCoapRequest{
+		msg: msg,
+	}
+}
+
+func NewConfirmableDeleteRequest() CoapRequest {
+	msg := NewMessage(TYPE_CONFIRMABLE, DELETE, GenerateMessageId())
+	msg.Token = []byte(GenerateToken(8))
+
+	return &DefaultCoapRequest{
+		msg: msg,
+	}
+}
+
 
 // Creates a new request messages from a CoAP Message
 func NewRequestFromMessage(msg *Message) CoapRequest {
