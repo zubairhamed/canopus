@@ -44,14 +44,13 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 
 	// TODO: Set timeout handler, and on timeout return 5.04
 	resp, err := client.Do(req)
-
-	// TODO: if response not understood or error, return 5.02
-	defer resp.Body.Close()
-
 	if err != nil {
 		log.Println(err)
 		SendMessageTo(BadGatewayMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
 	}
+
+	// TODO: if response not understood or error, return 5.02
+	defer resp.Body.Close()
 
 	contents, _ := ioutil.ReadAll(resp.Body)
 	msg.Payload = NewBytesPayload(contents)
@@ -63,7 +62,6 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 			msg.AddOption(OPTION_ETAG, etag)
 		}
 	}
-
 	SendMessageTo(respMsg.GetMessage(), NewCanopusUDPConnection(conn), addr)
 }
 
