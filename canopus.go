@@ -104,7 +104,7 @@ const COAP_DEFAULT_PORT = 5683
 const COAPS_DEFAULT_PORT = 5684
 
 const PAYLOAD_MARKER = 0xff
-const BUF_SIZE = 1500
+const MAX_PACKET_SIZE = 1500
 
 // Number of seconds before a MessageID Purge is initiated
 const MESSAGEID_PURGE_DURATION = 60

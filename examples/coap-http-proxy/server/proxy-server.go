@@ -1,6 +1,8 @@
 package main
 
-import . "github.com/zubairhamed/canopus"
+import (
+	. "github.com/zubairhamed/canopus"
+)
 
 func main() {
 	server := NewLocalServer()

@@ -127,7 +127,7 @@ func (s *CoapServer) serveServer() {
 
 	s.handleMessageIdPurge()
 
-	readBuf := make([]byte, BUF_SIZE)
+	readBuf := make([]byte, MAX_PACKET_SIZE)
 	for {
 		select {
 		case <- s.stopChannel:
@@ -318,6 +318,7 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 						err := ValidateMessage(respMsg)
 						if err == nil {
 							s.events.Message(respMsg, false)
+
 							SendMessageTo(respMsg, NewCanopusUDPConnection(conn), addr)
 						} else {
 

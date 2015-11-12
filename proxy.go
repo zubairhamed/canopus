@@ -34,8 +34,11 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	requestMethod := msg.Code
 
 	client := &http.Client{}
-
-	req, _ := http.NewRequest(MethodString(CoapCode(msg.GetMethod())), proxyUri, nil)
+	req, err := http.NewRequest(MethodString(CoapCode(msg.GetMethod())), proxyUri, nil)
+	if err != nil {
+		SendMessageTo(BadGatewayMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
+		return
+	}
 
 	etag := msg.GetOption(OPTION_ETAG)
 	if etag != nil {
@@ -45,11 +48,10 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	// TODO: Set timeout handler, and on timeout return 5.04
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println(err)
 		SendMessageTo(BadGatewayMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
+		return
 	}
 
-	// TODO: if response not understood or error, return 5.02
 	defer resp.Body.Close()
 
 	contents, _ := ioutil.ReadAll(resp.Body)
@@ -62,7 +64,17 @@ func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 			msg.AddOption(OPTION_ETAG, etag)
 		}
 	}
-	SendMessageTo(respMsg.GetMessage(), NewCanopusUDPConnection(conn), addr)
+
+	// TODO: Check payload length against Size1 options
+	if len(respMsg.GetMessage().Payload.String()) > MAX_PACKET_SIZE {
+		SendMessageTo(BadGatewayMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
+		return
+	}
+
+	_, err = SendMessageTo(respMsg.GetMessage(), NewCanopusUDPConnection(conn), addr)
+	if err != nil {
+		println(err.Error())
+	}
 }
 
 // Handles requests for proxying from HTTP to CoAP
