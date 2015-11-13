@@ -166,3 +166,21 @@ func main() {
 	client.Start()
 }
 ```
+
+### Proxy
+
+#### Enabling Coap-HTTP Proxy
+```go
+package main
+
+import (
+	. "github.com/zubairhamed/canopus"
+)
+
+func main() {
+	server := NewLocalServer()
+	server.SetProxy(PROXY_COAP_HTTP, true)
+
+	server.Start()
+}
+```
