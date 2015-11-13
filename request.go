@@ -52,7 +52,6 @@ func NewConfirmableDeleteRequest() CoapRequest {
 	}
 }
 
-
 // Creates a new request messages from a CoAP Message
 func NewRequestFromMessage(msg *Message) CoapRequest {
 	return &DefaultCoapRequest{

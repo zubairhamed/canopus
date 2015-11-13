@@ -5,6 +5,15 @@ import (
 )
 
 func main() {
+	go runServer()
+	runClient()
+
+	for {
+
+	}
+}
+
+func runClient() {
 	client := NewCoapServer(":0")
 
 	client.OnStart(func(server *CoapServer) {
@@ -21,4 +30,11 @@ func main() {
 		PrintMessage(resp.GetMessage())
 	})
 	client.Start()
+}
+
+func runServer() {
+	server := NewLocalServer()
+	server.SetProxy(PROXY_COAP_HTTP, true)
+
+	server.Start()
 }

@@ -29,7 +29,6 @@ func NewCoapClient() *CoapServer {
 	return NewServer(localAddr, nil)
 }
 
-
 func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	return &CoapServer{
 		remoteAddr:            remoteAddr,
@@ -38,7 +37,7 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 		observations:          make(map[string][]*Observation),
 		fnHandleCoapCoapProxy: NullProxyHandler,
 		fnHandleCoapHttpProxy: NullProxyHandler,
-		stopChannel: make(chan int),
+		stopChannel:           make(chan int),
 	}
 }
 
@@ -57,14 +56,14 @@ type CoapServer struct {
 	fnHandleCoapHttpProxy ProxyHandler
 	fnHandleCoapCoapProxy ProxyHandler
 
-	stopChannel 	chan int
+	stopChannel chan int
 }
 
 func (s *CoapServer) Start() {
 
 	var discoveryRoute RouteHandler = func(req CoapRequest) CoapResponse {
 		msg := req.GetMessage()
-		
+
 		ack := ContentMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
 		ack.Token = make([]byte, len(msg.Token))
 		copy(ack.Token, msg.Token)
@@ -130,7 +129,7 @@ func (s *CoapServer) serveServer() {
 	readBuf := make([]byte, MAX_PACKET_SIZE)
 	for {
 		select {
-		case <- s.stopChannel:
+		case <-s.stopChannel:
 			return
 
 		default:
