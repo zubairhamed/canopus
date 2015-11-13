@@ -520,7 +520,7 @@ func IsCoapUri(msg *Message) bool {
 
 // Determines if a message contains URI targetting an HTTP resource
 func IsHttpUri(uri string) bool {
-	if strings.HasPrefix(uri, "http") || strings.HasPrefix(uri, "http") {
+	if strings.HasPrefix(uri, "http") || strings.HasPrefix(uri, "https") {
 		return true
 	}
 	return false
