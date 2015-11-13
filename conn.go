@@ -33,7 +33,7 @@ func NewCanopusUDPConnectionWithAddr(c *net.UDPConn, a net.Addr) CanopusConnecti
 }
 
 type CanopusUDPConnection struct {
-	conn net.Conn
+	conn *net.UDPConn
 	addr net.Addr
 }
 
@@ -42,22 +42,22 @@ func (c *CanopusUDPConnection) GetConnection() net.Conn {
 }
 
 func (c *CanopusUDPConnection) Write(b []byte) (int, error) {
-	return c.conn.(*net.UDPConn).Write(b)
+	return c.conn.Write(b)
 }
 
 func (c *CanopusUDPConnection) SetReadDeadline(t time.Time) error {
-	return c.conn.(*net.UDPConn).SetReadDeadline(t)
+	return c.conn.SetReadDeadline(t)
 }
 
 func (c *CanopusUDPConnection) Read() (buf []byte, n int, err error) {
-	buf = make([]byte, 1500)
-	n, _, err = c.conn.(*net.UDPConn).ReadFromUDP(buf)
+	buf = make([]byte, MAX_PACKET_SIZE)
+	n, _, err = c.conn.ReadFromUDP(buf)
 
 	return
 }
 
 func (c *CanopusUDPConnection) WriteTo(b []byte, addr net.Addr) (n int, err error) {
-	n, err = c.conn.(*net.UDPConn).WriteToUDP(b, addr.(*net.UDPAddr))
+	n, err = c.conn.WriteToUDP(b, addr.(*net.UDPAddr))
 
 	return
 }
