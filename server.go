@@ -18,13 +18,13 @@ func NewLocalServer() *CoapServer {
 }
 
 func NewCoapServer(local string) *CoapServer {
-	localAddr, _ := net.ResolveUDPAddr("udp", local)
+	localAddr, _ := net.ResolveUDPAddr("udp6", local)
 
 	return NewServer(localAddr, nil)
 }
 
 func NewCoapClient() *CoapServer {
-	localAddr, _ := net.ResolveUDPAddr("udp", ":0")
+	localAddr, _ := net.ResolveUDPAddr("udp6", ":0")
 
 	return NewServer(localAddr, nil)
 }
@@ -35,8 +35,8 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 		localAddr:             localAddr,
 		events:                NewCanopusEvents(),
 		observations:          make(map[string][]*Observation),
-		fnHandleCoapCoapProxy: NullProxyHandler,
-		fnHandleCoapHttpProxy: NullProxyHandler,
+		fnHandleCoapProxy: 		NullProxyHandler,
+		fnHandleHttpProxy: 		NullProxyHandler,
 		stopChannel:           make(chan int),
 	}
 }
@@ -53,8 +53,8 @@ type CoapServer struct {
 	events       *CanopusEvents
 	observations map[string][]*Observation
 
-	fnHandleCoapHttpProxy ProxyHandler
-	fnHandleCoapCoapProxy ProxyHandler
+	fnHandleHttpProxy ProxyHandler
+	fnHandleCoapProxy ProxyHandler
 
 	stopChannel chan int
 }
@@ -123,7 +123,6 @@ func (s *CoapServer) serveServer() {
 	}
 
 	s.events.Started(s)
-
 	s.handleMessageIdPurge()
 
 	readBuf := make([]byte, MAX_PACKET_SIZE)
@@ -208,12 +207,13 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 
 			// Proxy
 			if IsProxyRequest(msg) {
-				if IsCoapUri(msg) {
-					s.fnHandleCoapCoapProxy(msg, conn, addr)
-				} else if IsHttpUri(msg.GetOption(OPTION_PROXY_URI).StringValue()) {
-					s.fnHandleCoapHttpProxy(msg, conn, addr)
+				proxyUri := msg.GetOption(OPTION_PROXY_URI).StringValue()
+				if IsCoapUri(proxyUri) {
+					s.fnHandleCoapProxy(msg, conn, addr)
+				} else if IsHttpUri(proxyUri) {
+					s.fnHandleHttpProxy(msg, conn, addr)
 				} else {
-					// Unknown URI
+					//
 				}
 			} else {
 				route, attrs, err := MatchingRoute(msg.GetUriPath(), MethodString(msg.Code), msg.GetOptions(OPTION_CONTENT_FORMAT), s.routes)
@@ -494,15 +494,15 @@ const (
 func (s *CoapServer) SetProxy(t ProxyType, enabled bool) {
 	if t == PROXY_COAP_HTTP {
 		if enabled {
-			s.fnHandleCoapHttpProxy = CoapHttpProxyHandler
+			s.fnHandleHttpProxy = HttpProxyHandler
 		} else {
-			s.fnHandleCoapHttpProxy = NullProxyHandler
+			s.fnHandleHttpProxy = NullProxyHandler
 		}
 	} else if t == PROXY_COAP_COAP {
 		if enabled {
-			s.fnHandleCoapCoapProxy = CoapHttpProxyHandler
+			s.fnHandleCoapProxy = CoapProxyHandler
 		} else {
-			s.fnHandleCoapCoapProxy = NullProxyHandler
+			s.fnHandleCoapProxy = NullProxyHandler
 		}
 	}
 }
