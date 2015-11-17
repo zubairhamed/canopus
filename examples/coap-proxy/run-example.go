@@ -18,6 +18,15 @@ func runProxyServer() {
 	server := NewLocalServer()
 	server.SetProxy(PROXY_COAP_COAP, true)
 
+	server.Get("/proxycall", func(req CoapRequest) CoapResponse {
+		PrintMessage(req.GetMessage())
+		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
+		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
+		res := NewResponse(msg, nil)
+
+		return res
+	})
+
 	server.Start()
 }
 
@@ -27,7 +36,7 @@ func runServer() {
 	server.Get("/proxycall", func(req CoapRequest) CoapResponse {
 		PrintMessage(req.GetMessage())
 		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
-		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
+		msg.SetStringPayload("Data from :5684 -- " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
 
 		return res

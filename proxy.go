@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 )
 
 type ProxyHandler func(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
@@ -14,23 +15,52 @@ func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
 }
 
+type UriInfo struct {
+	Scheme		string
+	User 		string
+	Password 	string
+	Host 		string
+	Port 		string
+	Path 		string
+	Fragment 	string
+
+}
+
 func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	proxyUri := msg.GetOption(OPTION_PROXY_URI).StringValue()
-	println("CoapCoapProxy!!")
-	println(proxyUri)
-	/*
-		Get value from Proxy-URI
-			Decompose
-		Initialize Canopus CoAP Proxy
-		Resolve Host Address
-		Construct CoAP message with Request URI
-		Send
 
-		Return response to client
+	parsedUrl, err := url.Parse(proxyUri)
+	if err != nil {
+		log.Println("Error parsing proxy URI")
+		SendMessageTo(BadGatewayMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
+		return
+	}
 
-	*/
+	client := NewCoapClient()
+	client.OnStart(func(server *CoapServer) {
+		client.Dial(parsedUrl.Host)
 
-	log.Println("CoapCoapProxyHandler Proxy Handler")
+		msg.RemoveOptions(OPTION_PROXY_URI)
+		req := NewRequestFromMessage(msg)
+		req.SetRequestURI(parsedUrl.RequestURI())
+
+		response, err := client.Send(req)
+		if err != nil {
+			SendMessageTo(BadGatewayMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
+			client.Stop()
+			return
+		}
+
+		_, err = SendMessageTo(response.GetMessage(), NewCanopusUDPConnection(conn), addr)
+		if err != nil {
+			log.Println("Error occured responding to proxy request")
+			client.Stop()
+			return
+		}
+		client.Stop()
+
+	})
+	client.Start()
 }
 
 // Handles requests for proxying from CoAP to HTTP
