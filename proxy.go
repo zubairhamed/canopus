@@ -14,9 +14,14 @@ func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
 }
 
-func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	proxyUri := msg.GetOption(OPTION_PROXY_URI).StringValue()
+	println("CoapCoapProxy!!")
+	println(proxyUri)
 	/*
 		Get value from Proxy-URI
+			Decompose
+		Initialize Canopus CoAP Proxy
 		Resolve Host Address
 		Construct CoAP message with Request URI
 		Send
@@ -29,7 +34,7 @@ func CoapCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 }
 
 // Handles requests for proxying from CoAP to HTTP
-func CoapHttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func HttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	proxyUri := msg.GetOption(OPTION_PROXY_URI).StringValue()
 	requestMethod := msg.Code
 

@@ -509,9 +509,7 @@ func encodeInt(v uint32) []byte {
 }
 
 // Determines if a message contains URI targetting a CoAP resource
-func IsCoapUri(msg *Message) bool {
-	uri := msg.GetUriPath()
-
+func IsCoapUri(uri string) bool {
 	if strings.HasPrefix(uri, "coap") || strings.HasPrefix(uri, "coaps") {
 		return true
 	}
