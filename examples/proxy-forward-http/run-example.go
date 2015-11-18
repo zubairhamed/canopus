@@ -34,7 +34,7 @@ func runClient() {
 
 func runServer() {
 	server := NewLocalServer()
-	server.SetProxy(PROXY_COAP_HTTP, true)
+	server.ProxyHttp(true)
 
 	server.Start()
 }

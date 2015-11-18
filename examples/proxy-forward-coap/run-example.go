@@ -16,7 +16,7 @@ func main() {
 
 func runProxyServer() {
 	server := NewLocalServer()
-	server.SetProxy(PROXY_COAP_COAP, true)
+	server.ProxyCoap(true)
 
 	server.Get("/proxycall", func(req CoapRequest) CoapResponse {
 		PrintMessage(req.GetMessage())
@@ -26,7 +26,6 @@ func runProxyServer() {
 
 		return res
 	})
-
 	server.Start()
 }
 

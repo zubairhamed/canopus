@@ -23,7 +23,6 @@ type UriInfo struct {
 	Port 		string
 	Path 		string
 	Fragment 	string
-
 }
 
 func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {

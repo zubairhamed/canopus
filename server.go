@@ -492,23 +492,23 @@ func (s *CoapServer) OnMessage(fn FnEventMessage) {
 type ProxyType int
 
 const (
-	PROXY_COAP_HTTP ProxyType = 0
-	PROXY_COAP_COAP ProxyType = 1
+	PROXY_HTTP ProxyType = 0
+	PROXY_COAP ProxyType = 1
 )
 
-func (s *CoapServer) SetProxy(t ProxyType, enabled bool) {
-	if t == PROXY_COAP_HTTP {
-		if enabled {
-			s.fnHandleHttpProxy = HttpProxyHandler
-		} else {
-			s.fnHandleHttpProxy = NullProxyHandler
-		}
-	} else if t == PROXY_COAP_COAP {
-		if enabled {
-			s.fnHandleCoapProxy = CoapProxyHandler
-		} else {
-			s.fnHandleCoapProxy = NullProxyHandler
-		}
+func (s *CoapServer) ProxyHttp(enabled bool) {
+	if enabled {
+		s.fnHandleHttpProxy = HttpProxyHandler
+	} else {
+		s.fnHandleHttpProxy = NullProxyHandler
+	}
+}
+
+func (s *CoapServer) ProxyCoap(enabled bool) {
+	if enabled {
+		s.fnHandleCoapProxy = CoapProxyHandler
+	} else {
+		s.fnHandleCoapProxy = NullProxyHandler
 	}
 }
 
