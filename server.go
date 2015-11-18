@@ -18,7 +18,12 @@ func NewLocalServer() *CoapServer {
 }
 
 func NewCoapServer(local string) *CoapServer {
-	localAddr, _ := net.ResolveUDPAddr("udp6", local)
+	localAddr, err := net.ResolveUDPAddr("udp6", local)
+
+	if err != nil {
+		log.Println("Error instantiating CoAP Server")
+		return nil
+	}
 
 	return NewServer(localAddr, nil)
 }
