@@ -8,6 +8,8 @@ import (
 func TestServerInstantiate(t *testing.T) {
 	var s *CoapServer
 	s = NewCoapServer("localhost:1000")
+
+	assert.NotNil(t, s)
 	assert.Equal(t, 1000, s.localAddr.Port)
 	assert.Equal(t, "udp", s.localAddr.Network())
 
