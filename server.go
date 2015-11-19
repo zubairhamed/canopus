@@ -42,6 +42,7 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 		observations:          make(map[string][]*Observation),
 		fnHandleCoapProxy: 		NullProxyHandler,
 		fnHandleHttpProxy: 		NullProxyHandler,
+		fnProxyFilter:			NullProxyFilter,
 		stopChannel:           make(chan int),
 	}
 }
@@ -60,6 +61,7 @@ type CoapServer struct {
 
 	fnHandleHttpProxy ProxyHandler
 	fnHandleCoapProxy ProxyHandler
+	fnProxyFilter	  ProxyFilter
 
 	stopChannel chan int
 }
@@ -175,6 +177,10 @@ func (s *CoapServer) handleMessageIdPurge() {
 	}()
 }
 
+func (s *CoapServer) SetProxyFilter(fn ProxyFilter) {
+	s.fnProxyFilter = fn
+}
+
 func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
 	s.events.Message(msg, true)
@@ -212,6 +218,10 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 
 			// Proxy
 			if IsProxyRequest(msg) {
+				if !s.fnProxyFilter(msg, addr) {
+					SendMessageTo(ForbiddenMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
+				}
+
 				proxyUri := msg.GetOption(OPTION_PROXY_URI).StringValue()
 				if IsCoapUri(proxyUri) {
 					s.fnHandleCoapProxy(msg, conn, addr)

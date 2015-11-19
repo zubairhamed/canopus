@@ -8,21 +8,18 @@ import (
 	"net/url"
 )
 
+// Proxy Filter
+type ProxyFilter func(*Message, *net.UDPAddr) (bool)
+
+func NullProxyFilter(*Message, *net.UDPAddr) (bool) {
+	return true
+}
+
 type ProxyHandler func(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
 
 // The default handler when proxying is disabled
 func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT), NewCanopusUDPConnection(conn), addr)
-}
-
-type UriInfo struct {
-	Scheme		string
-	User 		string
-	Password 	string
-	Host 		string
-	Port 		string
-	Path 		string
-	Fragment 	string
 }
 
 func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
