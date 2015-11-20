@@ -1,5 +1,4 @@
 package main
-import "github.com/zubairhamed/canopus"
 
 func main() {
 
@@ -8,12 +7,12 @@ func main() {
 		out string
 	}
 
-	var server *canopus.CoapServer
-	server.AddProxyPass(in, out)
-	server.RemoveProxyPass(in)
-
-	server.AddProxyPassReverse(in, out)
-	server.AddRemoveProxyPassReverse
+//	var server *canopus.CoapServer
+//	server.AddProxyPass(in, out)
+//	server.RemoveProxyPass(in)
+//
+//	server.AddProxyPassReverse(in, out)
+//	server.AddRemoveProxyPassReverse
 
 
 }

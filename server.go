@@ -315,9 +315,7 @@ func (s *DefaultCoapServer) RemoveObservation(resource string, addr *net.UDPAddr
 }
 
 func (c *DefaultCoapServer) Dial(host string) {
-	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
-
-	c.remoteAddr = remoteAddr
+	c.Dial6(host)
 }
 
 func (c *DefaultCoapServer) Dial6(host string) {
