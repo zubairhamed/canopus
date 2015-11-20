@@ -167,9 +167,7 @@ func main() {
 }
 ```
 
-### Proxy
-
-#### Enabling Coap-HTTP Proxy
+#### Forward Proxies
 ```go
 package main
 
@@ -179,7 +177,17 @@ import (
 
 func main() {
 	server := NewLocalServer()
-	server.SetProxy(PROXY_COAP_HTTP, true)
+	server.ProxyCoap(true)  // Forward CoAP Requests
+	server.ProxyHttp(true) // Forward HTTP Requests
+
+    // Defaults to NullProxyFilter, if not set.
+    // NullProxyFilter allows all requests through (return = true)
+	server.SetProxyFilter(func(*Message, *net.UDPAddr) (bool) {
+	    // do some checks, e.g. whitelisting etc
+
+	    // allow forwarding, or false to deny
+	    return true
+	})
 
 	server.Start()
 }
