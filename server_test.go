@@ -6,17 +6,17 @@ import (
 )
 
 func TestServerInstantiate(t *testing.T) {
-	var s *CoapServer
+	var s CoapServer
 	s = NewCoapServer(":1000")
 
 	assert.NotNil(t, s)
-	assert.Equal(t, 1000, s.localAddr.Port)
-	assert.Equal(t, "udp", s.localAddr.Network())
+	assert.Equal(t, 1000, s.GetLocalAddress().Port)
+	assert.Equal(t, "udp", s.GetLocalAddress().Network())
 
 	s = NewLocalServer()
 	assert.NotNil(t, s)
-	assert.Equal(t, 5683, s.localAddr.Port)
-	assert.Equal(t, "udp", s.localAddr.Network())
+	assert.Equal(t, 5683, s.GetLocalAddress().Port)
+	assert.Equal(t, "udp", s.GetLocalAddress().Network())
 }
 
 //func TestDiscoveryService(t *testing.T) {

@@ -1,8 +1,8 @@
 package canopus
 
 type FnEventNotify func(string, interface{}, *Message)
-type FnEventStart func(*CoapServer)
-type FnEventClose func(*CoapServer)
+type FnEventStart func(CoapServer)
+type FnEventClose func(CoapServer)
 type FnEventDiscover func()
 type FnEventError func(error)
 type FnEventObserve func(string, *Message)
@@ -35,7 +35,7 @@ func NewCanopusEvents() *CanopusEvents {
 	}
 }
 
-// This holds the various events which are triggred throughout
+// This holds the various events which are triggered throughout
 // an application's lifetime
 type CanopusEvents struct {
 	evtFnNotify        []FnEventNotify
@@ -96,14 +96,14 @@ func (ce *CanopusEvents) Notify(resource string, value interface{}, msg *Message
 }
 
 // Fires the "OnStarted" event
-func (ce *CanopusEvents) Started(server *CoapServer) {
+func (ce *CanopusEvents) Started(server CoapServer) {
 	for _, fn := range ce.evtFnStart {
 		fn(server)
 	}
 }
 
 // Fires the "OnClosed" event
-func (ce *CanopusEvents) Closed(server *CoapServer) {
+func (ce *CanopusEvents) Closed(server CoapServer) {
 	for _, fn := range ce.evtFnClose {
 		fn(server)
 	}

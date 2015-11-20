@@ -34,7 +34,7 @@ func runServer() {
 	server.Start()
 }
 
-func GenerateRandomChangeNotifications(server *CoapServer) {
+func GenerateRandomChangeNotifications(server CoapServer) {
 	ticker := time.NewTicker(3 * time.Second)
 
 	go func() {
@@ -61,7 +61,7 @@ func routeHandler(req CoapRequest) CoapResponse {
 func runClient() {
 	client := NewCoapServer(":0")
 
-	client.OnStart(func(server *CoapServer) {
+	client.OnStart(func(server CoapServer) {
 		client.Dial("localhost:5683")
 		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
 		req.SetRequestURI("/watch/this")

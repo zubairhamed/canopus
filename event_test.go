@@ -21,14 +21,14 @@ func TestEvents(t *testing.T) {
 
 	// OnStarted
 	evtOnStartedCalled := false
-	events.OnStart(func(*CoapServer) {
+	events.OnStart(func(CoapServer) {
 		evtOnStartedCalled = true
 	})
 	events.Started(nil)
 
 	// OnClosed
 	evtOnClosedCalled := false
-	events.OnClose(func(*CoapServer) {
+	events.OnClose(func(CoapServer) {
 		evtOnClosedCalled = true
 	})
 	events.Closed(nil)

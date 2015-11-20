@@ -33,7 +33,7 @@ func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	}
 
 	client := NewCoapClient()
-	client.OnStart(func(server *CoapServer) {
+	client.OnStart(func(server CoapServer) {
 		client.Dial(parsedUrl.Host)
 
 		msg.RemoveOptions(OPTION_PROXY_URI)

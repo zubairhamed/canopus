@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/rand"
 	"time"
+	"net"
 )
 
 // Message ID Generator, global
@@ -169,3 +170,46 @@ var ERR_NO_MATCHING_METHOD = errors.New("No matching method")
 var ERR_NIL_MESSAGE = errors.New("Message is nil")
 var ERR_NIL_CONN = errors.New("Connection object is nil")
 var ERR_NIL_ADDR = errors.New("Address cannot be nil")
+
+//// API ////
+type CoapServer interface {
+	Start()
+	Stop()
+	SetProxyFilter(fn ProxyFilter)
+	Get(path string, fn RouteHandler) *Route
+	Delete(path string, fn RouteHandler) *Route
+	Put(path string, fn RouteHandler) *Route
+	Post(path string, fn RouteHandler) *Route
+	Options(path string, fn RouteHandler) *Route
+	Patch(path string, fn RouteHandler) *Route
+	NewRoute(path string, method CoapCode, fn RouteHandler) *Route
+	Send(req CoapRequest) (CoapResponse, error)
+	SendTo(req CoapRequest, addr *net.UDPAddr) (CoapResponse, error)
+	NotifyChange(resource, value string, confirm bool)
+	Dial(host string)
+	Dial6(host string)
+	OnNotify(fn FnEventNotify)
+	OnStart(fn FnEventStart)
+	OnClose(fn FnEventClose)
+	OnDiscover(fn FnEventDiscover)
+	OnError(fn FnEventError)
+	OnObserve(fn FnEventObserve)
+	OnObserveCancel(fn FnEventObserveCancel)
+	OnMessage(fn FnEventMessage)
+	ProxyHttp(enabled bool)
+	ProxyCoap(enabled bool)
+	GetEvents() *CanopusEvents
+	GetLocalAddress() *net.UDPAddr
+
+	AllowProxyForwarding(*Message, *net.UDPAddr) (bool)
+	GetRoutes() []*Route
+	ForwardCoap(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
+	ForwardHttp(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
+
+	AddObservation(resource, token string, addr *net.UDPAddr)
+	HasObservation(resource string, addr *net.UDPAddr) bool
+	RemoveObservation(resource string, addr *net.UDPAddr)
+
+	IsDuplicateMessage(msg *Message) bool
+	UpdateMessageTS(msg *Message)
+}

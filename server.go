@@ -8,7 +8,14 @@ import (
 	"time"
 )
 
-func NewLocalServer() *CoapServer {
+type ProxyType int
+
+const (
+	PROXY_HTTP ProxyType = 0
+	PROXY_COAP ProxyType = 1
+)
+
+func NewLocalServer() CoapServer {
 	localAddr, err := net.ResolveUDPAddr("udp6", ":5683")
 	if err != nil {
 		log.Fatal("Error starting CoAP Server: ", err)
@@ -17,7 +24,7 @@ func NewLocalServer() *CoapServer {
 	return NewServer(localAddr, nil)
 }
 
-func NewCoapServer(local string) *CoapServer {
+func NewCoapServer(local string) CoapServer {
 	localAddr, err := net.ResolveUDPAddr("udp6", local)
 
 	if err != nil {
@@ -28,14 +35,14 @@ func NewCoapServer(local string) *CoapServer {
 	return NewServer(localAddr, nil)
 }
 
-func NewCoapClient() *CoapServer {
+func NewCoapClient() CoapServer {
 	localAddr, _ := net.ResolveUDPAddr("udp6", ":0")
 
 	return NewServer(localAddr, nil)
 }
 
-func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
-	return &CoapServer{
+func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) CoapServer {
+	return &DefaultCoapServer{
 		remoteAddr:            remoteAddr,
 		localAddr:             localAddr,
 		events:                NewCanopusEvents(),
@@ -47,7 +54,7 @@ func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) *CoapServer {
 	}
 }
 
-type CoapServer struct {
+type DefaultCoapServer struct {
 	localAddr  *net.UDPAddr
 	remoteAddr *net.UDPAddr
 
@@ -66,7 +73,11 @@ type CoapServer struct {
 	stopChannel chan int
 }
 
-func (s *CoapServer) Start() {
+func (s *DefaultCoapServer) GetEvents() *CanopusEvents {
+	return s.events
+}
+
+func (s *DefaultCoapServer) Start() {
 
 	var discoveryRoute RouteHandler = func(req CoapRequest) CoapResponse {
 		msg := req.GetMessage()
@@ -112,7 +123,7 @@ func (s *CoapServer) Start() {
 	s.serveServer()
 }
 
-func (s *CoapServer) serveServer() {
+func (s *DefaultCoapServer) serveServer() {
 	s.messageIds = make(map[uint16]time.Time)
 
 	conn, err := net.ListenUDP("udp", s.localAddr)
@@ -154,12 +165,12 @@ func (s *CoapServer) serveServer() {
 	}
 }
 
-func (s *CoapServer) Stop() {
+func (s *DefaultCoapServer) Stop() {
 	s.localConn.Close()
 	close(s.stopChannel)
 }
 
-func (s *CoapServer) handleMessageIdPurge() {
+func (s *DefaultCoapServer) handleMessageIdPurge() {
 	// Routine for clearing up message IDs which has expired
 	ticker := time.NewTicker(MESSAGEID_PURGE_DURATION * time.Second)
 	go func() {
@@ -177,11 +188,11 @@ func (s *CoapServer) handleMessageIdPurge() {
 	}()
 }
 
-func (s *CoapServer) SetProxyFilter(fn ProxyFilter) {
+func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 	s.fnProxyFilter = fn
 }
 
-func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
 	s.events.Message(msg, true)
 
@@ -192,45 +203,45 @@ func (s *CoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.U
 	}
 }
 
-func (s *CoapServer) Get(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Get(path string, fn RouteHandler) *Route {
 	return s.add(METHOD_GET, path, fn)
 }
 
-func (s *CoapServer) Delete(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Delete(path string, fn RouteHandler) *Route {
 	return s.add(METHOD_DELETE, path, fn)
 }
 
-func (s *CoapServer) Put(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Put(path string, fn RouteHandler) *Route {
 	return s.add(METHOD_PUT, path, fn)
 }
 
-func (s *CoapServer) Post(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Post(path string, fn RouteHandler) *Route {
 	return s.add(METHOD_POST, path, fn)
 }
 
-func (s *CoapServer) Options(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Options(path string, fn RouteHandler) *Route {
 	return s.add(METHOD_OPTIONS, path, fn)
 }
 
-func (s *CoapServer) Patch(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Patch(path string, fn RouteHandler) *Route {
 	return s.add(METHOD_PATCH, path, fn)
 }
 
-func (s *CoapServer) add(method string, path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) add(method string, path string, fn RouteHandler) *Route {
 	route := CreateNewRoute(path, method, fn)
 	s.routes = append(s.routes, route)
 
 	return route
 }
 
-func (s *CoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
 	route := CreateNewRoute(path, MethodString(method), fn)
 	s.routes = append(s.routes, route)
 
 	return route
 }
 
-func (c *CoapServer) Send(req CoapRequest) (CoapResponse, error) {
+func (c *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	c.events.Message(req.GetMessage(), false)
 	response, err := SendMessageTo(req.GetMessage(), NewCanopusUDPConnection(c.localConn), c.remoteAddr)
 
@@ -243,11 +254,11 @@ func (c *CoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	return response, err
 }
 
-func (c *CoapServer) SendTo(req CoapRequest, addr *net.UDPAddr) (CoapResponse, error) {
+func (c *DefaultCoapServer) SendTo(req CoapRequest, addr *net.UDPAddr) (CoapResponse, error) {
 	return SendMessageTo(req.GetMessage(), NewCanopusUDPConnection(c.localConn), addr)
 }
 
-func (c *CoapServer) NotifyChange(resource, value string, confirm bool) {
+func (c *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 	t := c.observations[resource]
 
 	if t != nil {
@@ -271,11 +282,11 @@ func (c *CoapServer) NotifyChange(resource, value string, confirm bool) {
 	}
 }
 
-func (s *CoapServer) addObservation(resource, token string, addr *net.UDPAddr) {
+func (s *DefaultCoapServer) AddObservation(resource, token string, addr *net.UDPAddr) {
 	s.observations[resource] = append(s.observations[resource], NewObservation(addr, token, resource))
 }
 
-func (s *CoapServer) hasObservation(resource string, addr *net.UDPAddr) bool {
+func (s *DefaultCoapServer) HasObservation(resource string, addr *net.UDPAddr) bool {
 	obs := s.observations[resource]
 	if obs == nil {
 		return false
@@ -289,7 +300,7 @@ func (s *CoapServer) hasObservation(resource string, addr *net.UDPAddr) bool {
 	return false
 }
 
-func (s *CoapServer) removeObservation(resource string, addr *net.UDPAddr) {
+func (s *DefaultCoapServer) RemoveObservation(resource string, addr *net.UDPAddr) {
 	obs := s.observations[resource]
 	if obs == nil {
 		return
@@ -303,58 +314,51 @@ func (s *CoapServer) removeObservation(resource string, addr *net.UDPAddr) {
 	}
 }
 
-func (c *CoapServer) Dial(host string) {
+func (c *DefaultCoapServer) Dial(host string) {
 	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
 
 	c.remoteAddr = remoteAddr
 }
 
-func (c *CoapServer) Dial6(host string) {
+func (c *DefaultCoapServer) Dial6(host string) {
 	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
 
 	c.remoteAddr = remoteAddr
 }
 
-func (s *CoapServer) OnNotify(fn FnEventNotify) {
+func (s *DefaultCoapServer) OnNotify(fn FnEventNotify) {
 	s.events.OnNotify(fn)
 }
 
-func (s *CoapServer) OnStart(fn FnEventStart) {
+func (s *DefaultCoapServer) OnStart(fn FnEventStart) {
 	s.events.OnStart(fn)
 }
 
-func (s *CoapServer) OnClose(fn FnEventClose) {
+func (s *DefaultCoapServer) OnClose(fn FnEventClose) {
 	s.events.OnClose(fn)
 }
 
-func (s *CoapServer) OnDiscover(fn FnEventDiscover) {
+func (s *DefaultCoapServer) OnDiscover(fn FnEventDiscover) {
 	s.events.OnDiscover(fn)
 }
 
-func (s *CoapServer) OnError(fn FnEventError) {
+func (s *DefaultCoapServer) OnError(fn FnEventError) {
 	s.events.OnError(fn)
 }
 
-func (s *CoapServer) OnObserve(fn FnEventObserve) {
+func (s *DefaultCoapServer) OnObserve(fn FnEventObserve) {
 	s.events.OnObserve(fn)
 }
 
-func (s *CoapServer) OnObserveCancel(fn FnEventObserveCancel) {
+func (s *DefaultCoapServer) OnObserveCancel(fn FnEventObserveCancel) {
 	s.events.OnObserveCancel(fn)
 }
 
-func (s *CoapServer) OnMessage(fn FnEventMessage) {
+func (s *DefaultCoapServer) OnMessage(fn FnEventMessage) {
 	s.events.OnMessage(fn)
 }
 
-type ProxyType int
-
-const (
-	PROXY_HTTP ProxyType = 0
-	PROXY_COAP ProxyType = 1
-)
-
-func (s *CoapServer) ProxyHttp(enabled bool) {
+func (s *DefaultCoapServer) ProxyHttp(enabled bool) {
 	if enabled {
 		s.fnHandleHttpProxy = HttpProxyHandler
 	} else {
@@ -362,12 +366,42 @@ func (s *CoapServer) ProxyHttp(enabled bool) {
 	}
 }
 
-func (s *CoapServer) ProxyCoap(enabled bool) {
+func (s *DefaultCoapServer) ProxyCoap(enabled bool) {
 	if enabled {
 		s.fnHandleCoapProxy = CoapProxyHandler
 	} else {
 		s.fnHandleCoapProxy = NullProxyHandler
 	}
+}
+
+func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr *net.UDPAddr) (bool) {
+	return s.fnProxyFilter(msg, addr)
+}
+
+func (s *DefaultCoapServer) ForwardCoap(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	s.fnHandleCoapProxy(msg, conn, addr)
+}
+
+func (s *DefaultCoapServer) ForwardHttp(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	s.fnHandleHttpProxy(msg, conn, addr)
+}
+
+func (s *DefaultCoapServer) GetRoutes() []*Route {
+	return s.routes
+}
+
+func (s *DefaultCoapServer) GetLocalAddress() *net.UDPAddr {
+	return s.localAddr
+}
+
+func (s *DefaultCoapServer) IsDuplicateMessage(msg *Message) bool {
+	_, ok := s.messageIds[msg.MessageId]
+
+	return ok
+}
+
+func (s *DefaultCoapServer) UpdateMessageTS(msg *Message) {
+	s.messageIds[msg.MessageId] = time.Now()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
