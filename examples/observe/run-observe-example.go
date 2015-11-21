@@ -59,7 +59,7 @@ func routeHandler(req CoapRequest) CoapResponse {
 }
 
 func runClient() {
-	client := NewCoapServer(":0")
+	client := NewCoapServer("0")
 
 	client.OnStart(func(server CoapServer) {
 		client.Dial("localhost:5683")

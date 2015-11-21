@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 	"time"
+	"strings"
 )
 
 type ProxyType int
@@ -16,32 +17,33 @@ const (
 )
 
 func NewLocalServer() CoapServer {
-	localAddr, err := net.ResolveUDPAddr("udp6", ":5683")
-	if err != nil {
-		log.Fatal("Error starting CoAP Server: ", err)
-		return nil
-	}
-	return NewServer(localAddr, nil)
+	return NewServer("5683", "")
 }
 
 func NewCoapServer(local string) CoapServer {
-	localAddr, err := net.ResolveUDPAddr("udp6", local)
-
-	if err != nil {
-		log.Println("Error instantiating CoAP Server")
-		return nil
-	}
-
-	return NewServer(localAddr, nil)
+	return NewServer(local, "")
 }
 
 func NewCoapClient() CoapServer {
-	localAddr, _ := net.ResolveUDPAddr("udp6", ":0")
-
-	return NewServer(localAddr, nil)
+	return NewServer("0", "")
 }
 
-func NewServer(localAddr *net.UDPAddr, remoteAddr *net.UDPAddr) CoapServer {
+func NewServer(local, remote string) CoapServer {
+	localHost := local
+	if !strings.Contains(localHost, ":") {
+		localHost = ":" + localHost
+	}
+	localAddr, _ := net.ResolveUDPAddr("udp6", localHost)
+
+	var remoteAddr *net.UDPAddr = nil
+	if remote != "" {
+		remoteHost := remote
+		if !strings.Contains(remoteHost, ":") {
+			remoteHost = ":" + remoteHost
+		}
+		remoteAddr, _ = net.ResolveUDPAddr("udp6", remoteHost)
+	}
+
 	return &DefaultCoapServer{
 		remoteAddr:            remoteAddr,
 		localAddr:             localAddr,
