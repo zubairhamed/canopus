@@ -54,7 +54,7 @@ func NewPathOptions(path string) []*Option {
 
 	for _, p := range ps {
 		if p != "" {
-			opt := NewOption(OPTION_URI_PATH, p)
+			opt := NewOption(OptionUriPath, p)
 			opts = append(opts, opt)
 		}
 	}
@@ -65,8 +65,8 @@ func NewPathOptions(path string) []*Option {
 func IsRepeatableOption(opt *Option) bool {
 	switch opt.Code {
 
-	case OPTION_IF_MATCH, OPTION_ETAG, OPTION_URI_PORT, OPTION_LOCATION_PATH, OPTION_URI_PATH, OPTION_URI_QUERY, OPTION_LOCATION_QUERY,
-		OPTION_BLOCK2, OPTION_BLOCK1:
+	case OptionIfMatch, OptionEtag, OptionUriPort, OptionLocationPath, OptionUriPath, OptionUriQuery, OptionLocationQuery,
+		OptionBlock2, OptionBlock1:
 		return true
 
 	default:
@@ -78,10 +78,10 @@ func IsRepeatableOption(opt *Option) bool {
 func IsValidOption(opt *Option) bool {
 	switch opt.Code {
 
-	case OPTION_IF_MATCH, OPTION_URI_HOST,
-		OPTION_ETAG, OPTION_IF_NONE_MATCH, OPTION_OBSERVE, OPTION_URI_PORT, OPTION_LOCATION_PATH,
-		OPTION_URI_PATH, OPTION_CONTENT_FORMAT, OPTION_MAX_AGE, OPTION_URI_QUERY, OPTION_ACCEPT,
-		OPTION_LOCATION_QUERY, OPTION_BLOCK2, OPTION_BLOCK1, OPTION_PROXY_URI, OPTION_PROXY_SCHEME, OPTION_SIZE1:
+	case OptionIfNoneMatch, OptionUriHost,
+		OptionEtag, OptionIfMatch, OptionObserve, OptionUriPort, OptionLocationPath,
+		OptionUriPath, OptionContentFormat, OptionMaxAge, OptionUriQuery, OptionAccept,
+		OptionLocationQuery, OptionBlock2, OptionBlock1, OptionProxyUri, OptionProxyScheme, OptionSize1:
 		return true
 
 	default:

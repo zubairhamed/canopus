@@ -20,7 +20,7 @@ func runProxyServer() {
 
 	server.Get("/proxycall", func(req CoapRequest) CoapResponse {
 		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
+		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
 
@@ -34,7 +34,7 @@ func runServer() {
 
 	server.Get("/proxycall", func(req CoapRequest) CoapResponse {
 		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
+		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
 		msg.SetStringPayload("Data from :5684 -- " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
 
@@ -50,7 +50,7 @@ func runClient() {
 	client.OnStart(func(server CoapServer) {
 		client.Dial("localhost:5683")
 
-		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+		req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
 		req.SetProxyUri("coap://localhost:5684/proxycall")
 
 		PrintMessage(req.GetMessage())

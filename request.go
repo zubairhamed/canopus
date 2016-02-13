@@ -17,7 +17,7 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) Coa
 }
 
 func NewConfirmableGetRequest() CoapRequest {
-	msg := NewMessage(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Get, GenerateMessageId())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -26,7 +26,7 @@ func NewConfirmableGetRequest() CoapRequest {
 }
 
 func NewConfirmablePostRequest() CoapRequest {
-	msg := NewMessage(TYPE_CONFIRMABLE, POST, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Post, GenerateMessageId())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -35,7 +35,7 @@ func NewConfirmablePostRequest() CoapRequest {
 }
 
 func NewConfirmablePutRequest() CoapRequest {
-	msg := NewMessage(TYPE_CONFIRMABLE, PUT, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Put, GenerateMessageId())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -44,7 +44,7 @@ func NewConfirmablePutRequest() CoapRequest {
 }
 
 func NewConfirmableDeleteRequest() CoapRequest {
-	msg := NewMessage(TYPE_CONFIRMABLE, DELETE, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Delete, GenerateMessageId())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -96,11 +96,11 @@ type DefaultCoapRequest struct {
 }
 
 func (c *DefaultCoapRequest) SetProxyUri(uri string) {
-	c.msg.AddOption(OPTION_PROXY_URI, uri)
+	c.msg.AddOption(OptionProxyUri, uri)
 }
 
 func (c *DefaultCoapRequest) SetMediaType(mt MediaType) {
-	c.msg.AddOption(OPTION_CONTENT_FORMAT, mt)
+	c.msg.AddOption(OptionContentFormat, mt)
 }
 
 func (c *DefaultCoapRequest) GetConnection() *net.UDPConn {
@@ -140,9 +140,9 @@ func (c *DefaultCoapRequest) SetRequestURI(uri string) {
 
 func (c *DefaultCoapRequest) SetConfirmable(con bool) {
 	if con {
-		c.msg.MessageType = TYPE_CONFIRMABLE
+		c.msg.MessageType = MessageConfirmable
 	} else {
-		c.msg.MessageType = TYPE_NONCONFIRMABLE
+		c.msg.MessageType = MessageNonConfirmable
 	}
 }
 
@@ -151,7 +151,7 @@ func (c *DefaultCoapRequest) SetToken(t string) {
 }
 
 func (c *DefaultCoapRequest) GetUriQuery(q string) string {
-	qs := c.GetMessage().GetOptionsAsString(OPTION_URI_QUERY)
+	qs := c.GetMessage().GetOptionsAsString(OptionUriQuery)
 
 	for _, o := range qs {
 		ps := strings.Split(o, "=")
@@ -165,5 +165,5 @@ func (c *DefaultCoapRequest) GetUriQuery(q string) string {
 }
 
 func (c *DefaultCoapRequest) SetUriQuery(k string, v string) {
-	c.GetMessage().AddOption(OPTION_URI_QUERY, k+"="+v)
+	c.GetMessage().AddOption(OptionUriQuery, k+"="+v)
 }

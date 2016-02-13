@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 	"strconv"
-	"time"
 	"strings"
+	"time"
 )
 
 type ProxyType int
@@ -45,14 +45,14 @@ func NewServer(local, remote string) CoapServer {
 	}
 
 	return &DefaultCoapServer{
-		remoteAddr:            remoteAddr,
-		localAddr:             localAddr,
-		events:                NewCanopusEvents(),
-		observations:          make(map[string][]*Observation),
-		fnHandleCoapProxy: 		NullProxyHandler,
-		fnHandleHttpProxy: 		NullProxyHandler,
-		fnProxyFilter:			NullProxyFilter,
-		stopChannel:           make(chan int),
+		remoteAddr:        remoteAddr,
+		localAddr:         localAddr,
+		events:            NewCanopusEvents(),
+		observations:      make(map[string][]*Observation),
+		fnHandleCoapProxy: NullProxyHandler,
+		fnHandleHttpProxy: NullProxyHandler,
+		fnProxyFilter:     NullProxyFilter,
+		stopChannel:       make(chan int),
 	}
 }
 
@@ -70,7 +70,7 @@ type DefaultCoapServer struct {
 
 	fnHandleHttpProxy ProxyHandler
 	fnHandleCoapProxy ProxyHandler
-	fnProxyFilter	  ProxyFilter
+	fnProxyFilter     ProxyFilter
 
 	stopChannel chan int
 }
@@ -84,11 +84,11 @@ func (s *DefaultCoapServer) Start() {
 	var discoveryRoute RouteHandler = func(req CoapRequest) CoapResponse {
 		msg := req.GetMessage()
 
-		ack := ContentMessage(msg.MessageId, TYPE_ACKNOWLEDGEMENT)
+		ack := ContentMessage(msg.MessageId, MessageAcknowledgement)
 		ack.Token = make([]byte, len(msg.Token))
 		copy(ack.Token, msg.Token)
 
-		ack.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
+		ack.AddOption(OptionContentFormat, MediaTypeApplicationLinkFormat)
 
 		var buf bytes.Buffer
 		for _, r := range s.routes {
@@ -121,7 +121,7 @@ func (s *DefaultCoapServer) Start() {
 		return resp
 	}
 
-	s.NewRoute("/.well-known/core", GET, discoveryRoute)
+	s.NewRoute("/.well-known/core", Get, discoveryRoute)
 	s.serveServer()
 }
 
@@ -145,7 +145,7 @@ func (s *DefaultCoapServer) serveServer() {
 	s.events.Started(s)
 	s.handleMessageIdPurge()
 
-	readBuf := make([]byte, MAX_PACKET_SIZE)
+	readBuf := make([]byte, MaxPacketSize)
 	for {
 		select {
 		case <-s.stopChannel:
@@ -174,14 +174,14 @@ func (s *DefaultCoapServer) Stop() {
 
 func (s *DefaultCoapServer) handleMessageIdPurge() {
 	// Routine for clearing up message IDs which has expired
-	ticker := time.NewTicker(MESSAGEID_PURGE_DURATION * time.Second)
+	ticker := time.NewTicker(MessageIdPurgeDuration * time.Second)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				for k, v := range s.messageIds {
 					elapsed := time.Since(v)
-					if elapsed > MESSAGEID_PURGE_DURATION {
+					if elapsed > MessageIdPurgeDuration {
 						delete(s.messageIds, k)
 					}
 				}
@@ -198,23 +198,23 @@ func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr
 	msg, err := BytesToMessage(msgBuf)
 	s.events.Message(msg, true)
 
-	if msg.MessageType == TYPE_ACKNOWLEDGEMENT {
+	if msg.MessageType == MessageAcknowledgement {
 		handleResponse(s, msg, conn, addr)
 	} else {
-		handleRequest(s, err, msg, conn,addr)
+		handleRequest(s, err, msg, conn, addr)
 	}
 }
 
 func (s *DefaultCoapServer) Get(path string, fn RouteHandler) *Route {
-	return s.add(METHOD_GET, path, fn)
+	return s.add(MethodGet, path, fn)
 }
 
 func (s *DefaultCoapServer) Delete(path string, fn RouteHandler) *Route {
-	return s.add(METHOD_DELETE, path, fn)
+	return s.add(MethodDelete, path, fn)
 }
 
 func (s *DefaultCoapServer) Put(path string, fn RouteHandler) *Route {
-	return s.add(METHOD_PUT, path, fn)
+	return s.add(MethodPut, path, fn)
 }
 
 func (s *DefaultCoapServer) Post(path string, fn RouteHandler) *Route {
@@ -267,9 +267,9 @@ func (c *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 		var req CoapRequest
 
 		if confirm {
-			req = NewRequest(TYPE_CONFIRMABLE, COAPCODE_205_CONTENT, GenerateMessageId())
+			req = NewRequest(MessageConfirmable, CoapCode_Content, GenerateMessageId())
 		} else {
-			req = NewRequest(TYPE_ACKNOWLEDGEMENT, COAPCODE_205_CONTENT, GenerateMessageId())
+			req = NewRequest(MessageAcknowledgement, CoapCode_Content, GenerateMessageId())
 		}
 
 		for _, r := range t {
@@ -277,7 +277,7 @@ func (c *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 			req.SetStringPayload(value)
 			req.SetRequestURI(r.Resource)
 			r.NotifyCount++
-			req.GetMessage().AddOption(OPTION_OBSERVE, r.NotifyCount)
+			req.GetMessage().AddOption(OptionObserve, r.NotifyCount)
 
 			go c.SendTo(req, r.Addr)
 		}
@@ -374,7 +374,7 @@ func (s *DefaultCoapServer) ProxyCoap(enabled bool) {
 	}
 }
 
-func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr *net.UDPAddr) (bool) {
+func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr *net.UDPAddr) bool {
 	return s.fnProxyFilter(msg, addr)
 }
 

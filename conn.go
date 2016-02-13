@@ -39,7 +39,7 @@ func (c *CanopusUDPConnection) SetReadDeadline(t time.Time) error {
 }
 
 func (c *CanopusUDPConnection) Read() (buf []byte, n int, err error) {
-	buf = make([]byte, MAX_PACKET_SIZE)
+	buf = make([]byte, MaxPacketSize)
 	n, _, err = c.conn.ReadFromUDP(buf)
 
 	return
@@ -83,7 +83,7 @@ func (c *MockCanopusUDPConnection) SetReadDeadline(t time.Time) error {
 }
 
 func (c *MockCanopusUDPConnection) Read() (buf []byte, n int, err error) {
-	msg := NewMessage(TYPE_NONCONFIRMABLE, c.coapCode, 12345)
+	msg := NewMessage(MessageNonConfirmable, c.coapCode, 12345)
 	buf, _ = MessageToBytes(msg)
 	n = len(buf)
 

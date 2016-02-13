@@ -51,7 +51,7 @@ func GenerateRandomChangeNotifications(server CoapServer) {
 }
 
 func routeHandler(req CoapRequest) CoapResponse {
-	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+	msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
 	res := NewResponse(msg, nil)
 
@@ -63,9 +63,9 @@ func runClient() {
 
 	client.OnStart(func(server CoapServer) {
 		client.Dial("localhost:5683")
-		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+		req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
 		req.SetRequestURI("/watch/this")
-		req.GetMessage().AddOption(OPTION_OBSERVE, 0)
+		req.GetMessage().AddOption(OptionObserve, 0)
 
 		_, err := client.Send(req)
 		if err != nil {
@@ -80,9 +80,9 @@ func runClient() {
 			log.Println("CLIENT: Got Change Notification for resource and value: ", notifyCount, resource, value)
 		} else {
 			log.Println("Cancelling Observation after 4 notifications")
-			req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+			req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
 			req.SetRequestURI("watch/this")
-			req.GetMessage().AddOption(OPTION_OBSERVE, 0)
+			req.GetMessage().AddOption(OptionObserve, 0)
 
 			_, err := client.Send(req)
 			if err != nil {

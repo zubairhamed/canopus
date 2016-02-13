@@ -16,7 +16,7 @@ func TestGenerateMessageId(t *testing.T) {
 		assert.Equal(t, id2, id)
 	}
 
-	MESSAGEID_CURR = 65535
+	CurrentMessageId = 65535
 	id = GenerateMessageId()
 	assert.Equal(t, uint16(1), id)
 }
@@ -78,40 +78,40 @@ func TestCoreResourceUtil(t *testing.T) {
 }
 
 func TestCoapCodeToString(t *testing.T) {
-	test_data := []struct {
+	testData := []struct {
 		coapCode   CoapCode
 		codeString string
 	}{
-		{GET, "GET"},
-		{POST, "POST"},
-		{PUT, "PUT"},
-		{DELETE, "DELETE"},
-		{COAPCODE_0_EMPTY, "0 Empty"},
-		{COAPCODE_201_CREATED, "201 Created"},
-		{COAPCODE_202_DELETED, "202 Deleted"},
-		{COAPCODE_203_VALID, "203 Valid"},
-		{COAPCODE_204_CHANGED, "204 Changed"},
-		{COAPCODE_205_CONTENT, "205 Content"},
-		{COAPCODE_400_BAD_REQUEST, "400 Bad Request"},
-		{COAPCODE_401_UNAUTHORIZED, "401 Unauthorized"},
-		{COAPCODE_402_BAD_OPTION, "402 Bad Option"},
-		{COAPCODE_403_FORBIDDEN, "403 Forbidden"},
-		{COAPCODE_404_NOT_FOUND, "404 Not Found"},
-		{COAPCODE_405_METHOD_NOT_ALLOWED, "405 Method Not Allowed"},
-		{COAPCODE_406_NOT_ACCEPTABLE, "406 Not Acceptable"},
-		{COAPCODE_412_PRECONDITION_FAILED, "412 Precondition Failed"},
-		{COAPCODE_413_REQUEST_ENTITY_TOO_LARGE, "413 Request Entity Too Large"},
-		{COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT, "415 Unsupported Content Format"},
-		{COAPCODE_500_INTERNAL_SERVER_ERROR, "500 Internal Server Error"},
-		{COAPCODE_501_NOT_IMPLEMENTED, "501 Not Implemented"},
-		{COAPCODE_502_BAD_GATEWAY, "502 Bad Gateway"},
-		{COAPCODE_503_SERVICE_UNAVAILABLE, "503 Service Unavailable"},
-		{COAPCODE_504_GATEWAY_TIMEOUT, "504 Gateway Timeout"},
-		{COAPCODE_505_PROXYING_NOT_SUPPORTED, "505 Proxying Not Supported"},
+		{Get, "GET"},
+		{Post, "POST"},
+		{Put, "PUT"},
+		{Delete, "DELETE"},
+		{CoapCode_Empty, "0 Empty"},
+		{CoapCode_Created, "201 Created"},
+		{CoapCode_Deleted, "202 Deleted"},
+		{CoapCode_Valid, "203 Valid"},
+		{CoapCode_Changed, "204 Changed"},
+		{CoapCode_Content, "205 Content"},
+		{CoapCode_BadRequest, "400 Bad Request"},
+		{CoapCode_Unauthorized, "401 Unauthorized"},
+		{CoapCode_BadOption, "402 Bad Option"},
+		{CoapCode_Forbidden, "403 Forbidden"},
+		{CoapCode_NotFound, "404 Not Found"},
+		{CoapCode_MethodNotAllowed, "405 Method Not Allowed"},
+		{CoapCode_NotAcceptable, "406 Not Acceptable"},
+		{CoapCode_PreconditionFailed, "412 Precondition Failed"},
+		{CoapCode_RequestEntityTooLarge, "413 Request Entity Too Large"},
+		{CoapCode_UnsupportedContentFormat, "415 Unsupported Content Format"},
+		{CoapCode_InternalServerError, "500 Internal Server Error"},
+		{CoapCode_NotImplemented, "501 Not Implemented"},
+		{CoapCode_BadGateway, "502 Bad Gateway"},
+		{CoapCode_ServiceUnavailable, "503 Service Unavailable"},
+		{CoapCode_GatewayTimeout, "504 Gateway Timeout"},
+		{CoapCode_ProxyingNotSupported, "505 Proxying Not Supported"},
 		{CoapCode(255), "Unknown"},
 	}
 
-	for _, td := range test_data {
+	for _, td := range testData {
 		assert.Equal(t, td.codeString, CoapCodeToString(td.coapCode))
 	}
 }
@@ -121,8 +121,8 @@ func TestRouteMatching(t *testing.T) {
 }
 
 func TestMediaTypeUtils(t *testing.T) {
-	assert.True(t, ValidCoapMediaTypeCode(MEDIATYPE_TEXT_PLAIN))
-	assert.True(t, ValidCoapMediaTypeCode(MEDIATYPE_OPAQUE_VND_OMA_LWM2M))
+	assert.True(t, ValidCoapMediaTypeCode(MediaTypeTextPlain))
+	assert.True(t, ValidCoapMediaTypeCode(MediaTypeOpaqueVndOmaLwm2m))
 
 	assert.False(t, ValidCoapMediaTypeCode(MediaType(9999)))
 }

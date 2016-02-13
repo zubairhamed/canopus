@@ -10,9 +10,9 @@ func TestResponse(t *testing.T) {
 	msg.SetStringPayload("hello canopus")
 	assert.NotNil(t, NewResponseWithMessage(msg))
 
-	response := NewResponse(msg, ERR_UNKNOWN_CRITICAL_OPTION)
+	response := NewResponse(msg, ErrUnknownCriticalOption)
 	assert.NotNil(t, response)
 	assert.Equal(t, uint16(12345), response.GetMessage().MessageId)
-	assert.Equal(t, ERR_UNKNOWN_CRITICAL_OPTION, response.GetError())
+	assert.Equal(t, ErrUnknownCriticalOption, response.GetError())
 
 }

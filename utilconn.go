@@ -5,18 +5,18 @@ import (
 	"time"
 )
 
-// Sends a CoAP Message to UDP address
+// SendMessageTo sends a CoAP Message to UDP address
 func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (CoapResponse, error) {
 	if conn == nil {
-		return nil, ERR_NIL_CONN
+		return nil, ErrNilConn
 	}
 
 	if msg == nil {
-		return nil, ERR_NIL_MESSAGE
+		return nil, ErrNilMessage
 	}
 
 	if addr == nil {
-		return nil, ERR_NIL_ADDR
+		return nil, ErrNilAddr
 	}
 
 	b, _ := MessageToBytes(msg)
@@ -26,26 +26,25 @@ func SendMessageTo(msg *Message, conn CanopusConnection, addr *net.UDPAddr) (Coa
 		return nil, err
 	}
 
-	if msg.MessageType == TYPE_NONCONFIRMABLE {
+	if msg.MessageType == MessageNonConfirmable {
 		return NewResponse(NewEmptyMessage(msg.MessageId), err), err
-	} else {
-		// conn.SetReadDeadline(time.Now().Add(time.Second * 2))
-		buf, n, err := conn.Read()
-		if err != nil {
-			return nil, err
-		}
-		msg, err := BytesToMessage(buf[:n])
-		resp := NewResponse(msg, err)
-
-		return resp, err
 	}
-	return nil, nil
+
+	// conn.SetReadDeadline(time.Now().Add(time.Second * 2))
+	buf, n, err := conn.Read()
+	if err != nil {
+		return nil, err
+	}
+	msg, err = BytesToMessage(buf[:n])
+	resp := NewResponse(msg, err)
+
+	return resp, err
 }
 
-// Sends a CoAP Message to a UDP Connection
+// SendMessage sends a CoAP Message to a UDP Connection
 func SendMessage(msg *Message, conn CanopusConnection) (CoapResponse, error) {
 	if conn == nil {
-		return nil, ERR_NIL_CONN
+		return nil, ErrNilConn
 	}
 
 	b, _ := MessageToBytes(msg)
@@ -55,11 +54,11 @@ func SendMessage(msg *Message, conn CanopusConnection) (CoapResponse, error) {
 		return nil, err
 	}
 
-	if msg.MessageType == TYPE_NONCONFIRMABLE {
+	if msg.MessageType == MessageNonConfirmable {
 		return nil, err
 	} else {
-		var buf []byte = make([]byte, 1500)
-		conn.SetReadDeadline(time.Now().Add(time.Second * DEFAULT_ACK_TIMEOUT))
+		var buf = make([]byte, 1500)
+		conn.SetReadDeadline(time.Now().Add(time.Second * DefaultAckTimeout))
 		buf, n, err := conn.Read()
 
 		if err != nil {

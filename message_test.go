@@ -7,7 +7,7 @@ import (
 )
 
 func TestMessage(t *testing.T) {
-	assert.NotNil(t, NewMessage(TYPE_CONFIRMABLE, GET, 12345))
+	assert.NotNil(t, NewMessage(MessageConfirmable, Get, 12345))
 	assert.NotNil(t, NewEmptyMessage(12345))
 }
 
@@ -28,7 +28,7 @@ func TestMessageConversion(t *testing.T) {
 
 	msg := NewBasicConfirmableMessage()
 	// Byte 1
-	msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_LINK_FORMAT)
+	msg.AddOption(OptionContentFormat, MediaTypeApplicationLinkFormat)
 
 	// Convert Message to BYte
 	b, err := MessageToBytes(msg)
@@ -59,31 +59,31 @@ func TestMessageObject(t *testing.T) {
 
 	assert.Equal(t, 0, len(msg.Options))
 	msg.AddOptions(NewPathOptions("/example"))
-	msg.AddOption(OPTION_ACCEPT, MEDIATYPE_APPLICATION_XML)
-	msg.AddOption(OPTION_CONTENT_FORMAT, MEDIATYPE_APPLICATION_JSON)
+	msg.AddOption(OptionAccept, MediaTypeApplicationXml)
+	msg.AddOption(OptionContentFormat, MediaTypeApplicationJson)
 	assert.Equal(t, 3, len(msg.Options))
 
-	opt := msg.GetOption(OPTION_ACCEPT)
+	opt := msg.GetOption(OptionAccept)
 	assert.NotNil(t, opt)
 
-	msg.RemoveOptions(OPTION_URI_PATH)
+	msg.RemoveOptions(OptionUriPath)
 	assert.Equal(t, 2, len(msg.Options))
 }
 
 func TestOptionConversion(t *testing.T) {
 	preMsg := NewBasicConfirmableMessage()
 
-	preMsg.AddOption(OPTION_IF_MATCH, "")
+	preMsg.AddOption(OptionIfMatch, "")
 	preMsg.AddOptions(NewPathOptions("/test"))
-	preMsg.AddOption(OPTION_ETAG, "1234567890")
-	preMsg.AddOption(OPTION_IF_NONE_MATCH, nil)
-	preMsg.AddOption(OPTION_OBSERVE, 0)
-	preMsg.AddOption(OPTION_URI_PORT, 1234)
-	preMsg.AddOption(OPTION_LOCATION_PATH, "/aaa")
-	preMsg.AddOption(OPTION_CONTENT_FORMAT, 1)
-	preMsg.AddOption(OPTION_MAX_AGE, 1)
-	preMsg.AddOption(OPTION_PROXY_URI, "http://www.google.com")
-	preMsg.AddOption(OPTION_PROXY_SCHEME, "http://proxy.scheme")
+	preMsg.AddOption(OptionEtag, "1234567890")
+	preMsg.AddOption(OptionIfNoneMatch, nil)
+	preMsg.AddOption(OptionObserve, 0)
+	preMsg.AddOption(OptionUriPort, 1234)
+	preMsg.AddOption(OptionLocationPath, "/aaa")
+	preMsg.AddOption(OptionContentFormat, 1)
+	preMsg.AddOption(OptionMaxAge, 1)
+	preMsg.AddOption(OptionProxyUri, "http://www.google.com")
+	preMsg.AddOption(OptionProxyScheme, "http://proxy.scheme")
 
 	converted, _ := MessageToBytes(preMsg)
 
@@ -99,29 +99,29 @@ func TestNewMessageHelpers(t *testing.T) {
 		msg  *Message
 		code CoapCode
 	}{
-		{EmptyMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_0_EMPTY},
-		{CreatedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_201_CREATED},
-		{DeletedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_202_DELETED},
-		{ValidMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_203_VALID},
-		{ChangedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_204_CHANGED},
-		{ContentMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_205_CONTENT},
-		{BadRequestMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_400_BAD_REQUEST},
-		{UnauthorizedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_401_UNAUTHORIZED},
-		{BadOptionMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_402_BAD_OPTION},
-		{ForbiddenMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_403_FORBIDDEN},
-		{NotFoundMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_404_NOT_FOUND},
-		{MethodNotAllowedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_405_METHOD_NOT_ALLOWED},
-		{NotAcceptableMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_406_NOT_ACCEPTABLE},
-		{ConflictMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_409_CONFLICT},
-		{PreconditionFailedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_412_PRECONDITION_FAILED},
-		{RequestEntityTooLargeMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_413_REQUEST_ENTITY_TOO_LARGE},
-		{UnsupportedContentFormatMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_415_UNSUPPORTED_CONTENT_FORMAT},
-		{InternalServerErrorMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_500_INTERNAL_SERVER_ERROR},
-		{NotImplementedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_501_NOT_IMPLEMENTED},
-		{BadGatewayMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_502_BAD_GATEWAY},
-		{ServiceUnavailableMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_503_SERVICE_UNAVAILABLE},
-		{GatewayTimeoutMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_504_GATEWAY_TIMEOUT},
-		{ProxyingNotSupportedMessage(messageId, TYPE_ACKNOWLEDGEMENT), COAPCODE_505_PROXYING_NOT_SUPPORTED},
+		{EmptyMessage(messageId, MessageAcknowledgement), CoapCode_Empty},
+		{CreatedMessage(messageId, MessageAcknowledgement), CoapCode_Created},
+		{DeletedMessage(messageId, MessageAcknowledgement), CoapCode_Deleted},
+		{ValidMessage(messageId, MessageAcknowledgement), CoapCode_Valid},
+		{ChangedMessage(messageId, MessageAcknowledgement), CoapCode_Changed},
+		{ContentMessage(messageId, MessageAcknowledgement), CoapCode_Content},
+		{BadRequestMessage(messageId, MessageAcknowledgement), CoapCode_BadRequest},
+		{UnauthorizedMessage(messageId, MessageAcknowledgement), CoapCode_Unauthorized},
+		{BadOptionMessage(messageId, MessageAcknowledgement), CoapCode_BadOption},
+		{ForbiddenMessage(messageId, MessageAcknowledgement), CoapCode_Forbidden},
+		{NotFoundMessage(messageId, MessageAcknowledgement), CoapCode_NotFound},
+		{MethodNotAllowedMessage(messageId, MessageAcknowledgement), CoapCode_MethodNotAllowed},
+		{NotAcceptableMessage(messageId, MessageAcknowledgement), CoapCode_NotAcceptable},
+		{ConflictMessage(messageId, MessageAcknowledgement), CoapCode_Conflict},
+		{PreconditionFailedMessage(messageId, MessageAcknowledgement), CoapCode_PreconditionFailed},
+		{RequestEntityTooLargeMessage(messageId, MessageAcknowledgement), CoapCode_RequestEntityTooLarge},
+		{UnsupportedContentFormatMessage(messageId, MessageAcknowledgement), CoapCode_UnsupportedContentFormat},
+		{InternalServerErrorMessage(messageId, MessageAcknowledgement), CoapCode_InternalServerError},
+		{NotImplementedMessage(messageId, MessageAcknowledgement), CoapCode_NotImplemented},
+		{BadGatewayMessage(messageId, MessageAcknowledgement), CoapCode_BadGateway},
+		{ServiceUnavailableMessage(messageId, MessageAcknowledgement), CoapCode_ServiceUnavailable},
+		{GatewayTimeoutMessage(messageId, MessageAcknowledgement), CoapCode_GatewayTimeout},
+		{ProxyingNotSupportedMessage(messageId, MessageAcknowledgement), CoapCode_ProxyingNotSupported},
 	}
 
 	for _, td := range test_data {
@@ -131,8 +131,8 @@ func TestNewMessageHelpers(t *testing.T) {
 }
 
 func NewBasicConfirmableMessage() *Message {
-	msg := NewMessageOfType(TYPE_CONFIRMABLE, 0xf0f0)
-	msg.Code = GET
+	msg := NewMessageOfType(MessageConfirmable, 0xf0f0)
+	msg.Code = Get
 	msg.Token = []byte("abcd1234")
 	msg.SetStringPayload("xxxxx")
 

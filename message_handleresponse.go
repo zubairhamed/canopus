@@ -3,7 +3,7 @@ package canopus
 import "net"
 
 func handleResponse(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	if msg.GetOption(OPTION_OBSERVE) != nil {
+	if msg.GetOption(OptionObserve) != nil {
 		handleAcknowledgeObserveRequest(s, msg)
 		return
 	}
@@ -11,4 +11,3 @@ func handleResponse(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDP
 func handleAcknowledgeObserveRequest(s CoapServer, msg *Message) {
 	s.GetEvents().Notify(msg.GetUriPath(), msg.Payload, msg)
 }
-

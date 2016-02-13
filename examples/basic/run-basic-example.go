@@ -20,7 +20,7 @@ func runServer() {
 	server.Get("/hello", func(req CoapRequest) CoapResponse {
 		log.Println("Hello Called")
 		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
+		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
 
@@ -30,7 +30,7 @@ func runServer() {
 	server.Post("/hello", func(req CoapRequest) CoapResponse {
 		log.Println("Hello Called via POST")
 		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, TYPE_ACKNOWLEDGEMENT)
+		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := NewResponse(msg, nil)
 
@@ -38,7 +38,7 @@ func runServer() {
 	})
 
 	server.Get("/basic", func(req CoapRequest) CoapResponse {
-		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
 		msg.SetStringPayload("Acknowledged")
 
 		res := NewResponse(msg, nil)
@@ -47,14 +47,14 @@ func runServer() {
 	})
 
 	server.Get("/basic/json", func(req CoapRequest) CoapResponse {
-		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
 		res := NewResponse(msg, nil)
 
 		return res
 	})
 
 	server.Get("/basic/xml", func(req CoapRequest) CoapResponse {
-		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
+		msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
 		res := NewResponse(msg, nil)
 
 		return res
@@ -73,7 +73,7 @@ func runClient() {
 	client.OnStart(func(server CoapServer) {
 		client.Dial("localhost:5683")
 
-		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
+		req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
 		req.SetStringPayload("Hello, canopus")
 		req.SetRequestURI("/hello")
 

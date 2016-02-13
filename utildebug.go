@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-// Pretty prints out a given Message's options
+// PrintOptions pretty prints out a given Message's options
 func PrintOptions(msg *Message) {
 	opts := msg.Options
 	log.Println(" - - - OPTIONS - - - ")
@@ -17,7 +17,7 @@ func PrintOptions(msg *Message) {
 	}
 }
 
-// Pretty prints out a given Message
+// PrintMessage pretty prints out a given Message
 func PrintMessage(msg *Message) {
 	log.Println("= = = = = = = = = = = = = = = = ")
 	log.Println("Code: ", msg.Code)
@@ -32,65 +32,64 @@ func PrintMessage(msg *Message) {
 
 }
 
-// Returns the string representation of a given Option Code
+// OptionNumberToString returns the string representation of a given Option Code
 func OptionNumberToString(o OptionCode) string {
 	switch o {
-	case OPTION_IF_MATCH:
+	case OptionIfMatch:
 		return "If-Match"
 
-	case OPTION_URI_HOST:
+	case OptionUriHost:
 		return "Uri-Host"
 
-	case OPTION_ETAG:
+	case OptionEtag:
 		return "ETag"
 
-	case OPTION_IF_NONE_MATCH:
+	case OptionIfNoneMatch:
 		return "If-None-Match"
 
-	case OPTION_URI_PORT:
+	case OptionUriPort:
 		return "Uri-Port"
 
-	case OPTION_LOCATION_PATH:
+	case OptionLocationPath:
 		return "Location-Path"
 
-	case OPTION_URI_PATH:
+	case OptionUriPath:
 		return "Uri-Path"
 
-	case OPTION_CONTENT_FORMAT:
+	case OptionContentFormat:
 		return "Content-Format"
 
-	case OPTION_MAX_AGE:
+	case OptionMaxAge:
 		return "Max-Age"
 
-	case OPTION_URI_QUERY:
+	case OptionUriQuery:
 		return "Uri-Query"
 
-	case OPTION_ACCEPT:
+	case OptionAccept:
 		return "Accept"
 
-	case OPTION_LOCATION_QUERY:
+	case OptionLocationQuery:
 		return "Location-Query"
 
-	case OPTION_BLOCK2:
+	case OptionBlock2:
 		return "Block2"
 
-	case OPTION_BLOCK1:
+	case OptionBlock1:
 		return "Block1"
 
-	case OPTION_PROXY_URI:
+	case OptionProxyUri:
 		return "Proxy-Uri"
 
-	case OPTION_PROXY_SCHEME:
+	case OptionProxyScheme:
 		return "Proxy-Scheme"
 
-	case OPTION_SIZE1:
+	case OptionSize1:
 		return "Size1"
 
-	case OPTION_SIZE2:
+	case OptionSize2:
 		return "Size2"
 
 	default:
 		return ""
 	}
-	return ""
 }

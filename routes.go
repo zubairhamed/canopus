@@ -85,7 +85,7 @@ func MatchingRoute(path string, method string, cf interface{}, routes []*Route) 
 			if match {
 				if len(route.MediaTypes) > 0 {
 					if cf == nil {
-						return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
+						return route, attrs, ErrUnsupportedContentFormat
 					}
 
 					foundMediaType := false
@@ -97,12 +97,12 @@ func MatchingRoute(path string, method string, cf interface{}, routes []*Route) 
 					}
 
 					if !foundMediaType {
-						return route, attrs, ERR_UNSUPPORTED_CONTENT_FORMAT
+						return route, attrs, ErrUnsupportedContentFormat
 					}
 				}
 				return route, attrs, nil
 			}
 		}
 	}
-	return nil, nil, ERR_NO_MATCHING_ROUTE
+	return nil, nil, ErrNoMatchingRoute
 }

@@ -69,7 +69,7 @@ func (c *DefaultResponse) GetPayload() []byte {
 }
 
 func (c *DefaultResponse) GetUriQuery(q string) string {
-	qs := c.GetMessage().GetOptionsAsString(OPTION_URI_QUERY)
+	qs := c.GetMessage().GetOptionsAsString(OptionUriQuery)
 
 	for _, o := range qs {
 		ps := strings.Split(o, "=")
