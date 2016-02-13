@@ -8,7 +8,7 @@ import (
 )
 
 func TestEvents(t *testing.T) {
-	events := NewCanopusEvents()
+	events := NewEvents()
 
 	assert.NotNil(t, events)
 

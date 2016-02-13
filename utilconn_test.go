@@ -7,12 +7,12 @@ import (
 )
 
 func TestSendMessages(t *testing.T) {
-	var conn CanopusConnection
+	var conn Connection
 	_, err := SendMessageTo(nil, conn, nil)
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrNilConn, err)
 
-	conn = NewCanopusUDPConnection(nil)
+	conn = NewUDPConnection(nil)
 	SendMessageTo(nil, conn, nil)
 	_, err = SendMessageTo(nil, conn, nil)
 	assert.NotNil(t, err)
@@ -23,7 +23,7 @@ func TestSendMessages(t *testing.T) {
 	assert.Equal(t, ErrNilAddr, err)
 
 	addr := &net.UDPAddr{}
-	conn = NewMockCanopusUDPConnection(CoapCode_Created, false, false)
+	conn = NewMockCanopusUDPConnection(CoapCodeCreated, false, false)
 	msg := NewBasicConfirmableMessage()
 	_, err = SendMessageTo(msg, conn, addr)
 	assert.Nil(t, err)
@@ -32,7 +32,7 @@ func TestSendMessages(t *testing.T) {
 	_, err = SendMessageTo(msg, conn, addr)
 	assert.Nil(t, err)
 
-	conn = NewMockCanopusUDPConnection(CoapCode_Created, false, true)
+	conn = NewMockCanopusUDPConnection(CoapCodeCreated, false, true)
 	msg.MessageType = MessageConfirmable
 	_, err = SendMessageTo(msg, conn, addr)
 	assert.NotNil(t, err)

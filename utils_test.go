@@ -8,16 +8,16 @@ import (
 func TestGenerateMessageId(t *testing.T) {
 
 	var id, id2 uint16
-	id = GenerateMessageId()
+	id = GenerateMessageID()
 	for i := 0; i < 100; i++ {
 		id2 = id + 1
-		id = GenerateMessageId()
+		id = GenerateMessageID()
 		assert.NotEqual(t, 65535, id)
 		assert.Equal(t, id2, id)
 	}
 
-	CurrentMessageId = 65535
-	id = GenerateMessageId()
+	CurrentMessageID = 65535
+	id = GenerateMessageID()
 	assert.Equal(t, uint16(1), id)
 }
 
@@ -86,28 +86,28 @@ func TestCoapCodeToString(t *testing.T) {
 		{Post, "POST"},
 		{Put, "PUT"},
 		{Delete, "DELETE"},
-		{CoapCode_Empty, "0 Empty"},
-		{CoapCode_Created, "201 Created"},
-		{CoapCode_Deleted, "202 Deleted"},
-		{CoapCode_Valid, "203 Valid"},
-		{CoapCode_Changed, "204 Changed"},
-		{CoapCode_Content, "205 Content"},
-		{CoapCode_BadRequest, "400 Bad Request"},
-		{CoapCode_Unauthorized, "401 Unauthorized"},
-		{CoapCode_BadOption, "402 Bad Option"},
-		{CoapCode_Forbidden, "403 Forbidden"},
-		{CoapCode_NotFound, "404 Not Found"},
-		{CoapCode_MethodNotAllowed, "405 Method Not Allowed"},
-		{CoapCode_NotAcceptable, "406 Not Acceptable"},
-		{CoapCode_PreconditionFailed, "412 Precondition Failed"},
-		{CoapCode_RequestEntityTooLarge, "413 Request Entity Too Large"},
-		{CoapCode_UnsupportedContentFormat, "415 Unsupported Content Format"},
-		{CoapCode_InternalServerError, "500 Internal Server Error"},
-		{CoapCode_NotImplemented, "501 Not Implemented"},
-		{CoapCode_BadGateway, "502 Bad Gateway"},
-		{CoapCode_ServiceUnavailable, "503 Service Unavailable"},
-		{CoapCode_GatewayTimeout, "504 Gateway Timeout"},
-		{CoapCode_ProxyingNotSupported, "505 Proxying Not Supported"},
+		{CoapCodeEmpty, "0 Empty"},
+		{CoapCodeCreated, "201 Created"},
+		{CoapCodeDeleted, "202 Deleted"},
+		{CoapCodeValid, "203 Valid"},
+		{CoapCodeChanged, "204 Changed"},
+		{CoapCodeContent, "205 Content"},
+		{CoapCodeBadRequest, "400 Bad Request"},
+		{CoapCodeUnauthorized, "401 Unauthorized"},
+		{CoapCodeBadOption, "402 Bad Option"},
+		{CoapCodeForbidden, "403 Forbidden"},
+		{CoapCodeNotFound, "404 Not Found"},
+		{CoapCodeMethodNotAllowed, "405 Method Not Allowed"},
+		{CoapCodeNotAcceptable, "406 Not Acceptable"},
+		{CoapCodePreconditionFailed, "412 Precondition Failed"},
+		{CoapCodeRequestEntityTooLarge, "413 Request Entity Too Large"},
+		{CoapCodeUnsupportedContentFormat, "415 Unsupported Content Format"},
+		{CoapCodeInternalServerError, "500 Internal Server Error"},
+		{CoapCodeNotImplemented, "501 Not Implemented"},
+		{CoapCodeBadGateway, "502 Bad Gateway"},
+		{CoapCodeServiceUnavailable, "503 Service Unavailable"},
+		{CoapCodeGatewayTimeout, "504 Gateway Timeout"},
+		{CoapCodeProxyingNotSupported, "505 Proxying Not Supported"},
 		{CoapCode(255), "Unknown"},
 	}
 

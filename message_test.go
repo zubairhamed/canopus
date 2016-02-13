@@ -39,7 +39,7 @@ func TestMessageConversion(t *testing.T) {
 
 	assert.Equal(t, 0, int(newMsg.MessageType)) // 0x0: Type Confirmable
 	assert.Equal(t, "abcd1234", bytes.NewBuffer(newMsg.Token).String(), "Token String not the same after reconversion")
-	assert.Equal(t, 61680, int(newMsg.MessageId), "Message ID not the same after reconversion")
+	assert.Equal(t, 61680, int(newMsg.MessageID), "Message ID not the same after reconversion")
 	assert.NotEqual(t, 0, len(newMsg.Options), "Options should not be 0")
 }
 
@@ -59,14 +59,14 @@ func TestMessageObject(t *testing.T) {
 
 	assert.Equal(t, 0, len(msg.Options))
 	msg.AddOptions(NewPathOptions("/example"))
-	msg.AddOption(OptionAccept, MediaTypeApplicationXml)
-	msg.AddOption(OptionContentFormat, MediaTypeApplicationJson)
+	msg.AddOption(OptionAccept, MediaTypeApplicationXML)
+	msg.AddOption(OptionContentFormat, MediaTypeApplicationJSON)
 	assert.Equal(t, 3, len(msg.Options))
 
 	opt := msg.GetOption(OptionAccept)
 	assert.NotNil(t, opt)
 
-	msg.RemoveOptions(OptionUriPath)
+	msg.RemoveOptions(OptionURIPath)
 	assert.Equal(t, 2, len(msg.Options))
 }
 
@@ -78,11 +78,11 @@ func TestOptionConversion(t *testing.T) {
 	preMsg.AddOption(OptionEtag, "1234567890")
 	preMsg.AddOption(OptionIfNoneMatch, nil)
 	preMsg.AddOption(OptionObserve, 0)
-	preMsg.AddOption(OptionUriPort, 1234)
+	preMsg.AddOption(OptionURIPort, 1234)
 	preMsg.AddOption(OptionLocationPath, "/aaa")
 	preMsg.AddOption(OptionContentFormat, 1)
 	preMsg.AddOption(OptionMaxAge, 1)
-	preMsg.AddOption(OptionProxyUri, "http://www.google.com")
+	preMsg.AddOption(OptionProxyURI, "http://www.google.com")
 	preMsg.AddOption(OptionProxyScheme, "http://proxy.scheme")
 
 	converted, _ := MessageToBytes(preMsg)
@@ -99,29 +99,29 @@ func TestNewMessageHelpers(t *testing.T) {
 		msg  *Message
 		code CoapCode
 	}{
-		{EmptyMessage(messageId, MessageAcknowledgement), CoapCode_Empty},
-		{CreatedMessage(messageId, MessageAcknowledgement), CoapCode_Created},
-		{DeletedMessage(messageId, MessageAcknowledgement), CoapCode_Deleted},
-		{ValidMessage(messageId, MessageAcknowledgement), CoapCode_Valid},
-		{ChangedMessage(messageId, MessageAcknowledgement), CoapCode_Changed},
-		{ContentMessage(messageId, MessageAcknowledgement), CoapCode_Content},
-		{BadRequestMessage(messageId, MessageAcknowledgement), CoapCode_BadRequest},
-		{UnauthorizedMessage(messageId, MessageAcknowledgement), CoapCode_Unauthorized},
-		{BadOptionMessage(messageId, MessageAcknowledgement), CoapCode_BadOption},
-		{ForbiddenMessage(messageId, MessageAcknowledgement), CoapCode_Forbidden},
-		{NotFoundMessage(messageId, MessageAcknowledgement), CoapCode_NotFound},
-		{MethodNotAllowedMessage(messageId, MessageAcknowledgement), CoapCode_MethodNotAllowed},
-		{NotAcceptableMessage(messageId, MessageAcknowledgement), CoapCode_NotAcceptable},
-		{ConflictMessage(messageId, MessageAcknowledgement), CoapCode_Conflict},
-		{PreconditionFailedMessage(messageId, MessageAcknowledgement), CoapCode_PreconditionFailed},
-		{RequestEntityTooLargeMessage(messageId, MessageAcknowledgement), CoapCode_RequestEntityTooLarge},
-		{UnsupportedContentFormatMessage(messageId, MessageAcknowledgement), CoapCode_UnsupportedContentFormat},
-		{InternalServerErrorMessage(messageId, MessageAcknowledgement), CoapCode_InternalServerError},
-		{NotImplementedMessage(messageId, MessageAcknowledgement), CoapCode_NotImplemented},
-		{BadGatewayMessage(messageId, MessageAcknowledgement), CoapCode_BadGateway},
-		{ServiceUnavailableMessage(messageId, MessageAcknowledgement), CoapCode_ServiceUnavailable},
-		{GatewayTimeoutMessage(messageId, MessageAcknowledgement), CoapCode_GatewayTimeout},
-		{ProxyingNotSupportedMessage(messageId, MessageAcknowledgement), CoapCode_ProxyingNotSupported},
+		{EmptyMessage(messageId, MessageAcknowledgment), CoapCodeEmpty},
+		{CreatedMessage(messageId, MessageAcknowledgment), CoapCodeCreated},
+		{DeletedMessage(messageId, MessageAcknowledgment), CoapCodeDeleted},
+		{ValidMessage(messageId, MessageAcknowledgment), CoapCodeValid},
+		{ChangedMessage(messageId, MessageAcknowledgment), CoapCodeChanged},
+		{ContentMessage(messageId, MessageAcknowledgment), CoapCodeContent},
+		{BadRequestMessage(messageId, MessageAcknowledgment), CoapCodeBadRequest},
+		{UnauthorizedMessage(messageId, MessageAcknowledgment), CoapCodeUnauthorized},
+		{BadOptionMessage(messageId, MessageAcknowledgment), CoapCodeBadOption},
+		{ForbiddenMessage(messageId, MessageAcknowledgment), CoapCodeForbidden},
+		{NotFoundMessage(messageId, MessageAcknowledgment), CoapCodeNotFound},
+		{MethodNotAllowedMessage(messageId, MessageAcknowledgment), CoapCodeMethodNotAllowed},
+		{NotAcceptableMessage(messageId, MessageAcknowledgment), CoapCodeNotAcceptable},
+		{ConflictMessage(messageId, MessageAcknowledgment), CoapCodeConflict},
+		{PreconditionFailedMessage(messageId, MessageAcknowledgment), CoapCodePreconditionFailed},
+		{RequestEntityTooLargeMessage(messageId, MessageAcknowledgment), CoapCodeRequestEntityTooLarge},
+		{UnsupportedContentFormatMessage(messageId, MessageAcknowledgment), CoapCodeUnsupportedContentFormat},
+		{InternalServerErrorMessage(messageId, MessageAcknowledgment), CoapCodeInternalServerError},
+		{NotImplementedMessage(messageId, MessageAcknowledgment), CoapCodeNotImplemented},
+		{BadGatewayMessage(messageId, MessageAcknowledgment), CoapCodeBadGateway},
+		{ServiceUnavailableMessage(messageId, MessageAcknowledgment), CoapCodeServiceUnavailable},
+		{GatewayTimeoutMessage(messageId, MessageAcknowledgment), CoapCodeGatewayTimeout},
+		{ProxyingNotSupportedMessage(messageId, MessageAcknowledgment), CoapCodeProxyingNotSupported},
 	}
 
 	for _, td := range test_data {

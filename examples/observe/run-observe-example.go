@@ -51,7 +51,7 @@ func GenerateRandomChangeNotifications(server canopus.CoapServer) {
 }
 
 func routeHandler(req canopus.CoapRequest) canopus.CoapResponse {
-	msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageId)
+	msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
 	msg.SetStringPayload("Acknowledged")
 	res := canopus.NewResponse(msg, nil)
 

@@ -37,7 +37,12 @@ const (
 type OptionCode int
 
 const (
+	// OptionIfMatch request-header field is used with a method to make it conditional.
+	// A client that has one or more entities previously obtained from the resource can verify
+	// that one of those entities is current by including a list of their associated entity tags
+	// in the If-Match header field.
 	OptionIfMatch       OptionCode = 1
+
 	OptionURIHost       OptionCode = 3
 	OptionEtag          OptionCode = 4
 	OptionIfNoneMatch   OptionCode = 5

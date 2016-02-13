@@ -20,7 +20,7 @@ func runProxyServer() {
 
 	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
 		canopus.PrintMessage(req.GetMessage())
-		msg := canopus.ContentMessage(req.GetMessage().MessageId, canopus.MessageAcknowledgment)
+		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := canopus.NewResponse(msg, nil)
 
@@ -34,7 +34,7 @@ func runServer() {
 
 	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
 		canopus.PrintMessage(req.GetMessage())
-		msg := canopus.ContentMessage(req.GetMessage().MessageId, canopus.MessageAcknowledgment)
+		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Data from :5684 -- " + req.GetMessage().Payload.String())
 		res := canopus.NewResponse(msg, nil)
 
