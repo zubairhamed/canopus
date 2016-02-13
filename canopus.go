@@ -7,29 +7,29 @@ import (
 	"time"
 )
 
-// Message ID Generator, global
-var CurrentMessageId = 0
+// CurrentMessageID stores the current message id used/generated for messages
+var CurrentMessageID = 0
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	CurrentMessageId = rand.Intn(65535)
+	CurrentMessageID = rand.Intn(65535)
 }
 
 // Types of Messages
 const (
-	MessageConfirmable     = 0
-	MessageNonConfirmable  = 1
-	MessageAcknowledgement = 2
-	MessageReset           = 3
+	MessageConfirmable    = 0
+	MessageNonConfirmable = 1
+	MessageAcknowledgment = 2
+	MessageReset          = 3
 )
 
 // Fragments/parts of a CoAP Message packet
 const (
 	DataHeader     = 0
 	DataCode       = 1
-	DataMsgIdStart = 2
-	DataMsgIdEnd   = 4
+	DataMsgIDStart = 2
+	DataMsgIDEnd   = 4
 	DataTokenStart = 4
 )
 
@@ -38,27 +38,27 @@ type OptionCode int
 
 const (
 	OptionIfMatch       OptionCode = 1
-	OptionUriHost       OptionCode = 3
+	OptionURIHost       OptionCode = 3
 	OptionEtag          OptionCode = 4
 	OptionIfNoneMatch   OptionCode = 5
 	OptionObserve       OptionCode = 6
-	OptionUriPort       OptionCode = 7
+	OptionURIPort       OptionCode = 7
 	OptionLocationPath  OptionCode = 8
-	OptionUriPath       OptionCode = 11
+	OptionURIPath       OptionCode = 11
 	OptionContentFormat OptionCode = 12
 	OptionMaxAge        OptionCode = 14
-	OptionUriQuery      OptionCode = 15
+	OptionURIQuery      OptionCode = 15
 	OptionAccept        OptionCode = 17
 	OptionLocationQuery OptionCode = 20
 	OptionBlock2        OptionCode = 23
 	OptionBlock1        OptionCode = 27
 	OptionSize2         OptionCode = 28
-	OptionProxyUri      OptionCode = 35
+	OptionProxyURI      OptionCode = 35
 	OptionProxyScheme   OptionCode = 39
 	OptionSize1         OptionCode = 60
 )
 
-// Valid CoAP Codes
+// CoapCode defines a valid CoAP Code Type
 type CoapCode uint8
 
 const (
@@ -67,32 +67,31 @@ const (
 	Put    CoapCode = 3
 	Delete CoapCode = 4
 
-	CoapCode_Empty                    CoapCode = 0
-	CoapCode_Created                  CoapCode = 65
-	CoapCode_Deleted                  CoapCode = 66
-	CoapCode_Valid                    CoapCode = 67
-	CoapCode_Changed                  CoapCode = 68
-	CoapCode_Content                  CoapCode = 69
-	CoapCode_BadRequest               CoapCode = 128
-	CoapCode_Unauthorized             CoapCode = 129
-	CoapCode_BadOption                CoapCode = 130
-	CoapCode_Forbidden                CoapCode = 131
-	CoapCode_NotFound                 CoapCode = 132
-	CoapCode_MethodNotAllowed         CoapCode = 133
-	CoapCode_NotAcceptable            CoapCode = 134
-	CoapCode_Conflict                 CoapCode = 137
-	CoapCode_PreconditionFailed       CoapCode = 140
-	CoapCode_RequestEntityTooLarge    CoapCode = 141
-	CoapCode_UnsupportedContentFormat CoapCode = 143
-	CoapCode_InternalServerError      CoapCode = 160
-	CoapCode_NotImplemented           CoapCode = 161
-	CoapCode_BadGateway               CoapCode = 162
-	CoapCode_ServiceUnavailable       CoapCode = 163
-	CoapCode_GatewayTimeout           CoapCode = 164
-	CoapCode_ProxyingNotSupported     CoapCode = 165
+	CoapCodeEmpty                    CoapCode = 0
+	CoapCodeCreated                  CoapCode = 65
+	CoapCodeDeleted                  CoapCode = 66
+	CoapCodeValid                    CoapCode = 67
+	CoapCodeChanged                  CoapCode = 68
+	CoapCodeContent                  CoapCode = 69
+	CoapCodeBadRequest               CoapCode = 128
+	CoapCodeUnauthorized             CoapCode = 129
+	CoapCodeBadOption                CoapCode = 130
+	CoapCodeForbidden                CoapCode = 131
+	CoapCodeNotFound                 CoapCode = 132
+	CoapCodeMethodNotAllowed         CoapCode = 133
+	CoapCodeNotAcceptable            CoapCode = 134
+	CoapCodeConflict                 CoapCode = 137
+	CoapCodePreconditionFailed       CoapCode = 140
+	CoapCodeRequestEntityTooLarge    CoapCode = 141
+	CoapCodeUnsupportedContentFormat CoapCode = 143
+	CoapCodeInternalServerError      CoapCode = 160
+	CoapCodeNotImplemented           CoapCode = 161
+	CoapCodeBadGateway               CoapCode = 162
+	CoapCodeServiceUnavailable       CoapCode = 163
+	CoapCodeGatewayTimeout           CoapCode = 164
+	CoapCodeProxyingNotSupported     CoapCode = 165
 )
 
-// Default Acknowledgement Timeout
 const DefaultAckTimeout = 2
 const DefaultAckRandomFactor = 1.5
 const DefaultMaxRetransmit = 4
@@ -107,21 +106,18 @@ const CoapsDefaultPort = 5684
 const PayloadMarker = 0xff
 const MaxPacketSize = 1500
 
-// Number of seconds before a MessageID Purge is initiated
-const MessageIdPurgeDuration = 60
+// MessageIDPurgeDuration defines the number of seconds before a MessageID Purge is initiated
+const MessageIDPurgeDuration = 60
 
 type RouteHandler func(CoapRequest) CoapResponse
 
-// type ResponseHandler func(CoapRespose, error)
-
-// Supported Media Types
 type MediaType int
 
 const (
 	MediaTypeTextPlain                  MediaType = 0
-	MediaTypeTextXml                    MediaType = 1
+	MediaTypeTextXML                    MediaType = 1
 	MediaTypeTextCsv                    MediaType = 2
-	MediaTypeTextHtml                   MediaType = 3
+	MediaTypeTextHTML                   MediaType = 3
 	MediaTypeImageGif                   MediaType = 21
 	MediaTypeImageJpeg                  MediaType = 22
 	MediaTypeImagePng                   MediaType = 23
@@ -129,33 +125,33 @@ const (
 	MediaTypeAudioRaw                   MediaType = 25
 	MediaTypeVideoRaw                   MediaType = 26
 	MediaTypeApplicationLinkFormat      MediaType = 40
-	MediaTypeApplicationXml             MediaType = 41
+	MediaTypeApplicationXML             MediaType = 41
 	MediaTypeApplicationOctetStream     MediaType = 42
-	MediaTypeApplicationRdfXml          MediaType = 43
-	MediaTypeApplicationSoapXml         MediaType = 44
-	MediaTypeApplicationAtomXml         MediaType = 45
-	MediaTypeApplicationXmppXml         MediaType = 46
+	MediaTypeApplicationRdfXML          MediaType = 43
+	MediaTypeApplicationSoapXML         MediaType = 44
+	MediaTypeApplicationAtomXML         MediaType = 45
+	MediaTypeApplicationXmppXML         MediaType = 46
 	MediaTypeApplicationExi             MediaType = 47
 	MediaTypeApplicationFastInfoSet     MediaType = 48
 	MediaTypeApplicationSoapFastInfoSet MediaType = 49
-	MediaTypeApplicationJson            MediaType = 50
+	MediaTypeApplicationJSON            MediaType = 50
 	MediaTypeApplicationXObitBinary     MediaType = 51
 	MediaTypeTextPlainVndOmaLwm2m       MediaType = 1541
 	MediaTypeTlvVndOmaLwm2m             MediaType = 1542
-	MediaTypeJsonVndOmaLwm2m            MediaType = 1543
+	MediaTypeJSONVndOmaLwm2m            MediaType = 1543
 	MediaTypeOpaqueVndOmaLwm2m          MediaType = 1544
 )
 
 const (
 	MethodGet      = "GET"
 	MethodPut      = "PUT"
-	METHOD_POST    = "POST"
+	MethodPost    = "POST"
 	MethodDelete   = "DELETE"
-	METHOD_OPTIONS = "OPTIONS"
-	METHOD_PATCH   = "PATCH"
+	MethodOptions = "OPTIONS"
+	MethodPatch   = "PATCH"
 )
 
-// ERRORS
+// Errors
 var ErrPacketLengthLessThan4 = errors.New("Packet length less than 4 bytes")
 var ErrInvalidCoapVersion = errors.New("Invalid CoAP version. Should be 1.")
 var ErrOptionLengthUsesValue15 = errors.New(("Message format error. Option length has reserved value of 15"))
@@ -171,7 +167,7 @@ var ErrNilMessage = errors.New("Message is nil")
 var ErrNilConn = errors.New("Connection object is nil")
 var ErrNilAddr = errors.New("Address cannot be nil")
 
-//// API ////
+// Interfaces
 type CoapServer interface {
 	Start()
 	Stop()
@@ -196,15 +192,15 @@ type CoapServer interface {
 	OnObserve(fn FnEventObserve)
 	OnObserveCancel(fn FnEventObserveCancel)
 	OnMessage(fn FnEventMessage)
-	ProxyHttp(enabled bool)
+	ProxyHTTP(enabled bool)
 	ProxyCoap(enabled bool)
-	GetEvents() *CanopusEvents
+	GetEvents() *Events
 	GetLocalAddress() *net.UDPAddr
 
 	AllowProxyForwarding(*Message, *net.UDPAddr) bool
 	GetRoutes() []*Route
 	ForwardCoap(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
-	ForwardHttp(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
+	ForwardHTTP(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
 
 	AddObservation(resource, token string, addr *net.UDPAddr)
 	HasObservation(resource string, addr *net.UDPAddr) bool
@@ -214,10 +210,10 @@ type CoapServer interface {
 	UpdateMessageTS(msg *Message)
 }
 
-// A simple wrapper interface around a connection
-// This was primarily concieved so that mocks could be
+// Connection is a simple wrapper interface around a connection
+// This was primarily conceived so that mocks could be
 // created to unit test connection code
-type CanopusConnection interface {
+type Connection interface {
 	GetConnection() net.Conn
 	Write(b []byte) (int, error)
 	SetReadDeadline(t time.Time) error

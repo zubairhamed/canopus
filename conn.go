@@ -8,44 +8,47 @@ import (
 
 // ----------------------------------------------------------------
 
-func NewCanopusUDPConnection(c *net.UDPConn) CanopusConnection {
-	return &CanopusUDPConnection{
+// NewCanopusUDPConnection creates a new default CanopousConnect
+func NewUDPConnection(c *net.UDPConn) Connection {
+	return &UDPConnection{
 		conn: c,
 	}
 }
 
-func NewCanopusUDPConnectionWithAddr(c *net.UDPConn, a net.Addr) CanopusConnection {
-	return &CanopusUDPConnection{
+// NewCanopusUDPConnection creates a new CanopousConnect given an existing UDP
+// connection and address
+func NewUDPConnectionWithAddr(c *net.UDPConn, a net.Addr) Connection {
+	return &UDPConnection{
 		conn: c,
 		addr: a,
 	}
 }
 
-type CanopusUDPConnection struct {
+type UDPConnection struct {
 	conn *net.UDPConn
 	addr net.Addr
 }
 
-func (c *CanopusUDPConnection) GetConnection() net.Conn {
+func (c *UDPConnection) GetConnection() net.Conn {
 	return c.conn
 }
 
-func (c *CanopusUDPConnection) Write(b []byte) (int, error) {
+func (c *UDPConnection) Write(b []byte) (int, error) {
 	return c.conn.Write(b)
 }
 
-func (c *CanopusUDPConnection) SetReadDeadline(t time.Time) error {
+func (c *UDPConnection) SetReadDeadline(t time.Time) error {
 	return c.conn.SetReadDeadline(t)
 }
 
-func (c *CanopusUDPConnection) Read() (buf []byte, n int, err error) {
+func (c *UDPConnection) Read() (buf []byte, n int, err error) {
 	buf = make([]byte, MaxPacketSize)
 	n, _, err = c.conn.ReadFromUDP(buf)
 
 	return
 }
 
-func (c *CanopusUDPConnection) WriteTo(b []byte, addr net.Addr) (n int, err error) {
+func (c *UDPConnection) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	n, err = c.conn.WriteToUDP(b, addr.(*net.UDPAddr))
 
 	return

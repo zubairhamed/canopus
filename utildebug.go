@@ -22,7 +22,7 @@ func PrintMessage(msg *Message) {
 	log.Println("= = = = = = = = = = = = = = = = ")
 	log.Println("Code: ", msg.Code)
 	log.Println("Code String: ", CoapCodeToString(msg.Code))
-	log.Println("MessageId: ", msg.MessageId)
+	log.Println("MessageId: ", msg.MessageID)
 	log.Println("MessageType: ", msg.MessageType)
 	log.Println("Token: ", string(msg.Token))
 	log.Println("Token Length: ", msg.GetTokenLength())
@@ -38,7 +38,7 @@ func OptionNumberToString(o OptionCode) string {
 	case OptionIfMatch:
 		return "If-Match"
 
-	case OptionUriHost:
+	case OptionURIHost:
 		return "Uri-Host"
 
 	case OptionEtag:
@@ -47,13 +47,13 @@ func OptionNumberToString(o OptionCode) string {
 	case OptionIfNoneMatch:
 		return "If-None-Match"
 
-	case OptionUriPort:
+	case OptionURIPort:
 		return "Uri-Port"
 
 	case OptionLocationPath:
 		return "Location-Path"
 
-	case OptionUriPath:
+	case OptionURIPath:
 		return "Uri-Path"
 
 	case OptionContentFormat:
@@ -62,7 +62,7 @@ func OptionNumberToString(o OptionCode) string {
 	case OptionMaxAge:
 		return "Max-Age"
 
-	case OptionUriQuery:
+	case OptionURIQuery:
 		return "Uri-Query"
 
 	case OptionAccept:
@@ -77,7 +77,7 @@ func OptionNumberToString(o OptionCode) string {
 	case OptionBlock1:
 		return "Block1"
 
-	case OptionProxyUri:
+	case OptionProxyURI:
 		return "Proxy-Uri"
 
 	case OptionProxyScheme:

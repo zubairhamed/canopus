@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "github.com/zubairhamed/canopus"
+	"github.com/zubairhamed/canopus"
 	"log"
 	"math/rand"
 	"strconv"
@@ -18,23 +18,23 @@ func main() {
 }
 
 func runServer() {
-	server := NewLocalServer()
+	server := canopus.NewLocalServer()
 	server.Get("/watch/this", routeHandler)
 
 	GenerateRandomChangeNotifications(server)
 
-	server.OnMessage(func(msg *Message, inbound bool) {
+	server.OnMessage(func(msg *canopus.Message, inbound bool) {
 		// PrintMessage(msg)
 	})
 
-	server.OnObserve(func(resource string, msg *Message) {
+	server.OnObserve(func(resource string, msg *canopus.Message) {
 		log.Println("Observe Requested for " + resource)
 	})
 
 	server.Start()
 }
 
-func GenerateRandomChangeNotifications(server CoapServer) {
+func GenerateRandomChangeNotifications(server canopus.CoapServer) {
 	ticker := time.NewTicker(3 * time.Second)
 
 	go func() {
@@ -50,22 +50,22 @@ func GenerateRandomChangeNotifications(server CoapServer) {
 	}()
 }
 
-func routeHandler(req CoapRequest) CoapResponse {
-	msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
+func routeHandler(req canopus.CoapRequest) canopus.CoapResponse {
+	msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageId)
 	msg.SetStringPayload("Acknowledged")
-	res := NewResponse(msg, nil)
+	res := canopus.NewResponse(msg, nil)
 
 	return res
 }
 
 func runClient() {
-	client := NewCoapServer("0")
+	client := canopus.NewCoapServer("0")
 
-	client.OnStart(func(server CoapServer) {
+	client.OnStart(func(server canopus.CoapServer) {
 		client.Dial("localhost:5683")
-		req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
+		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
 		req.SetRequestURI("/watch/this")
-		req.GetMessage().AddOption(OptionObserve, 0)
+		req.GetMessage().AddOption(canopus.OptionObserve, 0)
 
 		_, err := client.Send(req)
 		if err != nil {
@@ -73,16 +73,16 @@ func runClient() {
 		}
 	})
 
-	var notifyCount int = 0
-	client.OnNotify(func(resource string, value interface{}, msg *Message) {
+	var notifyCount int;
+	client.OnNotify(func(resource string, value interface{}, msg *canopus.Message) {
 		if notifyCount < 4 {
 			notifyCount++
 			log.Println("CLIENT: Got Change Notification for resource and value: ", notifyCount, resource, value)
 		} else {
 			log.Println("Cancelling Observation after 4 notifications")
-			req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
+			req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
 			req.SetRequestURI("watch/this")
-			req.GetMessage().AddOption(OptionObserve, 0)
+			req.GetMessage().AddOption(canopus.OptionObserve, 0)
 
 			_, err := client.Send(req)
 			if err != nil {

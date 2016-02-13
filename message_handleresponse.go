@@ -9,5 +9,5 @@ func handleResponse(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDP
 	}
 }
 func handleAcknowledgeObserveRequest(s CoapServer, msg *Message) {
-	s.GetEvents().Notify(msg.GetUriPath(), msg.Payload, msg)
+	s.GetEvents().Notify(msg.GetURIPath(), msg.Payload, msg)
 }

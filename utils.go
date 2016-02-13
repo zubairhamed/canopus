@@ -8,13 +8,13 @@ import (
 )
 
 // GenerateMessageId generate a uint16 Message ID
-func GenerateMessageId() uint16 {
-	if CurrentMessageId != 65535 {
-		CurrentMessageId++
+func GenerateMessageID() uint16 {
+	if CurrentMessageID != 65535 {
+		CurrentMessageID++
 	} else {
-		CurrentMessageId = 1
+		CurrentMessageID = 1
 	}
-	return uint16(CurrentMessageId)
+	return uint16(CurrentMessageID)
 }
 
 var genChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -73,70 +73,70 @@ func CoapCodeToString(code CoapCode) string {
 	case Delete:
 		return "DELETE"
 
-	case CoapCode_Empty:
+	case CoapCodeEmpty:
 		return "0 Empty"
 
-	case CoapCode_Created:
+	case CoapCodeCreated:
 		return "201 Created"
 
-	case CoapCode_Deleted:
+	case CoapCodeDeleted:
 		return "202 Deleted"
 
-	case CoapCode_Valid:
+	case CoapCodeValid:
 		return "203 Valid"
 
-	case CoapCode_Changed:
+	case CoapCodeChanged:
 		return "204 Changed"
 
-	case CoapCode_Content:
+	case CoapCodeContent:
 		return "205 Content"
 
-	case CoapCode_BadRequest:
+	case CoapCodeBadRequest:
 		return "400 Bad Request"
 
-	case CoapCode_Unauthorized:
+	case CoapCodeUnauthorized:
 		return "401 Unauthorized"
 
-	case CoapCode_BadOption:
+	case CoapCodeBadOption:
 		return "402 Bad Option"
 
-	case CoapCode_Forbidden:
+	case CoapCodeForbidden:
 		return "403 Forbidden"
 
-	case CoapCode_NotFound:
+	case CoapCodeNotFound:
 		return "404 Not Found"
 
-	case CoapCode_MethodNotAllowed:
+	case CoapCodeMethodNotAllowed:
 		return "405 Method Not Allowed"
 
-	case CoapCode_NotAcceptable:
+	case CoapCodeNotAcceptable:
 		return "406 Not Acceptable"
 
-	case CoapCode_PreconditionFailed:
+	case CoapCodePreconditionFailed:
 		return "412 Precondition Failed"
 
-	case CoapCode_RequestEntityTooLarge:
+	case CoapCodeRequestEntityTooLarge:
 		return "413 Request Entity Too Large"
 
-	case CoapCode_UnsupportedContentFormat:
+	case CoapCodeUnsupportedContentFormat:
 		return "415 Unsupported Content Format"
 
-	case CoapCode_InternalServerError:
+	case CoapCodeInternalServerError:
 		return "500 Internal Server Error"
 
-	case CoapCode_NotImplemented:
+	case CoapCodeNotImplemented:
 		return "501 Not Implemented"
 
-	case CoapCode_BadGateway:
+	case CoapCodeBadGateway:
 		return "502 Bad Gateway"
 
-	case CoapCode_ServiceUnavailable:
+	case CoapCodeServiceUnavailable:
 		return "503 Service Unavailable"
 
-	case CoapCode_GatewayTimeout:
+	case CoapCodeGatewayTimeout:
 		return "504 Gateway Timeout"
 
-	case CoapCode_ProxyingNotSupported:
+	case CoapCodeProxyingNotSupported:
 		return "505 Proxying Not Supported"
 
 	default:
@@ -147,13 +147,13 @@ func CoapCodeToString(code CoapCode) string {
 // ValidCoapMediaTypeCode Checks if a MediaType is of a valid code
 func ValidCoapMediaTypeCode(mt MediaType) bool {
 	switch mt {
-	case MediaTypeTextPlain, MediaTypeTextXml, MediaTypeTextCsv, MediaTypeTextHtml, MediaTypeImageGif,
+	case MediaTypeTextPlain, MediaTypeTextXML, MediaTypeTextCsv, MediaTypeTextHTML, MediaTypeImageGif,
 		MediaTypeImageJpeg, MediaTypeImagePng, MediaTypeImageTiff, MediaTypeAudioRaw, MediaTypeVideoRaw,
-		MediaTypeApplicationLinkFormat, MediaTypeApplicationXml, MediaTypeApplicationOctetStream, MediaTypeApplicationRdfXml,
-		MediaTypeApplicationSoapXml, MediaTypeApplicationAtomXml, MediaTypeApplicationXmppXml, MediaTypeApplicationExi,
-		MediaTypeApplicationFastInfoSet, MediaTypeApplicationSoapFastInfoSet, MediaTypeApplicationJson,
+		MediaTypeApplicationLinkFormat, MediaTypeApplicationXML, MediaTypeApplicationOctetStream, MediaTypeApplicationRdfXML,
+		MediaTypeApplicationSoapXML, MediaTypeApplicationAtomXML, MediaTypeApplicationXmppXML, MediaTypeApplicationExi,
+		MediaTypeApplicationFastInfoSet, MediaTypeApplicationSoapFastInfoSet, MediaTypeApplicationJSON,
 		MediaTypeApplicationXObitBinary, MediaTypeTextPlainVndOmaLwm2m, MediaTypeTlvVndOmaLwm2m,
-		MediaTypeJsonVndOmaLwm2m, MediaTypeOpaqueVndOmaLwm2m:
+		MediaTypeJSONVndOmaLwm2m, MediaTypeOpaqueVndOmaLwm2m:
 		return true
 	}
 

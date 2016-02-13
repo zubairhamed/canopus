@@ -19,16 +19,16 @@ type ProxyHandler func(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
 
 // The default handler when proxying is disabled
 func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageId, MessageAcknowledgement), NewCanopusUDPConnection(conn), addr)
+	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 }
 
 func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	proxyUri := msg.GetOption(OptionProxyUri).StringValue()
+	proxyUri := msg.GetOption(OptionProxyURI).StringValue()
 
 	parsedUrl, err := url.Parse(proxyUri)
 	if err != nil {
 		log.Println("Error parsing proxy URI")
-		SendMessageTo(BadGatewayMessage(msg.MessageId, MessageAcknowledgement), NewCanopusUDPConnection(conn), addr)
+		SendMessageTo(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 		return
 	}
 
@@ -36,18 +36,18 @@ func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	client.OnStart(func(server CoapServer) {
 		client.Dial(parsedUrl.Host)
 
-		msg.RemoveOptions(OptionProxyUri)
+		msg.RemoveOptions(OptionProxyURI)
 		req := NewRequestFromMessage(msg)
 		req.SetRequestURI(parsedUrl.RequestURI())
 
 		response, err := client.Send(req)
 		if err != nil {
-			SendMessageTo(BadGatewayMessage(msg.MessageId, MessageAcknowledgement), NewCanopusUDPConnection(conn), addr)
+			SendMessageTo(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 			client.Stop()
 			return
 		}
 
-		_, err = SendMessageTo(response.GetMessage(), NewCanopusUDPConnection(conn), addr)
+		_, err = SendMessageTo(response.GetMessage(), NewUDPConnection(conn), addr)
 		if err != nil {
 			log.Println("Error occured responding to proxy request")
 			client.Stop()
@@ -61,13 +61,13 @@ func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 
 // Handles requests for proxying from CoAP to HTTP
 func HttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	proxyUri := msg.GetOption(OptionProxyUri).StringValue()
+	proxyUri := msg.GetOption(OptionProxyURI).StringValue()
 	requestMethod := msg.Code
 
 	client := &http.Client{}
 	req, err := http.NewRequest(MethodString(CoapCode(msg.GetMethod())), proxyUri, nil)
 	if err != nil {
-		SendMessageTo(BadGatewayMessage(msg.MessageId, MessageAcknowledgement), NewCanopusUDPConnection(conn), addr)
+		SendMessageTo(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 		return
 	}
 
@@ -79,7 +79,7 @@ func HttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	// TODO: Set timeout handler, and on timeout return 5.04
 	resp, err := client.Do(req)
 	if err != nil {
-		SendMessageTo(BadGatewayMessage(msg.MessageId, MessageAcknowledgement), NewCanopusUDPConnection(conn), addr)
+		SendMessageTo(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 		return
 	}
 
@@ -98,11 +98,11 @@ func HttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 
 	// TODO: Check payload length against Size1 options
 	if len(respMsg.GetMessage().Payload.String()) > MaxPacketSize {
-		SendMessageTo(BadGatewayMessage(msg.MessageId, MessageAcknowledgement), NewCanopusUDPConnection(conn), addr)
+		SendMessageTo(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 		return
 	}
 
-	_, err = SendMessageTo(respMsg.GetMessage(), NewCanopusUDPConnection(conn), addr)
+	_, err = SendMessageTo(respMsg.GetMessage(), NewUDPConnection(conn), addr)
 	if err != nil {
 		println(err.Error())
 	}

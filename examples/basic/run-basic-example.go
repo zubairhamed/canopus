@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "github.com/zubairhamed/canopus"
+	"github.com/zubairhamed/canopus"
 	"log"
 )
 
@@ -15,65 +15,65 @@ func main() {
 }
 
 func runServer() {
-	server := NewLocalServer()
+	server := canopus.NewLocalServer()
 
-	server.Get("/hello", func(req CoapRequest) CoapResponse {
+	server.Get("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called")
-		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
+		canopus.PrintMessage(req.GetMessage())
+		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
-		res := NewResponse(msg, nil)
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.Post("/hello", func(req CoapRequest) CoapResponse {
+	server.Post("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called via POST")
-		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
+		canopus.PrintMessage(req.GetMessage())
+		msg := canopus.ContentMessage(req.GetMessage().MessageID,canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
-		res := NewResponse(msg, nil)
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.Get("/basic", func(req CoapRequest) CoapResponse {
-		msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
+	server.Get("/basic", func(req canopus.CoapRequest) canopus.CoapResponse {
+		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
 		msg.SetStringPayload("Acknowledged")
 
-		res := NewResponse(msg, nil)
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.Get("/basic/json", func(req CoapRequest) CoapResponse {
-		msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
-		res := NewResponse(msg, nil)
+	server.Get("/basic/json", func(req canopus.CoapRequest) canopus.CoapResponse {
+		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.Get("/basic/xml", func(req CoapRequest) CoapResponse {
-		msg := NewMessageOfType(MessageAcknowledgement, req.GetMessage().MessageId)
-		res := NewResponse(msg, nil)
+	server.Get("/basic/xml", func(req canopus.CoapRequest) canopus.CoapResponse {
+		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.OnMessage(func(msg *Message, inbound bool) {
-		PrintMessage(msg)
+	server.OnMessage(func(msg *canopus.Message, inbound bool) {
+		canopus.PrintMessage(msg)
 	})
 
 	server.Start()
 }
 
 func runClient() {
-	client := NewCoapServer("0")
+	client := canopus.NewCoapServer("0")
 
-	client.OnStart(func(server CoapServer) {
+	client.OnStart(func(server canopus.CoapServer) {
 		client.Dial("localhost:5683")
 
-		req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
+		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
 		req.SetStringPayload("Hello, canopus")
 		req.SetRequestURI("/hello")
 
@@ -91,14 +91,14 @@ func runClient() {
 		log.Println(err)
 	})
 
-	client.OnMessage(func(msg *Message, inbound bool) {
+	client.OnMessage(func(msg *canopus.Message, inbound bool) {
 		if inbound {
 			log.Println(">>>>> INBOUND <<<<<")
 		} else {
 			log.Println(">>>>> OUTBOUND <<<<<")
 		}
 
-		PrintMessage(msg)
+		canopus.PrintMessage(msg)
 	})
 
 	client.Start()

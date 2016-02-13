@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "github.com/zubairhamed/canopus"
+	"github.com/zubairhamed/canopus"
 )
 
 func main() {
@@ -15,14 +15,14 @@ func main() {
 }
 
 func runProxyServer() {
-	server := NewLocalServer()
+	server := canopus.NewLocalServer()
 	server.ProxyCoap(true)
 
-	server.Get("/proxycall", func(req CoapRequest) CoapResponse {
-		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
+	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
+		canopus.PrintMessage(req.GetMessage())
+		msg := canopus.ContentMessage(req.GetMessage().MessageId, canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
-		res := NewResponse(msg, nil)
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
@@ -30,13 +30,13 @@ func runProxyServer() {
 }
 
 func runServer() {
-	server := NewCoapServer(":5684")
+	server := canopus.NewCoapServer(":5684")
 
-	server.Get("/proxycall", func(req CoapRequest) CoapResponse {
-		PrintMessage(req.GetMessage())
-		msg := ContentMessage(req.GetMessage().MessageId, MessageAcknowledgement)
+	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
+		canopus.PrintMessage(req.GetMessage())
+		msg := canopus.ContentMessage(req.GetMessage().MessageId, canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Data from :5684 -- " + req.GetMessage().Payload.String())
-		res := NewResponse(msg, nil)
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
@@ -45,20 +45,20 @@ func runServer() {
 }
 
 func runClient() {
-	client := NewCoapServer(":0")
+	client := canopus.NewCoapServer(":0")
 
-	client.OnStart(func(server CoapServer) {
+	client.OnStart(func(server canopus.CoapServer) {
 		client.Dial("localhost:5683")
 
-		req := NewRequest(MessageConfirmable, Get, GenerateMessageId())
+		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
 		req.SetProxyUri("coap://localhost:5684/proxycall")
 
-		PrintMessage(req.GetMessage())
+		canopus.PrintMessage(req.GetMessage())
 		resp, err := client.Send(req)
 		if err != nil {
 			println("err", err)
 		}
-		PrintMessage(resp.GetMessage())
+		canopus.PrintMessage(resp.GetMessage())
 	})
 	client.Start()
 }

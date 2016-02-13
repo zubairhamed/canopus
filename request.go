@@ -17,7 +17,7 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) Coa
 }
 
 func NewConfirmableGetRequest() CoapRequest {
-	msg := NewMessage(MessageConfirmable, Get, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Get, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -26,7 +26,7 @@ func NewConfirmableGetRequest() CoapRequest {
 }
 
 func NewConfirmablePostRequest() CoapRequest {
-	msg := NewMessage(MessageConfirmable, Post, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Post, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -35,7 +35,7 @@ func NewConfirmablePostRequest() CoapRequest {
 }
 
 func NewConfirmablePutRequest() CoapRequest {
-	msg := NewMessage(MessageConfirmable, Put, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Put, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -44,7 +44,7 @@ func NewConfirmablePutRequest() CoapRequest {
 }
 
 func NewConfirmableDeleteRequest() CoapRequest {
-	msg := NewMessage(MessageConfirmable, Delete, GenerateMessageId())
+	msg := NewMessage(MessageConfirmable, Delete, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -96,7 +96,7 @@ type DefaultCoapRequest struct {
 }
 
 func (c *DefaultCoapRequest) SetProxyUri(uri string) {
-	c.msg.AddOption(OptionProxyUri, uri)
+	c.msg.AddOption(OptionProxyURI, uri)
 }
 
 func (c *DefaultCoapRequest) SetMediaType(mt MediaType) {
@@ -151,7 +151,7 @@ func (c *DefaultCoapRequest) SetToken(t string) {
 }
 
 func (c *DefaultCoapRequest) GetUriQuery(q string) string {
-	qs := c.GetMessage().GetOptionsAsString(OptionUriQuery)
+	qs := c.GetMessage().GetOptionsAsString(OptionURIQuery)
 
 	for _, o := range qs {
 		ps := strings.Split(o, "=")
@@ -165,5 +165,5 @@ func (c *DefaultCoapRequest) GetUriQuery(q string) string {
 }
 
 func (c *DefaultCoapRequest) SetUriQuery(k string, v string) {
-	c.GetMessage().AddOption(OptionUriQuery, k+"="+v)
+	c.GetMessage().AddOption(OptionURIQuery, k+"="+v)
 }

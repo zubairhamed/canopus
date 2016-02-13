@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-// Create a RegEx for a valid route path
+// CreateCompilableRoutePath creates a RegEx for a valid route path
 func CreateCompilableRoutePath(route string) (*regexp.Regexp, bool) {
 	var re *regexp.Regexp
 	var isStatic bool
@@ -39,7 +39,7 @@ func CreateCompilableRoutePath(route string) (*regexp.Regexp, bool) {
 	return regexp.MustCompile(s), isStatic
 }
 
-// Creates a new Route object
+// CreateNewRoute creates a new Route object
 func CreateNewRoute(path string, method string, fn RouteHandler) *Route {
 	re, _ := CreateCompilableRoutePath(path)
 
@@ -52,7 +52,7 @@ func CreateNewRoute(path string, method string, fn RouteHandler) *Route {
 	}
 }
 
-// Checks if a given path matches a regex route
+// MatchesRoutePath checks if a given path matches a regex route
 func MatchesRoutePath(path string, re *regexp.Regexp) (bool, map[string]string) {
 	matches := re.FindAllStringSubmatch(path, -1)
 	attrs := make(map[string]string)
@@ -66,7 +66,7 @@ func MatchesRoutePath(path string, re *regexp.Regexp) (bool, map[string]string) 
 	return false, attrs
 }
 
-// Represents a CoAP Route/Resource
+// Route represents a CoAP Route/Resource
 type Route struct {
 	Path       string
 	Method     string
@@ -76,7 +76,7 @@ type Route struct {
 	MediaTypes []MediaType
 }
 
-// Checks if a given path matches any defined routes/resources
+// MatchingRoute checks if a given path matches any defined routes/resources
 func MatchingRoute(path string, method string, cf interface{}, routes []*Route) (*Route, map[string]string, error) {
 	for _, route := range routes {
 		if method == route.Method {
