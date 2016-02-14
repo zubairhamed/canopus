@@ -93,38 +93,38 @@ func TestOptionConversion(t *testing.T) {
 }
 
 func TestNewMessageHelpers(t *testing.T) {
-	var messageId uint16 = 12345
+	var messageID uint16 = 12345
 
-	test_data := []struct {
+	testData := []struct {
 		msg  *Message
 		code CoapCode
 	}{
-		{EmptyMessage(messageId, MessageAcknowledgment), CoapCodeEmpty},
-		{CreatedMessage(messageId, MessageAcknowledgment), CoapCodeCreated},
-		{DeletedMessage(messageId, MessageAcknowledgment), CoapCodeDeleted},
-		{ValidMessage(messageId, MessageAcknowledgment), CoapCodeValid},
-		{ChangedMessage(messageId, MessageAcknowledgment), CoapCodeChanged},
-		{ContentMessage(messageId, MessageAcknowledgment), CoapCodeContent},
-		{BadRequestMessage(messageId, MessageAcknowledgment), CoapCodeBadRequest},
-		{UnauthorizedMessage(messageId, MessageAcknowledgment), CoapCodeUnauthorized},
-		{BadOptionMessage(messageId, MessageAcknowledgment), CoapCodeBadOption},
-		{ForbiddenMessage(messageId, MessageAcknowledgment), CoapCodeForbidden},
-		{NotFoundMessage(messageId, MessageAcknowledgment), CoapCodeNotFound},
-		{MethodNotAllowedMessage(messageId, MessageAcknowledgment), CoapCodeMethodNotAllowed},
-		{NotAcceptableMessage(messageId, MessageAcknowledgment), CoapCodeNotAcceptable},
-		{ConflictMessage(messageId, MessageAcknowledgment), CoapCodeConflict},
-		{PreconditionFailedMessage(messageId, MessageAcknowledgment), CoapCodePreconditionFailed},
-		{RequestEntityTooLargeMessage(messageId, MessageAcknowledgment), CoapCodeRequestEntityTooLarge},
-		{UnsupportedContentFormatMessage(messageId, MessageAcknowledgment), CoapCodeUnsupportedContentFormat},
-		{InternalServerErrorMessage(messageId, MessageAcknowledgment), CoapCodeInternalServerError},
-		{NotImplementedMessage(messageId, MessageAcknowledgment), CoapCodeNotImplemented},
-		{BadGatewayMessage(messageId, MessageAcknowledgment), CoapCodeBadGateway},
-		{ServiceUnavailableMessage(messageId, MessageAcknowledgment), CoapCodeServiceUnavailable},
-		{GatewayTimeoutMessage(messageId, MessageAcknowledgment), CoapCodeGatewayTimeout},
-		{ProxyingNotSupportedMessage(messageId, MessageAcknowledgment), CoapCodeProxyingNotSupported},
+		{EmptyMessage(messageID, MessageAcknowledgment), CoapCodeEmpty},
+		{CreatedMessage(messageID, MessageAcknowledgment), CoapCodeCreated},
+		{DeletedMessage(messageID, MessageAcknowledgment), CoapCodeDeleted},
+		{ValidMessage(messageID, MessageAcknowledgment), CoapCodeValid},
+		{ChangedMessage(messageID, MessageAcknowledgment), CoapCodeChanged},
+		{ContentMessage(messageID, MessageAcknowledgment), CoapCodeContent},
+		{BadRequestMessage(messageID, MessageAcknowledgment), CoapCodeBadRequest},
+		{UnauthorizedMessage(messageID, MessageAcknowledgment), CoapCodeUnauthorized},
+		{BadOptionMessage(messageID, MessageAcknowledgment), CoapCodeBadOption},
+		{ForbiddenMessage(messageID, MessageAcknowledgment), CoapCodeForbidden},
+		{NotFoundMessage(messageID, MessageAcknowledgment), CoapCodeNotFound},
+		{MethodNotAllowedMessage(messageID, MessageAcknowledgment), CoapCodeMethodNotAllowed},
+		{NotAcceptableMessage(messageID, MessageAcknowledgment), CoapCodeNotAcceptable},
+		{ConflictMessage(messageID, MessageAcknowledgment), CoapCodeConflict},
+		{PreconditionFailedMessage(messageID, MessageAcknowledgment), CoapCodePreconditionFailed},
+		{RequestEntityTooLargeMessage(messageID, MessageAcknowledgment), CoapCodeRequestEntityTooLarge},
+		{UnsupportedContentFormatMessage(messageID, MessageAcknowledgment), CoapCodeUnsupportedContentFormat},
+		{InternalServerErrorMessage(messageID, MessageAcknowledgment), CoapCodeInternalServerError},
+		{NotImplementedMessage(messageID, MessageAcknowledgment), CoapCodeNotImplemented},
+		{BadGatewayMessage(messageID, MessageAcknowledgment), CoapCodeBadGateway},
+		{ServiceUnavailableMessage(messageID, MessageAcknowledgment), CoapCodeServiceUnavailable},
+		{GatewayTimeoutMessage(messageID, MessageAcknowledgment), CoapCodeGatewayTimeout},
+		{ProxyingNotSupportedMessage(messageID, MessageAcknowledgment), CoapCodeProxyingNotSupported},
 	}
 
-	for _, td := range test_data {
+	for _, td := range testData {
 		assert.NotNil(t, td.msg)
 		assert.Equal(t, td.code, td.msg.Code)
 	}

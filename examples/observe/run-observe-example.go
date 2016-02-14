@@ -73,7 +73,7 @@ func runClient() {
 		}
 	})
 
-	var notifyCount int;
+	var notifyCount int
 	client.OnNotify(func(resource string, value interface{}, msg *canopus.Message) {
 		if notifyCount < 4 {
 			notifyCount++

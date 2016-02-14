@@ -20,7 +20,7 @@ func runClient() {
 		client.Dial("localhost:5683")
 
 		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
-		req.SetProxyUri("http://api.openweathermap.org/data/2.5/weather?q=London,uk&appid=2de143494c0b295cca9337e1e96b00e0")
+		req.SetProxyURI("http://api.openweathermap.org/data/2.5/weather?q=London,uk&appid=2de143494c0b295cca9337e1e96b00e0")
 
 		canopus.PrintMessage(req.GetMessage())
 		resp, err := client.Send(req)
@@ -34,7 +34,7 @@ func runClient() {
 
 func runServer() {
 	server := canopus.NewLocalServer()
-	server.ProxyHttp(true)
+	server.ProxyHTTP(true)
 
 	server.Start()
 }

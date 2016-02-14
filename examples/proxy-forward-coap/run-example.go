@@ -51,7 +51,7 @@ func runClient() {
 		client.Dial("localhost:5683")
 
 		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
-		req.SetProxyUri("coap://localhost:5684/proxycall")
+		req.SetProxyURI("coap://localhost:5684/proxycall")
 
 		canopus.PrintMessage(req.GetMessage())
 		resp, err := client.Send(req)

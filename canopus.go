@@ -41,7 +41,7 @@ const (
 	// A client that has one or more entities previously obtained from the resource can verify
 	// that one of those entities is current by including a list of their associated entity tags
 	// in the If-Match header field.
-	OptionIfMatch       OptionCode = 1
+	OptionIfMatch OptionCode = 1
 
 	OptionURIHost       OptionCode = 3
 	OptionEtag          OptionCode = 4
@@ -148,10 +148,10 @@ const (
 )
 
 const (
-	MethodGet      = "GET"
-	MethodPut      = "PUT"
+	MethodGet     = "GET"
+	MethodPut     = "PUT"
 	MethodPost    = "POST"
-	MethodDelete   = "DELETE"
+	MethodDelete  = "DELETE"
 	MethodOptions = "OPTIONS"
 	MethodPatch   = "PATCH"
 )

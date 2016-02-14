@@ -12,8 +12,8 @@ import (
 type ProxyType int
 
 const (
-	ProxyHttp ProxyType = 0
-	ProxyCoap ProxyType = 1
+	ProxyHTTP ProxyType = 0
+	ProxyCOAP ProxyType = 1
 )
 
 func NewLocalServer() CoapServer {
@@ -35,7 +35,7 @@ func NewServer(local, remote string) CoapServer {
 	}
 	localAddr, _ := net.ResolveUDPAddr("udp6", localHost)
 
-	var remoteAddr *net.UDPAddr = nil
+	var remoteAddr *net.UDPAddr
 	if remote != "" {
 		remoteHost := remote
 		if !strings.Contains(remoteHost, ":") {
@@ -49,8 +49,8 @@ func NewServer(local, remote string) CoapServer {
 		localAddr:         localAddr,
 		events:            NewEvents(),
 		observations:      make(map[string][]*Observation),
-		fnHandleCoapProxy: NullProxyHandler,
-		fnHandleHttpProxy: NullProxyHandler,
+		fnHandleCOAPProxy: NullProxyHandler,
+		fnHandleHTTPProxy: NullProxyHandler,
 		fnProxyFilter:     NullProxyFilter,
 		stopChannel:       make(chan int),
 	}
@@ -68,8 +68,8 @@ type DefaultCoapServer struct {
 	events       *Events
 	observations map[string][]*Observation
 
-	fnHandleHttpProxy ProxyHandler
-	fnHandleCoapProxy ProxyHandler
+	fnHandleHTTPProxy ProxyHandler
+	fnHandleCOAPProxy ProxyHandler
 	fnProxyFilter     ProxyFilter
 
 	stopChannel chan int
@@ -360,17 +360,17 @@ func (s *DefaultCoapServer) OnMessage(fn FnEventMessage) {
 
 func (s *DefaultCoapServer) ProxyHTTP(enabled bool) {
 	if enabled {
-		s.fnHandleHttpProxy = HttpProxyHandler
+		s.fnHandleHTTPProxy = HTTPProxyHandler
 	} else {
-		s.fnHandleHttpProxy = NullProxyHandler
+		s.fnHandleHTTPProxy = NullProxyHandler
 	}
 }
 
 func (s *DefaultCoapServer) ProxyCoap(enabled bool) {
 	if enabled {
-		s.fnHandleCoapProxy = CoapProxyHandler
+		s.fnHandleCOAPProxy = COAPProxyHandler
 	} else {
-		s.fnHandleCoapProxy = NullProxyHandler
+		s.fnHandleCOAPProxy = NullProxyHandler
 	}
 }
 
@@ -379,11 +379,11 @@ func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr *net.UDPAddr
 }
 
 func (s *DefaultCoapServer) ForwardCoap(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	s.fnHandleCoapProxy(msg, conn, addr)
+	s.fnHandleCOAPProxy(msg, conn, addr)
 }
 
 func (s *DefaultCoapServer) ForwardHTTP(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	s.fnHandleHttpProxy(msg, conn, addr)
+	s.fnHandleHTTPProxy(msg, conn, addr)
 }
 
 func (s *DefaultCoapServer) GetRoutes() []*Route {

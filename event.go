@@ -12,14 +12,14 @@ type FnEventMessage func(*Message, bool)
 type EventCode int
 
 const (
-	EventStart          EventCode = 0
-	EventClose          EventCode = 1
-	EventDiscover       EventCode = 2
-	EventMessage        EventCode = 3
-	EventError          EventCode = 4
-	EventObserve        EventCode = 5
+	EventStart         EventCode = 0
+	EventClose         EventCode = 1
+	EventDiscover      EventCode = 2
+	EventMessage       EventCode = 3
+	EventError         EventCode = 4
+	EventObserve       EventCode = 5
 	EventObserveCancel EventCode = 6
-	EventNotify         EventCode = 7
+	EventNotify        EventCode = 7
 )
 
 func NewEvents() *Events {

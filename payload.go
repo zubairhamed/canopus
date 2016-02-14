@@ -77,7 +77,7 @@ func (p *BytesPayload) String() string {
 }
 
 // Represents a message payload containing XML String
-type XmlPayload struct {
+type XMLPayload struct {
 }
 
 func NewEmptyPayload() MessagePayload {
@@ -100,18 +100,18 @@ func (p *EmptyPayload) String() string {
 	return ""
 }
 
-func NewJsonPayload(obj interface{}) MessagePayload {
-	return &JsonPayload{
+func NewJSONPayload(obj interface{}) MessagePayload {
+	return &JSONPayload{
 		obj: obj,
 	}
 }
 
 // Represents a message payload containing JSON String
-type JsonPayload struct {
+type JSONPayload struct {
 	obj interface{}
 }
 
-func (p *JsonPayload) GetBytes() []byte {
+func (p *JSONPayload) GetBytes() []byte {
 	o, err := json.MarshalIndent(p.obj, "", "   ")
 
 	if err != nil {
@@ -123,11 +123,11 @@ func (p *JsonPayload) GetBytes() []byte {
 	return []byte(string(o))
 }
 
-func (p *JsonPayload) Length() int {
+func (p *JSONPayload) Length() int {
 	return 0
 }
 
-func (p *JsonPayload) String() string {
+func (p *JSONPayload) String() string {
 	o, _ := json.Marshal(p.obj)
 
 	return string(o)

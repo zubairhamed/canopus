@@ -30,7 +30,7 @@ func runServer() {
 	server.Post("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called via POST")
 		canopus.PrintMessage(req.GetMessage())
-		msg := canopus.ContentMessage(req.GetMessage().MessageID,canopus.MessageAcknowledgment)
+		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
 		res := canopus.NewResponse(msg, nil)
 

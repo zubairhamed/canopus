@@ -96,11 +96,8 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 func handleReqUnknownCriticalOption(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if msg.MessageType == MessageConfirmable {
 		SendMessageTo(BadOptionMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
-		return
-	} else {
-		// Ignore silently
-		return
 	}
+	return
 }
 
 func handleReqUnsupportedMethodRequest(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
@@ -116,10 +113,10 @@ func handleReqProxyRequest(s CoapServer, msg *Message, conn *net.UDPConn, addr *
 		SendMessageTo(ForbiddenMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 	}
 
-	proxyUri := msg.GetOption(OptionProxyURI).StringValue()
-	if IsCoapURI(proxyUri) {
+	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
+	if IsCoapURI(proxyURI) {
 		s.ForwardCoap(msg, conn, addr)
-	} else if IsHTTPURI(proxyUri) {
+	} else if IsHTTPURI(proxyURI) {
 		s.ForwardHTTP(msg, conn, addr)
 	} else {
 		//

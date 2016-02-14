@@ -22,10 +22,10 @@ func NullProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	SendMessageTo(ProxyingNotSupportedMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 }
 
-func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	proxyUri := msg.GetOption(OptionProxyURI).StringValue()
+func COAPProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
 
-	parsedUrl, err := url.Parse(proxyUri)
+	parsedURL, err := url.Parse(proxyURI)
 	if err != nil {
 		log.Println("Error parsing proxy URI")
 		SendMessageTo(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
@@ -34,11 +34,11 @@ func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 
 	client := NewCoapClient()
 	client.OnStart(func(server CoapServer) {
-		client.Dial(parsedUrl.Host)
+		client.Dial(parsedURL.Host)
 
 		msg.RemoveOptions(OptionProxyURI)
 		req := NewRequestFromMessage(msg)
-		req.SetRequestURI(parsedUrl.RequestURI())
+		req.SetRequestURI(parsedURL.RequestURI())
 
 		response, err := client.Send(req)
 		if err != nil {
@@ -60,12 +60,12 @@ func CoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 }
 
 // Handles requests for proxying from CoAP to HTTP
-func HttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	proxyUri := msg.GetOption(OptionProxyURI).StringValue()
+func HTTPProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
 	requestMethod := msg.Code
 
 	client := &http.Client{}
-	req, err := http.NewRequest(MethodString(CoapCode(msg.GetMethod())), proxyUri, nil)
+	req, err := http.NewRequest(MethodString(CoapCode(msg.GetMethod())), proxyURI, nil)
 	if err != nil {
 		SendMessageTo(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 		return
@@ -109,6 +109,6 @@ func HttpProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 }
 
 // Handles requests for proxying from HTTP to CoAP
-func HttpCoapProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func HTTPCOAPProxyHandler(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	log.Println("HttpCoapProxyHandler Proxy Handler")
 }

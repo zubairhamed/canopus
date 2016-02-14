@@ -10,7 +10,7 @@ type CoapResponse interface {
 	GetMessage() *Message
 	GetError() error
 	GetPayload() []byte
-	GetUriQuery(q string) string
+	GetURIQuery(q string) string
 }
 
 type NilResponse struct {
@@ -28,7 +28,7 @@ func (c NilResponse) GetPayload() []byte {
 	return nil
 }
 
-func (c NilResponse) GetUriQuery(q string) string {
+func (c NilResponse) GetURIQuery(q string) string {
 	return ""
 }
 
@@ -68,7 +68,7 @@ func (c *DefaultResponse) GetPayload() []byte {
 	return c.GetMessage().Payload.GetBytes()
 }
 
-func (c *DefaultResponse) GetUriQuery(q string) string {
+func (c *DefaultResponse) GetURIQuery(q string) string {
 	qs := c.GetMessage().GetOptionsAsString(OptionURIQuery)
 
 	for _, o := range qs {

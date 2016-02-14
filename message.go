@@ -167,7 +167,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 				break
 
 			default:
-				if lastOptionID & 0x01 == 1 {
+				if lastOptionID&0x01 == 1 {
 					log.Println("Unknown Critical Option id " + strconv.Itoa(lastOptionID))
 					return msg, ErrUnknownCriticalOption
 				}

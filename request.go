@@ -7,8 +7,8 @@ import (
 )
 
 // Creates a New Request Instance
-func NewRequest(messageType uint8, messageMethod CoapCode, messageId uint16) CoapRequest {
-	msg := NewMessage(messageType, messageMethod, messageId)
+func NewRequest(messageType uint8, messageMethod CoapCode, messageID uint16) CoapRequest {
+	msg := NewMessage(messageType, messageMethod, messageID)
 	msg.Token = []byte(GenerateToken(8))
 
 	return &DefaultCoapRequest{
@@ -69,7 +69,7 @@ func NewClientRequestFromMessage(msg *Message, attrs map[string]string, conn *ne
 }
 
 type CoapRequest interface {
-	SetProxyUri(uri string)
+	SetProxyURI(uri string)
 	SetMediaType(mt MediaType)
 	GetConnection() *net.UDPConn
 	GetAddress() *net.UDPAddr
@@ -81,8 +81,8 @@ type CoapRequest interface {
 	SetRequestURI(uri string)
 	SetConfirmable(con bool)
 	SetToken(t string)
-	GetUriQuery(q string) string
-	SetUriQuery(k string, v string)
+	GetURIQuery(q string) string
+	SetURIQuery(k string, v string)
 }
 
 // Wraps a CoAP Message as a Request
@@ -95,7 +95,7 @@ type DefaultCoapRequest struct {
 	server *CoapServer
 }
 
-func (c *DefaultCoapRequest) SetProxyUri(uri string) {
+func (c *DefaultCoapRequest) SetProxyURI(uri string) {
 	c.msg.AddOption(OptionProxyURI, uri)
 }
 
@@ -150,7 +150,7 @@ func (c *DefaultCoapRequest) SetToken(t string) {
 	c.msg.Token = []byte(t)
 }
 
-func (c *DefaultCoapRequest) GetUriQuery(q string) string {
+func (c *DefaultCoapRequest) GetURIQuery(q string) string {
 	qs := c.GetMessage().GetOptionsAsString(OptionURIQuery)
 
 	for _, o := range qs {
@@ -164,6 +164,6 @@ func (c *DefaultCoapRequest) GetUriQuery(q string) string {
 	return ""
 }
 
-func (c *DefaultCoapRequest) SetUriQuery(k string, v string) {
+func (c *DefaultCoapRequest) SetURIQuery(k string, v string) {
 	c.GetMessage().AddOption(OptionURIQuery, k+"="+v)
 }
