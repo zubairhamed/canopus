@@ -64,6 +64,10 @@ func runServer() {
 		canopus.PrintMessage(msg)
 	})
 
+	server.OnBlockMessage(func(msg *canopus.Message, inbound bool) {
+		println("Got BLock Message")
+	})
+
 	server.Start()
 }
 

@@ -189,6 +189,7 @@ type CoapServer interface {
 	NotifyChange(resource, value string, confirm bool)
 	Dial(host string)
 	Dial6(host string)
+
 	OnNotify(fn FnEventNotify)
 	OnStart(fn FnEventStart)
 	OnClose(fn FnEventClose)
@@ -197,6 +198,8 @@ type CoapServer interface {
 	OnObserve(fn FnEventObserve)
 	OnObserveCancel(fn FnEventObserveCancel)
 	OnMessage(fn FnEventMessage)
+	OnBlockMessage(fn FnEventBlockMessage)
+
 	ProxyHTTP(enabled bool)
 	ProxyCoap(enabled bool)
 	GetEvents() *Events

@@ -63,7 +63,9 @@ type DefaultCoapServer struct {
 	localConn  *net.UDPConn
 	remoteConn *net.UDPConn
 
-	messageIds   map[uint16]time.Time
+	messageIds    map[uint16]time.Time
+	blockMessages map[string]*BlockMessage
+
 	routes       []*Route
 	events       *Events
 	observations map[string][]*Observation
@@ -80,7 +82,6 @@ func (s *DefaultCoapServer) GetEvents() *Events {
 }
 
 func (s *DefaultCoapServer) Start() {
-
 	var discoveryRoute RouteHandler = func(req CoapRequest) CoapResponse {
 		msg := req.GetMessage()
 
@@ -356,6 +357,10 @@ func (s *DefaultCoapServer) OnObserveCancel(fn FnEventObserveCancel) {
 
 func (s *DefaultCoapServer) OnMessage(fn FnEventMessage) {
 	s.events.OnMessage(fn)
+}
+
+func (s *DefaultCoapServer) OnBlockMessage(fn FnEventBlockMessage) {
+	s.events.OnBlockMessage(fn)
 }
 
 func (s *DefaultCoapServer) ProxyHTTP(enabled bool) {
