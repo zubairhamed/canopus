@@ -216,6 +216,8 @@ type CoapServer interface {
 
 	IsDuplicateMessage(msg *Message) bool
 	UpdateMessageTS(msg *Message)
+
+	UpdateBlockMessage(string, *Message, uint32)
 }
 
 // Connection is a simple wrapper interface around a connection

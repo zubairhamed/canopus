@@ -297,14 +297,16 @@ func ValidateMessage(msg *Message) error {
 	return nil
 }
 
-type BlockMessage struct {
-	OriginIP       string
-	StoredMessages []*Message
-	Sequence       int
+
+func NewBlockMessage() *BlockMessage {
+	return &BlockMessage{
+		Sequence: 0,
+	}
 }
 
-func (m *BlockMessage) GetPayload() []byte {
-	return nil
+type BlockMessage struct {
+	StoredMessage *Message
+	Sequence       uint32
 }
 
 // A Message object represents a CoAP payload

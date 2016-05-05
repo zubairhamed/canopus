@@ -64,7 +64,7 @@ type DefaultCoapServer struct {
 	remoteConn *net.UDPConn
 
 	messageIds    map[uint16]time.Time
-	blockMessages map[string]*BlockMessage
+	blockMessages map[string][]*BlockMessage
 
 	routes       []*Route
 	events       *Events
@@ -128,6 +128,7 @@ func (s *DefaultCoapServer) Start() {
 
 func (s *DefaultCoapServer) serveServer() {
 	s.messageIds = make(map[uint16]time.Time)
+	s.blockMessages = make(map[string][]*BlockMessage)
 
 	conn, err := net.ListenUDP("udp", s.localAddr)
 	if err != nil {
@@ -172,6 +173,27 @@ func (s *DefaultCoapServer) Stop() {
 	s.localConn.Close()
 	close(s.stopChannel)
 }
+
+
+func (s *DefaultCoapServer) UpdateBlockMessage(client string, msg *Message, seq uint32) {
+	msgs := s.blockMessages[client]
+	if msgs == nil {
+		msgs = []*BlockMessage{}
+	}
+
+	bm := NewBlockMessage()
+	bm.StoredMessage = msg
+	bm.Sequence = seq
+	s.blockMessages[client] = append(msgs, bm)
+}
+
+//func (s *DefaultCoapServer) GetBlockBuffer(client string) []byte {
+//	return s.blockMessages[client]
+//}
+//
+//func (s *DefaultCoapServer) PurgeBlockBuffer(client string) {
+//	s.blockMessages[client] = nil
+//}
 
 func (s *DefaultCoapServer) handleMessageIDPurge() {
 	// Routine for clearing up message IDs which has expired

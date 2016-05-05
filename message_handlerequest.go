@@ -79,6 +79,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 
 			blockOpt := req.GetMessage().GetOption(OptionBlock1)
 			if blockOpt != nil {
+
 				// 0000 1 010
 				/*
 									[NUM][M][SZX]
@@ -119,13 +120,19 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 
 						szx := math.Exp2(float64(exp + 4))
 						moreBit := (optValue >> 4) & 0x01
-						fmt.Println("Out Values == ", optValue, exp, szx, strconv.FormatInt(int64(optValue), 2), moreBit)
+						seqNum := optValue >> 4
+						fmt.Println("Out Values == ", optValue, exp, szx, strconv.FormatInt(int64(optValue), 2), moreBit, seqNum)
 
 						s.GetEvents().BlockMessage(msg, true)
-						// 73
-						// 01001 001
-						// 00011 001
-						// [2 ^ [1+4]] = 25
+
+						s.UpdateBlockMessage(addr.String(), msg, seqNum)
+
+
+						// If more
+							// Store into block buffer given ip
+						// else
+							// Pass to handler
+						// Respond to client
 
 					} else if blockOpt.Code == OptionBlock2 {
 

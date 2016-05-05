@@ -17,7 +17,7 @@ func main() {
 func runServer() {
 	server := canopus.NewLocalServer()
 
-	server.Get("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
+	server.Get("/blockinfo", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called")
 		canopus.PrintMessage(req.GetMessage())
 		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
@@ -27,7 +27,7 @@ func runServer() {
 		return res
 	})
 
-	server.Post("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
+	server.Post("/blockupload", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called via POST")
 		canopus.PrintMessage(req.GetMessage())
 		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
@@ -37,35 +37,10 @@ func runServer() {
 		return res
 	})
 
-	server.Get("/basic", func(req canopus.CoapRequest) canopus.CoapResponse {
-		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
-		msg.SetStringPayload("Acknowledged")
-
-		res := canopus.NewResponse(msg, nil)
-
-		return res
-	})
-
-	server.Get("/basic/json", func(req canopus.CoapRequest) canopus.CoapResponse {
-		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
-		res := canopus.NewResponse(msg, nil)
-
-		return res
-	})
-
-	server.Get("/basic/xml", func(req canopus.CoapRequest) canopus.CoapResponse {
-		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
-		res := canopus.NewResponse(msg, nil)
-
-		return res
-	})
-
-	server.OnMessage(func(msg *canopus.Message, inbound bool) {
-		canopus.PrintMessage(msg)
-	})
 
 	server.OnBlockMessage(func(msg *canopus.Message, inbound bool) {
-		println("Got BLock Message")
+		log.Println("Incoming Block Message:")
+		canopus.PrintMessage(msg)
 	})
 
 	server.Start()
@@ -79,8 +54,8 @@ func runClient() {
 
 		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
 		req.GetMessage().AddOption(canopus.OptionBlock1, nil)
-		req.SetStringPayload("Hello, canopus")
-		req.SetRequestURI("/hello")
+		req.SetStringPayload("Returning Block transfer information")
+		req.SetRequestURI("/blockinfo")
 
 		resp, err := client.Send(req)
 		if err != nil {
