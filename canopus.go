@@ -72,29 +72,36 @@ const (
 	Put    CoapCode = 3
 	Delete CoapCode = 4
 
-	CoapCodeEmpty                    CoapCode = 0
-	CoapCodeCreated                  CoapCode = 65
-	CoapCodeDeleted                  CoapCode = 66
-	CoapCodeValid                    CoapCode = 67
-	CoapCodeChanged                  CoapCode = 68
-	CoapCodeContent                  CoapCode = 69
-	CoapCodeBadRequest               CoapCode = 128
-	CoapCodeUnauthorized             CoapCode = 129
-	CoapCodeBadOption                CoapCode = 130
-	CoapCodeForbidden                CoapCode = 131
-	CoapCodeNotFound                 CoapCode = 132
-	CoapCodeMethodNotAllowed         CoapCode = 133
-	CoapCodeNotAcceptable            CoapCode = 134
-	CoapCodeConflict                 CoapCode = 137
-	CoapCodePreconditionFailed       CoapCode = 140
-	CoapCodeRequestEntityTooLarge    CoapCode = 141
-	CoapCodeUnsupportedContentFormat CoapCode = 143
-	CoapCodeInternalServerError      CoapCode = 160
-	CoapCodeNotImplemented           CoapCode = 161
-	CoapCodeBadGateway               CoapCode = 162
-	CoapCodeServiceUnavailable       CoapCode = 163
-	CoapCodeGatewayTimeout           CoapCode = 164
-	CoapCodeProxyingNotSupported     CoapCode = 165
+	// 2.x
+	CoapCodeEmpty    CoapCode = 0
+	CoapCodeCreated  CoapCode = 65 // 2.01
+	CoapCodeDeleted  CoapCode = 66 // 2.02
+	CoapCodeValid    CoapCode = 67 // 2.03
+	CoapCodeChanged  CoapCode = 68 // 2.04
+	CoapCodeContent  CoapCode = 69 // 2.05
+	CoapCodeContinue CoapCode = 95 // 2.31
+
+	// 4.x
+	CoapCodeBadRequest               CoapCode = 128 // 4.00
+	CoapCodeUnauthorized             CoapCode = 129 // 4.01
+	CoapCodeBadOption                CoapCode = 130 // 4.02
+	CoapCodeForbidden                CoapCode = 131 // 4.03
+	CoapCodeNotFound                 CoapCode = 132 // 4.04
+	CoapCodeMethodNotAllowed         CoapCode = 133 // 4.05
+	CoapCodeNotAcceptable            CoapCode = 134 // 4.06
+	CoapCodeRequestEntityIncomplete  CoapCode = 136 // 4.08
+	CoapCodeConflict                 CoapCode = 137 // 4.09
+	CoapCodePreconditionFailed       CoapCode = 140 // 4.12
+	CoapCodeRequestEntityTooLarge    CoapCode = 141 // 4.13
+	CoapCodeUnsupportedContentFormat CoapCode = 143 // 4.15
+
+	// 5.x
+	CoapCodeInternalServerError  CoapCode = 160 // 5.00
+	CoapCodeNotImplemented       CoapCode = 161 // 5.01
+	CoapCodeBadGateway           CoapCode = 162 // 5.02
+	CoapCodeServiceUnavailable   CoapCode = 163 // 5.03
+	CoapCodeGatewayTimeout       CoapCode = 164 // 5.04
+	CoapCodeProxyingNotSupported CoapCode = 165 // 5.05
 )
 
 const DefaultAckTimeout = 2
@@ -156,6 +163,18 @@ const (
 	MethodPatch   = "PATCH"
 )
 
+type BlockSize byte
+
+const (
+	BlockSize16   = 0
+	BlockSize32   = 1
+	BlockSize64   = 2
+	BlockSize128  = 3
+	BlockSize256  = 4
+	BlockSize512  = 5
+	BlockSize1024 = 6
+)
+
 // Errors
 var ErrPacketLengthLessThan4 = errors.New("Packet length less than 4 bytes")
 var ErrInvalidCoapVersion = errors.New("Invalid CoAP version. Should be 1.")
@@ -171,6 +190,7 @@ var ErrNoMatchingMethod = errors.New("No matching method")
 var ErrNilMessage = errors.New("Message is nil")
 var ErrNilConn = errors.New("Connection object is nil")
 var ErrNilAddr = errors.New("Address cannot be nil")
+var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long, block option or value not set")
 
 // Interfaces
 type CoapServer interface {
@@ -217,7 +237,8 @@ type CoapServer interface {
 	IsDuplicateMessage(msg *Message) bool
 	UpdateMessageTS(msg *Message)
 
-	UpdateBlockMessage(string, *Message, uint32)
+	UpdateBlockMessageFragment(string, *Message, uint32)
+	FlushBlockMessagePayload(string) MessagePayload
 }
 
 // Connection is a simple wrapper interface around a connection
