@@ -33,7 +33,7 @@ func NewEvents() *Events {
 		evtFnObserve:       []FnEventObserve{},
 		evtFnObserveCancel: []FnEventObserveCancel{},
 		evtFnMessage:       []FnEventMessage{},
-		evtFnBlockMessage: []FnEventBlockMessage{},
+		evtFnBlockMessage:  []FnEventBlockMessage{},
 	}
 }
 
