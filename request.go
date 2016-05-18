@@ -77,6 +77,7 @@ type CoapRequest interface {
 	GetAttribute(o string) string
 	GetAttributeAsInt(o string) int
 	GetMessage() *Message
+	SetPayload([]byte)
 	SetStringPayload(s string)
 	SetRequestURI(uri string)
 	SetConfirmable(con bool)
@@ -132,6 +133,10 @@ func (c *DefaultCoapRequest) GetMessage() *Message {
 
 func (c *DefaultCoapRequest) SetStringPayload(s string) {
 	c.msg.Payload = NewPlainTextPayload(s)
+}
+
+func (c *DefaultCoapRequest) SetPayload(b []byte) {
+	c.msg.Payload = NewBytesPayload(b)
 }
 
 func (c *DefaultCoapRequest) SetRequestURI(uri string) {
