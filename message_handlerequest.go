@@ -3,7 +3,6 @@ package canopus
 import (
 	"fmt"
 	"log"
-	"math"
 	"net"
 	"strconv"
 )
@@ -77,8 +76,9 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				}
 			}
 
-			blockOpt := req.GetMessage().GetOption(OptionBlock1)
-			if blockOpt != nil {
+			opt := req.GetMessage().GetOption(OptionBlock1)
+			if opt != nil {
+				blockOpt := Block1OptionFromOption(opt)
 
 				// 0000 1 010
 				/*
@@ -109,38 +109,42 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				*/
 
 				if blockOpt.Value != nil {
-					optValue := blockOpt.Value.(uint32)
+					log.Println("HandleRequestBlock1 ## 1")
 					if blockOpt.Code == OptionBlock1 {
-						exp := optValue & 0x07
+						log.Println("HandleRequestBlock1 ## 2")
+						exp := blockOpt.Exponent()
 
 						if exp == 7 {
+							log.Println("HandleRequestBlock1 ## 3")
 							handleReqBadRequest(msg, conn, addr)
 							return
 						}
 
-						szx := math.Exp2(float64(exp + 4))
-						moreBit := (optValue >> 4) & 0x01
-						seqNum := optValue >> 4
-						fmt.Println("Out Values == ", optValue, exp, szx, strconv.FormatInt(int64(optValue), 2), moreBit, seqNum)
+						szx := blockOpt.Size()
+						hasMore := blockOpt.HasMore()
+						seqNum := blockOpt.Sequence()
+						fmt.Println("Out Values == ", blockOpt.Value, exp, szx, strconv.FormatInt(blockOpt.Value.(int64), 2), hasMore, seqNum)
 
 						s.GetEvents().BlockMessage(msg, true)
 
-						s.UpdateBlockMessage(addr.String(), msg, seqNum)
+						s.UpdateBlockMessageFragment(addr.String(), msg, seqNum)
 
-
-						// If more
-							// Store into block buffer given ip
-						// else
-							// Pass to handler
-						// Respond to client
-
+						if hasMore {
+							handleReqContinue(msg, conn, addr)
+							// Auto Respond to client
+						} else {
+							// TODO: Check if message is too large
+							msg = NewMessage(msg.MessageType, msg.Code, msg.MessageID)
+							msg.Payload = s.FlushBlockMessagePayload(addr.String())
+							req = NewClientRequestFromMessage(msg, attrs, conn, addr)
+						}
 					} else if blockOpt.Code == OptionBlock2 {
 
 					} else {
 						// TOOO: Invalid Block option Code
 					}
 
-					log.Println("Block Option==", blockOpt, optValue)
+					log.Println("Block Option==", blockOpt, blockOpt.Value)
 				}
 			}
 
@@ -174,6 +178,13 @@ func handleReqUnknownCriticalOption(msg *Message, conn *net.UDPConn, addr *net.U
 func handleReqBadRequest(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if msg.MessageType == MessageConfirmable {
 		SendMessageTo(BadRequestMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
+	}
+	return
+}
+
+func handleReqContinue(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	if msg.MessageType == MessageConfirmable {
+		SendMessageTo(ContinueMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
 	}
 	return
 }
