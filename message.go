@@ -297,7 +297,6 @@ func ValidateMessage(msg *Message) error {
 	return nil
 }
 
-
 func NewBlockMessage() *BlockMessage {
 	return &BlockMessage{
 		Sequence: 0,
@@ -305,8 +304,22 @@ func NewBlockMessage() *BlockMessage {
 }
 
 type BlockMessage struct {
-	StoredMessage *Message
-	Sequence       uint32
+	MessageBuf []byte
+	Sequence   uint32
+}
+
+type BySequence []*BlockMessage
+
+func (o BySequence) Len() int {
+	return len(o)
+}
+
+func (o BySequence) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
+}
+
+func (o BySequence) Less(i, j int) bool {
+	return o[i].Sequence < o[j].Sequence
 }
 
 // A Message object represents a CoAP payload
@@ -415,6 +428,10 @@ func (m *Message) AddOptions(opts []*Option) {
 			m.Options = append(m.Options, opt)
 		}
 	}
+}
+
+func (c *Message) SetBlock1Option(opt *Block1Option) {
+	c.AddOption(OptionBlock1, opt.Value)
 }
 
 // Copies the given list of options from another message to this one
@@ -584,6 +601,10 @@ func ContentMessage(messageID uint16, messageType uint8) *Message {
 // Creates a Non-Confirmable with CoAP Code 400 - Bad Request
 func BadRequestMessage(messageID uint16, messageType uint8) *Message {
 	return NewMessage(messageType, CoapCodeBadRequest, messageID)
+}
+
+func ContinueMessage(messageID uint16, messageType uint8) *Message {
+	return NewMessage(messageType, CoapCodeContinue, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 401 - Unauthorized
