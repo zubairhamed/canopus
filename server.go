@@ -63,8 +63,9 @@ type DefaultCoapServer struct {
 	localConn  *net.UDPConn
 	remoteConn *net.UDPConn
 
-	messageIds    map[uint16]time.Time
-	blockMessages map[string][]*BlockMessage
+	messageIds            map[uint16]time.Time
+	incomingBlockMessages map[string]*BlockMessage
+	outgoingBlockMessages map[string]*BlockMessage
 
 	routes       []*Route
 	events       *Events
@@ -128,7 +129,8 @@ func (s *DefaultCoapServer) Start() {
 
 func (s *DefaultCoapServer) serveServer() {
 	s.messageIds = make(map[uint16]time.Time)
-	s.blockMessages = make(map[string][]*BlockMessage)
+	s.incomingBlockMessages = make(map[string]*BlockMessage)
+	s.outgoingBlockMessages = make(map[string]*BlockMessage)
 
 	conn, err := net.ListenUDP("udp", s.localAddr)
 	if err != nil {
@@ -174,17 +176,28 @@ func (s *DefaultCoapServer) Stop() {
 	close(s.stopChannel)
 }
 
+func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg *Message, seq uint32) {
+	msgs := s.incomingBlockMessages[client]
 
-func (s *DefaultCoapServer) UpdateBlockMessage(client string, msg *Message, seq uint32) {
-	msgs := s.blockMessages[client]
 	if msgs == nil {
-		msgs = []*BlockMessage{}
+		msgs = &BlockMessage{
+			Sequence:   0,
+			MessageBuf: []byte{},
+		}
 	}
 
-	bm := NewBlockMessage()
-	bm.StoredMessage = msg
-	bm.Sequence = seq
-	s.blockMessages[client] = append(msgs, bm)
+	msgs.Sequence = seq
+	msgs.MessageBuf = append(msgs.MessageBuf, msg.Payload.GetBytes()...)
+
+	s.incomingBlockMessages[client] = msgs
+}
+
+func (s *DefaultCoapServer) FlushBlockMessagePayload(origin string) MessagePayload {
+	msgs := s.incomingBlockMessages[origin]
+
+	payload := msgs.MessageBuf
+
+	return NewBytesPayload(payload)
 }
 
 //func (s *DefaultCoapServer) GetBlockBuffer(client string) []byte {
@@ -267,6 +280,39 @@ func (s *DefaultCoapServer) NewRoute(path string, method CoapCode, fn RouteHandl
 }
 
 func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
+	msg := req.GetMessage()
+	opt := msg.GetOption(OptionBlock1)
+
+	if opt == nil { // Block1 was not set
+		log.Println("BLock 1 was not set")
+		if MessageSizeAllowed(req) != true {
+			log.Println("ErrMessageSizeTooLOng")
+			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
+		}
+	} else { // Block1 was set
+		log.Println("Block 1 was set")
+	}
+
+	if opt != nil {
+		log.Println("BLock 1 was set")
+		blockOpt := Block1OptionFromOption(opt)
+		if blockOpt.Value == nil {
+			log.Println("Block option vlaue is nil")
+			if MessageSizeAllowed(req) != true {
+				return nil, ErrMessageSizeTooLongBlockOptionValNotSet
+			} else {
+				// - Block # = one and only block (sz = unspecified), whereas 0 = 16bits
+				// - MOre bit = 0
+			}
+		} else {
+			log.Println("Block option vlaue is NOT nil", blockOpt.Sequence(), blockOpt.HasMore(), blockOpt.Size())
+			if blockOpt.Sequence() == 0 {
+				log.Println("store into buffer with default packet size info")
+				// store into buffer with default packet size info
+			}
+		}
+	}
+
 	s.events.Message(req.GetMessage(), false)
 	response, err := SendMessageTo(req.GetMessage(), NewUDPConnection(s.localConn), s.remoteAddr)
 
