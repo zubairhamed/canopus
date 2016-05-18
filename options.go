@@ -1,6 +1,7 @@
 package canopus
 
 import (
+	"math"
 	"strings"
 )
 
@@ -102,4 +103,70 @@ func IsElectiveOption(opt *Option) bool {
 // Determines if an option is critical
 func IsCriticalOption(opt *Option) bool {
 	return !IsElectiveOption(opt)
+}
+
+func NewBlock1Option(bs BlockSize, more bool) *Block1Option {
+	opt := &Block1Option{}
+
+	var val uint32 = 0
+
+	if more {
+		val |= (1 << 3)
+	}
+
+	opt.Value = val
+
+	/*
+		BLockSize
+		val := o.Value.(uint32)
+		exp := val & 0x07
+
+		return math.Exp2(float64(exp + 4))
+
+		More
+		val := o.Value.(uint32)
+
+		return ((val >> 3) & 0x01) == 1
+
+	*/
+
+	return opt
+}
+
+func Block1OptionFromOption(opt *Option) *Block1Option {
+	blockOpt := &Block1Option{}
+
+	blockOpt.Value = opt.Value
+	blockOpt.Code = opt.Code
+
+	return blockOpt
+}
+
+type Block1Option struct {
+	Option
+}
+
+func (o *Block1Option) Sequence() uint32 {
+	val := o.Value.(uint32)
+
+	return val >> 4
+}
+
+func (o *Block1Option) Exponent() uint32 {
+	val := o.Value.(uint32)
+
+	return val & 0x07
+}
+
+func (o *Block1Option) Size() float64 {
+	val := o.Value.(uint32)
+	exp := val & 0x07
+
+	return math.Exp2(float64(exp + 4))
+}
+
+func (o *Block1Option) HasMore() bool {
+	val := o.Value.(uint32)
+
+	return ((val >> 3) & 0x01) == 1
 }
