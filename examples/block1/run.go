@@ -12,6 +12,7 @@ func main() {
 
 	for {
 
+
 	}
 }
 
@@ -59,12 +60,8 @@ func runClient() {
 
 		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
 
-		// blockOpt := canopus.NewBlock1Option(canopus.BlockSize16, true)
-		blockOpt := canopus.NewBlock1Option(canopus.BlockSize64, true)
-
-		//  req.GetMessage().AddOption(canopus.OptionBlock1, nil)
+		blockOpt := canopus.NewBlock1Option(canopus.BlockSize16, true)
 		req.GetMessage().SetBlock1Option(blockOpt)
-		// req.SetStringPayload("Returning Block transfer information")
 		req.SetPayload(file)
 		req.SetRequestURI("/blockinfo")
 

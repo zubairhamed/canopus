@@ -163,16 +163,16 @@ const (
 	MethodPatch   = "PATCH"
 )
 
-type BlockSize byte
+type BlockSizeType byte
 
 const (
-	BlockSize16   = 0
-	BlockSize32   = 1
-	BlockSize64   = 2
-	BlockSize128  = 3
-	BlockSize256  = 4
-	BlockSize512  = 5
-	BlockSize1024 = 6
+	BlockSize16   BlockSizeType = 0
+	BlockSize32   BlockSizeType = 1
+	BlockSize64   BlockSizeType = 2
+	BlockSize128  BlockSizeType = 3
+	BlockSize256  BlockSizeType = 4
+	BlockSize512  BlockSizeType = 5
+	BlockSize1024 BlockSizeType = 6
 )
 
 // Errors

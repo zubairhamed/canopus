@@ -308,13 +308,13 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 			log.Println("Block option vlaue is NOT nil", blockOpt.Sequence(), blockOpt.HasMore(), blockOpt.Size())
 			if blockOpt.Sequence() == 0 {
 				log.Println("store into buffer with default packet size info")
-				// store into buffer with default packet size info
+				s.storeNewOutgoingBlockMessage(req.GetAddress().String(), msg.Payload.GetBytes())
 			}
 		}
 	}
 
-	s.events.Message(req.GetMessage(), false)
-	response, err := SendMessageTo(req.GetMessage(), NewUDPConnection(s.localConn), s.remoteAddr)
+	s.events.Message(msg, false)
+	response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
 
 	if err != nil {
 		s.events.Error(err)
@@ -323,6 +323,16 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	s.events.Message(response.GetMessage(), true)
 
 	return response, err
+}
+
+func (s *DefaultCoapServer) storeNewOutgoingBlockMessage(client string, payload []byte) {
+	bm := NewBlockMessage()
+	bm.MessageBuf = payload
+	s.outgoingBlockMessages[client] = bm
+}
+
+func (s *DefaultCoapServer) getOutgoingBlockMessage(client string, seq int, sz BlockSizeType) {
+// GetOutgoingBlockMessage(client, seq, sz)
 }
 
 func (s *DefaultCoapServer) SendTo(req CoapRequest, addr *net.UDPAddr) (CoapResponse, error) {

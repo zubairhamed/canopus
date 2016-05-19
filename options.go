@@ -108,7 +108,7 @@ func IsCriticalOption(opt *Option) bool {
 func NewBlock1Option(bs BlockSize, more bool) *Block1Option {
 	opt := &Block1Option{}
 
-	var val uint32 = 0
+	val := uint32(bs)
 
 	if more {
 		val |= (1 << 3)
