@@ -237,7 +237,7 @@ type CoapServer interface {
 	IsDuplicateMessage(msg *Message) bool
 	UpdateMessageTS(msg *Message)
 
-	UpdateBlockMessageFragment(string, *Message, uint32)
+	UpdateBlockMessageFragment(string, *Message, uint)
 	FlushBlockMessagePayload(string) MessagePayload
 }
 

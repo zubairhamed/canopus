@@ -186,7 +186,7 @@ func BytesToMessage(data []byte) (*Message, error) {
 }
 
 // type to sort the coap options list (which is mandatory) prior to transmission
-type SortOptions []*Option
+type SortOptions []Option
 
 func (opts SortOptions) Len() int {
 	return len(opts)
@@ -197,7 +197,7 @@ func (opts SortOptions) Swap(i, j int) {
 }
 
 func (opts SortOptions) Less(i, j int) bool {
-	return opts[i].Code < opts[j].Code
+	return opts[i].GetCode() < opts[j].GetCode()
 }
 
 // Converts a message object to a byte array. Typically done prior to transmission
@@ -217,11 +217,11 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 
 	lastOptionCode := 0
 	for _, opt := range msg.Options {
-		optCode := int(opt.Code)
+		optCode := int(opt.GetCode())
 		optDelta := optCode - lastOptionCode
 		optDeltaValue, _ := getOptionHeaderValue(optDelta)
 
-		byteValue := valueToBytes(opt.Value)
+		byteValue := valueToBytes(opt.GetValue())
 		valueLength := len(byteValue)
 		optLength := valueLength
 		optLengthValue, _ := getOptionHeaderValue(optLength)
@@ -283,11 +283,11 @@ func ValidateMessage(msg *Message) error {
 
 	// Repeated Unrecognized Options
 	for _, opt := range msg.Options {
-		opts := msg.GetOptions(opt.Code)
+		opts := msg.GetOptions(opt.GetCode())
 
 		if len(opts) > 1 {
 			if !IsRepeatableOption(opts[0]) {
-				if opts[0].Code&0x01 == 1 {
+				if opts[0].GetCode() & 0x01 == 1 {
 					return ErrUnknownCriticalOption
 				}
 			}
@@ -305,7 +305,7 @@ func NewBlockMessage() *BlockMessage {
 
 type BlockMessage struct {
 	MessageBuf []byte
-	Sequence   uint32
+	Sequence   uint
 }
 
 type BySequence []*BlockMessage
@@ -329,7 +329,7 @@ type Message struct {
 	MessageID   uint16
 	Payload     MessagePayload
 	Token       []byte
-	Options     []*Option
+	Options     []Option
 }
 
 func (m *Message) GetAcceptedContent() MediaType {
@@ -358,10 +358,10 @@ func (m *Message) GetTokenString() string {
 }
 
 // Returns an array of options given an option code
-func (m Message) GetOptions(id OptionCode) []*Option {
-	var opts []*Option
+func (m Message) GetOptions(id OptionCode) []Option {
+	var opts []Option
 	for _, val := range m.Options {
-		if val.Code == id {
+		if val.GetCode() == id {
 			opts = append(opts, val)
 		}
 	}
@@ -369,9 +369,9 @@ func (m Message) GetOptions(id OptionCode) []*Option {
 }
 
 // Returns the first option found for a given option code
-func (m Message) GetOption(id OptionCode) *Option {
+func (m Message) GetOption(id OptionCode) Option {
 	for _, val := range m.Options {
-		if val.Code == id {
+		if val.GetCode() == id {
 			return val
 		}
 	}
@@ -384,8 +384,8 @@ func (m Message) GetOptionsAsString(id OptionCode) []string {
 
 	var str []string
 	for _, o := range opts {
-		if o.Value != nil {
-			str = append(str, o.Value.(string))
+		if o.GetValue() != nil {
+			str = append(str, o.GetValue().(string))
 		}
 	}
 	return str
@@ -419,19 +419,19 @@ func (m *Message) AddOption(code OptionCode, value interface{}) {
 
 // Add an array of Options to the message. If an option is not repeatable, it will replace
 // any existing defined Option of the same type
-func (m *Message) AddOptions(opts []*Option) {
+func (m *Message) AddOptions(opts []Option) {
 	for _, opt := range opts {
 		if IsRepeatableOption(opt) {
 			m.Options = append(m.Options, opt)
 		} else {
-			m.RemoveOptions(opt.Code)
+			m.RemoveOptions(opt.GetCode())
 			m.Options = append(m.Options, opt)
 		}
 	}
 }
 
 func (c *Message) SetBlock1Option(opt *Block1Option) {
-	c.AddOption(OptionBlock1, opt.Value)
+	c.AddOption(OptionBlock1, opt.GetValue())
 }
 
 // Copies the given list of options from another message to this one
@@ -441,11 +441,18 @@ func (m *Message) CloneOptions(cm *Message, opts ...OptionCode) {
 	}
 }
 
+// Replace an Option
+func (m *Message) ReplaceOptions(code OptionCode, opts []Option) {
+	m.RemoveOptions(code)
+
+	m.AddOptions(opts)
+}
+
 // Removes an Option
 func (m *Message) RemoveOptions(id OptionCode) {
-	var opts []*Option
+	var opts []Option
 	for _, opt := range m.Options {
-		if opt.Code != id {
+		if opt.GetCode() != id {
 			opts = append(opts, opt)
 		}
 	}

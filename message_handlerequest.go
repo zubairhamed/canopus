@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
 )
 
 func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
@@ -109,13 +108,14 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				*/
 
 				if blockOpt.Value != nil {
-					log.Println("HandleRequestBlock1 ## 1")
+					// log.Println("HandleRequestBlock1 ## 1")
 					if blockOpt.Code == OptionBlock1 {
-						log.Println("HandleRequestBlock1 ## 2")
+						// log.Println("HandleRequestBlock1 ## 2")
+						log.Println("Log", blockOpt.Value)
 						exp := blockOpt.Exponent()
 
 						if exp == 7 {
-							log.Println("HandleRequestBlock1 ## 3")
+							// log.Println("HandleRequestBlock1 ## 3")
 							handleReqBadRequest(msg, conn, addr)
 							return
 						}
@@ -123,7 +123,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 						szx := blockOpt.Size()
 						hasMore := blockOpt.HasMore()
 						seqNum := blockOpt.Sequence()
-						fmt.Println("Out Values == ", blockOpt.Value, exp, szx, strconv.FormatInt(blockOpt.Value.(int64), 2), hasMore, seqNum)
+						fmt.Println("Out Values == ", blockOpt.Value, exp, szx, 2, hasMore, seqNum)
 
 						s.GetEvents().BlockMessage(msg, true)
 

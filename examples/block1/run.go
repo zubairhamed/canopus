@@ -12,7 +12,6 @@ func main() {
 
 	for {
 
-
 	}
 }
 
@@ -41,7 +40,7 @@ func runServer() {
 
 	server.OnBlockMessage(func(msg *canopus.Message, inbound bool) {
 		log.Println("Incoming Block Message:")
-		canopus.PrintMessage(msg)
+		// canopus.PrintMessage(msg)
 	})
 
 	server.Start()
@@ -60,23 +59,23 @@ func runClient() {
 
 		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
 
-		blockOpt := canopus.NewBlock1Option(canopus.BlockSize16, true)
+		blockOpt := canopus.NewBlock1Option(canopus.BlockSize16, true, 0)
 		req.GetMessage().SetBlock1Option(blockOpt)
 		req.SetPayload(file)
 		req.SetRequestURI("/blockinfo")
 
-		resp, err := client.Send(req)
+		// resp, err := client.Send(req)
+		_, err = client.Send(req)
 		if err != nil {
 			log.Println(err)
 		} else {
 			log.Println("Got Response:")
-			log.Println(resp.GetMessage().Payload.String())
+			// log.Println(resp.GetMessage().Payload.String())
 		}
 	})
 
 	client.OnError(func(err error) {
-		log.Println("An error occured")
-		log.Println(err)
+		log.Println("An error occured: ", err)
 	})
 
 	//client.OnMessage(func(msg *canopus.Message, inbound bool) {
