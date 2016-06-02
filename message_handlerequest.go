@@ -108,14 +108,10 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				*/
 
 				if blockOpt.Value != nil {
-					// log.Println("HandleRequestBlock1 ## 1")
 					if blockOpt.Code == OptionBlock1 {
-						// log.Println("HandleRequestBlock1 ## 2")
-						log.Println("Log", blockOpt.Value)
 						exp := blockOpt.Exponent()
 
 						if exp == 7 {
-							// log.Println("HandleRequestBlock1 ## 3")
 							handleReqBadRequest(msg, conn, addr)
 							return
 						}

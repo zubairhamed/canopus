@@ -52,7 +52,7 @@ func runClient() {
 	client.OnStart(func(server canopus.CoapServer) {
 		client.Dial("localhost:5683")
 
-		file, err := ioutil.ReadFile("./feedbooks_book_1421.epub")
+		file, err := ioutil.ReadFile("./ietf-block.htm")
 		if err != nil {
 
 		}

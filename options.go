@@ -3,7 +3,6 @@ package canopus
 import (
 	"math"
 	"strings"
-	"log"
 )
 
 type Option interface {
@@ -125,17 +124,18 @@ func IsCriticalOption(opt Option) bool {
 	return !IsElectiveOption(opt)
 }
 
-func NewBlock1Option(bs BlockSizeType, more bool, seq uint) *Block1Option {
+func NewBlock1Option(bs BlockSizeType, more bool, seq uint32) *Block1Option {
 	opt := &Block1Option{}
+	opt.Code = OptionBlock1
 
-	val := uint(seq)
+	val := seq
 
 	val = val << 4
 	if more {
 		val |= (1 << 3)
 	}
 
-	val |= (uint(bs) << 0)
+	val |= (uint32(bs) << 0)
 
 	opt.Value = val
 
@@ -169,35 +169,33 @@ type Block1Option struct {
 	CoapOption
 }
 
-func (o *Block1Option) Sequence() uint {
-	val := o.GetValue().(uint)
+func (o *Block1Option) Sequence() uint32 {
+	val := o.GetValue().(uint32)
 
 	return val >> 4
 }
 
-func (o *Block1Option) Exponent() uint {
-	val := uint(o.GetValue().(uint32))
-
-	log.Println("Exponent", val & 0x07)
+func (o *Block1Option) Exponent() uint32 {
+	val := o.GetValue().(uint32)
 
 	return val & 0x07
 }
 
-func (o *Block1Option) BlockSizeLength() uint {
-	sz := uint(o.Size()) + 4
+func (o *Block1Option) BlockSizeLength() uint32 {
+	sz := uint32(o.Size()) + 4
 
 	return sz * sz
 }
 
 func (o *Block1Option) Size() BlockSizeType {
-	val := o.GetValue().(uint)
+	val := o.GetValue().(uint32)
 	exp := val & 0x07
 
 	return BlockSizeType(byte(math.Exp2(float64(exp + 4))))
 }
 
 func (o *Block1Option) HasMore() bool {
-	val := o.Value.(uint)
+	val := o.Value.(uint32)
 
 	return ((val >> 3) & 0x01) == 1
 }

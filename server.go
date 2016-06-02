@@ -177,7 +177,7 @@ func (s *DefaultCoapServer) Stop() {
 	close(s.stopChannel)
 }
 
-func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg *Message, seq uint) {
+func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg *Message, seq uint32) {
 	msgs := s.incomingBlockMessages[client]
 
 	if msgs == nil {
@@ -283,12 +283,9 @@ func (s *DefaultCoapServer) NewRoute(path string, method CoapCode, fn RouteHandl
 func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	msg := req.GetMessage()
 	opt := msg.GetOption(OptionBlock1)
-	//	client := req.GetAddress().String()
 
 	if opt == nil { // Block1 was not set
-		log.Println("BLock 1 was not set")
 		if MessageSizeAllowed(req) != true {
-			log.Println("ErrMessageSizeTooLOng")
 			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
 		}
 	} else { // Block1 was set
@@ -296,12 +293,8 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	}
 
 	if opt != nil {
-		log.Println("ERR 1")
-		// log.Println("BLock 1 was set")
 		blockOpt := Block1OptionFromOption(opt)
 		if blockOpt.Value == nil {
-			log.Println("ERR 2")
-			// log.Println("Block option vlaue is nil")
 			if MessageSizeAllowed(req) != true {
 				return nil, ErrMessageSizeTooLongBlockOptionValNotSet
 			} else {
@@ -309,12 +302,11 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 				// - MOre bit = 0
 			}
 		} else {
-			log.Println("ERR 3")
 			payload := msg.Payload.GetBytes()
-			payloadLen := uint(len(payload))
+			payloadLen := uint32(len(payload))
 			blockSize := blockOpt.BlockSizeLength()
-			currSeq := uint(0)
-			totalBlocks := uint(payloadLen / blockSize)
+			currSeq := uint32(0)
+			totalBlocks := uint32(payloadLen / blockSize)
 			completed := false
 
 			var wg sync.WaitGroup
@@ -322,11 +314,9 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 
 			for completed == false {
 				if currSeq < totalBlocks {
-					// create new message, cloned from msg
-					// create blockopt1
-					// get block payload
-					blockPayloadStart := currSeq * uint(blockSize)
-					blockPayloadEnd := blockPayloadStart + uint(blockSize)
+
+					blockPayloadStart := currSeq * uint32(blockSize)
+					blockPayloadEnd := blockPayloadStart + uint32(blockSize)
 					blockPayload := payload[blockPayloadStart:blockPayloadEnd]
 
 					more := true
@@ -340,12 +330,11 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 					msg.MessageID = GenerateMessageID()
 					msg.Payload = NewBytesPayload(blockPayload)
 
-					log.Println("Payload length", len(blockPayload), "from", blockPayloadStart, "to", blockPayloadEnd)
+					log.Println("Payload length", len(blockPayload), "from", blockPayloadStart, "to", blockPayloadEnd, "totalBlocks", totalBlocks, "currSeq", currSeq)
 
 					// send message
 					response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
 					if err != nil {
-						log.Println("ERR 4")
 						s.events.Error(err)
 						wg.Done()
 						return nil, err
@@ -353,12 +342,14 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 					s.events.Message(response.GetMessage(), true)
 
 				} else {
+					completed = true
 					wg.Done()
 				}
 			}
 		}
 	}
 
+	log.Println("TRANSFER BLOCK COMPLETE")
 	s.events.Message(msg, false)
 	response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
 
@@ -369,107 +360,6 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	s.events.Message(response.GetMessage(), true)
 
 	return response, err
-
-
-
-			// get payload bytes
-			// get total blocks/sequences
-			// currseq = 0
-			/*
-				while !complete
-					if currSeq != totalBlocks
-						create new message, cloned from msg
-						get block payload
-						send message
-
-						if !error
-							update currentSeq
-						else
-							done
-					else
-						done
-
-			 */
-			// log.Println("Block option vlaue is NOT nil", blockOpt.Sequence(), blockOpt.HasMore(), blockOpt.Size())
-	//		if blockOpt.Sequence() == 0 {
-	//			log.Println("store into buffer with default packet size info")
-	//			payload := msg.Payload.GetBytes()
-	//			payloadSize := uint(len(payload))
-	//			currSeq := blockOpt.Sequence()
-	//			currSz := uint(blockOpt.Size())
-	//
-	//			var wg sync.WaitGroup
-	//			wg.Add(1)
-	//
-	//			var err error
-	//			var response CoapResponse
-	//
-	//			go func() {
-	//				completed := false
-	//				for completed == false {
-	//
-	//					blockPayloadStart := currSeq * currSz
-	//					blockPayloadEnd := blockPayloadStart + currSz
-	//					if blockPayloadEnd >= payloadSize {
-	//						blockPayloadEnd = payloadSize
-	//						completed = true
-	//
-	//						wg.Done()
-	//					}
-	//
-	//					blockPayload := payload[blockPayloadStart:blockPayloadEnd]
-	//
-	//					currSeq = currSeq+1
-	//
-	//					nextOpt := NewBlock1Option(BlockSizeType(payloadSize), true, currSeq)
-	//					msg.Payload = NewBytesPayload(blockPayload)
-	//					msg.MessageID = GenerateMessageID()
-	//					msg.ReplaceOptions(OptionBlock1, []Option { nextOpt })
-	//
-	//					// log.Println("Sending Block Payload ", blockPayload)
-	//
-	//					s.events.Message(msg, false)
-	//					response, err = SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
-	//					if err != nil {
-	//						log.Println("ERROR 1")
-	//						s.events.Error(err)
-	//						wg.Done()
-	//						return
-	//					}
-	//					s.events.Message(response.GetMessage(), true)
-	//
-	//					// get response for sending payload
-	//					currSeq = currSeq + 1
-	//
-	//					// TODO:
-	//					// Split blockmessage byte into segments of size sz with remainders
-	//					// if seq > segment size, throw error
-	//					// otherwise send out byte array
-	//				}
-	//			}()
-	//
-	//			wg.Wait()
-	//			log.Println("Completed sending")
-	//			return response, err
-	//
-	//			// TODO: Send out payload and wait for response
-	//			// Send out all message blocks and when done
-	//			// return response
-	//		}
-	//	}
-	//}
-	//log.Println("PASS THRU")
-
-	//s.events.Message(msg, false)
-	//response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
-	//
-	//if err != nil {
-	//	s.events.Error(err)
-	//	return response, err
-	//}
-	//s.events.Message(response.GetMessage(), true)
-	//
-	//return response, err
 }
 
 func (s *DefaultCoapServer) storeNewOutgoingBlockMessage(client string, payload []byte) {

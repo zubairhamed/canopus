@@ -305,7 +305,7 @@ func NewBlockMessage() *BlockMessage {
 
 type BlockMessage struct {
 	MessageBuf []byte
-	Sequence   uint
+	Sequence   uint32
 }
 
 type BySequence []*BlockMessage
