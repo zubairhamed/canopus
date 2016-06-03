@@ -1,7 +1,6 @@
 package canopus
 
 import (
-	"fmt"
 	"log"
 	"net"
 )
@@ -92,21 +91,6 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 					      	in a request.
 				*/
 
-				/*
-					Server get Block1
-						Server saves and append buffer [Ip][BlockXFERs]
-						Call OnBlock1 Callback and pass buffer data
-						Server Responds OK
-
-						if MORE
-							Notify User Callback
-							Flush Buffer
-						Else
-							Do nothing
-
-
-				*/
-
 				if blockOpt.Value != nil {
 					if blockOpt.Code == OptionBlock1 {
 						exp := blockOpt.Exponent()
@@ -116,10 +100,10 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 							return
 						}
 
-						szx := blockOpt.Size()
+						// szx := blockOpt.Size()
 						hasMore := blockOpt.HasMore()
 						seqNum := blockOpt.Sequence()
-						fmt.Println("Out Values == ", blockOpt.Value, exp, szx, 2, hasMore, seqNum)
+						// fmt.Println("Out Values == ", blockOpt.Value, exp, szx, 2, hasMore, seqNum)
 
 						s.GetEvents().BlockMessage(msg, true)
 

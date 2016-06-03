@@ -313,18 +313,24 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 			wg.Add(1)
 
 			for completed == false {
-				if currSeq < totalBlocks {
+				if currSeq <= totalBlocks {
 
-					blockPayloadStart := currSeq * uint32(blockSize)
-					blockPayloadEnd := blockPayloadStart + uint32(blockSize)
-					blockPayload := payload[blockPayloadStart:blockPayloadEnd]
+					var blockPayloadStart uint32
+					var blockPayloadEnd uint32
+					var blockPayload []byte
+
+					blockPayloadStart = currSeq * uint32(blockSize) + (currSeq * 1)
 
 					more := true
 					if currSeq == totalBlocks {
 						more = false
+						blockPayloadEnd = payloadLen
+					} else {
+						blockPayloadEnd = blockPayloadStart + uint32(blockSize)
 					}
 
-					currSeq = currSeq + 1
+					blockPayload = payload[blockPayloadStart:blockPayloadEnd]
+
 					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
 					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt })
 					msg.MessageID = GenerateMessageID()
@@ -334,12 +340,14 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 
 					// send message
 					response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
+					PrintMessage(response.GetMessage())
 					if err != nil {
 						s.events.Error(err)
 						wg.Done()
 						return nil, err
 					}
 					s.events.Message(response.GetMessage(), true)
+					currSeq = currSeq + 1
 
 				} else {
 					completed = true
