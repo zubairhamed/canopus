@@ -78,13 +78,16 @@ func runClient() {
 		req.SetStringPayload("Hello, canopus")
 		req.SetRequestURI("/hello")
 
-		resp, err := client.Send(req)
-		if err != nil {
+		for {
+			_, err := client.Send(req)
+			if err != nil {
 			log.Println(err)
-		} else {
+			} else {
 			log.Println("Got Response:")
-			log.Println(resp.GetMessage().Payload.String())
+			// log.Println(resp.GetMessage().Payload.String())
+			}
 		}
+
 	})
 
 	client.OnError(func(err error) {

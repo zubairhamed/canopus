@@ -167,6 +167,8 @@ func (s *DefaultCoapServer) serveServer() {
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf)
 
+			log.Println("Found Messages to handle..")
+
 			go s.handleMessage(msgBuf, conn, addr)
 		}
 	}
@@ -232,6 +234,8 @@ func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 }
 
 func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+	log.Println("handleMessage")
+
 	msg, err := BytesToMessage(msgBuf)
 	s.events.Message(msg, true)
 
@@ -336,11 +340,8 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 					msg.MessageID = GenerateMessageID()
 					msg.Payload = NewBytesPayload(blockPayload)
 
-					log.Println("Payload length", len(blockPayload), "from", blockPayloadStart, "to", blockPayloadEnd, "totalBlocks", totalBlocks, "currSeq", currSeq)
-
 					// send message
 					response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
-					PrintMessage(response.GetMessage())
 					if err != nil {
 						s.events.Error(err)
 						wg.Done()
@@ -357,9 +358,14 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 		}
 	}
 
-	log.Println("TRANSFER BLOCK COMPLETE")
 	s.events.Message(msg, false)
-	response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
+
+	conn, err := net.DialUDP("udp6", s.localAddr, s.remoteAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := SendMessageTo(msg, NewUDPConnection(conn), s.remoteAddr)
 
 	if err != nil {
 		s.events.Error(err)

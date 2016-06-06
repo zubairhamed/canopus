@@ -123,8 +123,6 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 					} else {
 						// TOOO: Invalid Block option Code
 					}
-
-					log.Println("Block Option==", blockOpt, blockOpt.Value)
 				}
 			}
 
@@ -138,6 +136,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				err := ValidateMessage(respMsg)
 				if err == nil {
 					s.GetEvents().Message(respMsg, false)
+
 
 					SendMessageTo(respMsg, NewUDPConnection(conn), addr)
 				} else {

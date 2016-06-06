@@ -17,12 +17,12 @@ func main() {
 			log.Fatal(err)
 		}
 
-		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
+		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Post, canopus.GenerateMessageID())
 
 		blockOpt := canopus.NewBlock1Option(canopus.BlockSize16, true, 0)
 		req.GetMessage().SetBlock1Option(blockOpt)
 		req.SetPayload(file)
-		req.SetRequestURI("/blockinfo")
+		req.SetRequestURI("/blockupload")
 
 		// resp, err := client.Send(req)
 		_, err = client.Send(req)
