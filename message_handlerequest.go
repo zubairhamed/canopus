@@ -112,6 +112,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 						if hasMore {
 							handleReqContinue(msg, conn, addr)
 							// Auto Respond to client
+
 						} else {
 							// TODO: Check if message is too large
 							msg = NewMessage(msg.MessageType, msg.Code, msg.MessageID)
@@ -136,7 +137,6 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				err := ValidateMessage(respMsg)
 				if err == nil {
 					s.GetEvents().Message(respMsg, false)
-
 
 					SendMessageTo(respMsg, NewUDPConnection(conn), addr)
 				} else {

@@ -167,8 +167,6 @@ func (s *DefaultCoapServer) serveServer() {
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf)
 
-			log.Println("Found Messages to handle..")
-
 			go s.handleMessage(msgBuf, conn, addr)
 		}
 	}
@@ -203,14 +201,6 @@ func (s *DefaultCoapServer) FlushBlockMessagePayload(origin string) MessagePaylo
 	return NewBytesPayload(payload)
 }
 
-//func (s *DefaultCoapServer) GetBlockBuffer(client string) []byte {
-//	return s.blockMessages[client]
-//}
-//
-//func (s *DefaultCoapServer) PurgeBlockBuffer(client string) {
-//	s.blockMessages[client] = nil
-//}
-
 func (s *DefaultCoapServer) handleMessageIDPurge() {
 	// Routine for clearing up message IDs which has expired
 	ticker := time.NewTicker(MessageIDPurgeDuration * time.Second)
@@ -234,8 +224,6 @@ func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 }
 
 func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-	log.Println("handleMessage")
-
 	msg, err := BytesToMessage(msgBuf)
 	s.events.Message(msg, true)
 
