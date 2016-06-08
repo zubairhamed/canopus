@@ -59,6 +59,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 			s.UpdateMessageTS(msg)
 
 			// Auto acknowledge
+			// TODO: Necessary?
 			if msg.MessageType == MessageConfirmable && route.AutoAck {
 				handleRequestAutoAcknowledge(s, msg, conn, addr)
 			}
@@ -70,6 +71,59 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				obsOpt := msg.GetOption(OptionObserve)
 				if obsOpt != nil {
 					handleReqObserve(s, req, msg, conn, addr)
+				}
+			}
+
+			opt := req.GetMessage().GetOption(OptionBlock1)
+			if opt != nil {
+				blockOpt := Block1OptionFromOption(opt)
+
+				// 0000 1 010
+				/*
+									[NUM][M][SZX]
+									2 ^ (2 + 4)
+									2 ^ 6 = 32
+									Size = 2 ^ (SZX + 4)
+
+									The value 7 for SZX (which would
+					      	indicate a block size of 2048) is reserved, i.e. MUST NOT be sent
+					      	and MUST lead to a 4.00 Bad Request response code upon reception
+					      	in a request.
+				*/
+
+				if blockOpt.Value != nil {
+					if blockOpt.Code == OptionBlock1 {
+						exp := blockOpt.Exponent()
+
+						if exp == 7 {
+							handleReqBadRequest(msg, conn, addr)
+							return
+						}
+
+						// szx := blockOpt.Size()
+						hasMore := blockOpt.HasMore()
+						seqNum := blockOpt.Sequence()
+						// fmt.Println("Out Values == ", blockOpt.Value, exp, szx, 2, hasMore, seqNum)
+
+						s.GetEvents().BlockMessage(msg, true)
+
+						s.UpdateBlockMessageFragment(addr.String(), msg, seqNum)
+
+						if hasMore {
+							handleReqContinue(msg, conn, addr)
+							// Auto Respond to client
+
+						} else {
+							// TODO: Check if message is too large
+							msg = NewMessage(msg.MessageType, msg.Code, msg.MessageID)
+							msg.Payload = s.FlushBlockMessagePayload(addr.String())
+							req = NewClientRequestFromMessage(msg, attrs, conn, addr)
+						}
+					} else if blockOpt.Code == OptionBlock2 {
+
+					} else {
+						// TOOO: Invalid Block option Code
+					}
 				}
 			}
 
@@ -96,6 +150,20 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 func handleReqUnknownCriticalOption(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if msg.MessageType == MessageConfirmable {
 		SendMessageTo(BadOptionMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
+	}
+	return
+}
+
+func handleReqBadRequest(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	if msg.MessageType == MessageConfirmable {
+		SendMessageTo(BadRequestMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
+	}
+	return
+}
+
+func handleReqContinue(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+	if msg.MessageType == MessageConfirmable {
+		SendMessageTo(ContinueMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
 	}
 	return
 }

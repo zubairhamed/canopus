@@ -8,6 +8,7 @@ type FnEventError func(error)
 type FnEventObserve func(string, *Message)
 type FnEventObserveCancel func(string, *Message)
 type FnEventMessage func(*Message, bool)
+type FnEventBlockMessage func(*Message, bool)
 
 type EventCode int
 
@@ -32,6 +33,7 @@ func NewEvents() *Events {
 		evtFnObserve:       []FnEventObserve{},
 		evtFnObserveCancel: []FnEventObserveCancel{},
 		evtFnMessage:       []FnEventMessage{},
+		evtFnBlockMessage:  []FnEventBlockMessage{},
 	}
 }
 
@@ -46,6 +48,7 @@ type Events struct {
 	evtFnObserve       []FnEventObserve
 	evtFnObserveCancel []FnEventObserveCancel
 	evtFnMessage       []FnEventMessage
+	evtFnBlockMessage  []FnEventBlockMessage
 }
 
 // OnNotify is Fired when an observeed resource is notified
@@ -86,6 +89,11 @@ func (ce *Events) OnObserveCancel(fn FnEventObserveCancel) {
 // Fired when a message is received
 func (ce *Events) OnMessage(fn FnEventMessage) {
 	ce.evtFnMessage = append(ce.evtFnMessage, fn)
+}
+
+// Fired when a block messageis received
+func (ce *Events) OnBlockMessage(fn FnEventBlockMessage) {
+	ce.evtFnBlockMessage = append(ce.evtFnBlockMessage, fn)
 }
 
 // Fires the "OnNotify" event
@@ -141,6 +149,14 @@ func (ce *Events) ObserveCancelled(resource string, msg *Message) {
 // message is inbound or outgoing
 func (ce *Events) Message(msg *Message, inbound bool) {
 	for _, fn := range ce.evtFnMessage {
+		fn(msg, inbound)
+	}
+}
+
+// Fires the "OnBlockMessage" event. The 'inbound' variables determines if the
+// message is inbound or outgoing
+func (ce *Events) BlockMessage(msg *Message, inbound bool) {
+	for _, fn := range ce.evtFnBlockMessage {
 		fn(msg, inbound)
 	}
 }

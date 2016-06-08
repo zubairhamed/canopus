@@ -10,7 +10,7 @@ func PrintOptions(msg *Message) {
 	log.Println(" - - - OPTIONS - - - ")
 	if len(opts) > 0 {
 		for _, opts := range msg.Options {
-			log.Println("Code/Number: ", opts.Code, ", Name: ", OptionNumberToString(opts.Code), ", Value: ", opts.Value)
+			log.Println("Code/Number: ", opts.GetCode(), ", Name: ", OptionNumberToString(opts.GetCode()), ", Value: ", opts.GetValue())
 		}
 	} else {
 		log.Println("None")
