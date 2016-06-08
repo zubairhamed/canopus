@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/zubairhamed/canopus"
-	"log"
 	"io/ioutil"
+	"log"
 )
 
 func main() {
