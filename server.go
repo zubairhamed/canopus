@@ -348,7 +348,11 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 
 	s.events.Message(msg, false)
 
-	conn, err := net.DialUDP("udp6", s.localAddr, s.remoteAddr)
+	// conn, err := net.DialUDP("udp6", s.localAddr, s.remoteAddr)
+
+	conn, err := net.ListenUDP("udp6", s.localAddr)
+	defer conn.Close()
+
 	if err != nil {
 		return nil, err
 	}

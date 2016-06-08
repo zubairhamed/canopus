@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/zubairhamed/canopus"
 	"log"
+	"io/ioutil"
 )
 
 func main() {
@@ -24,9 +25,13 @@ func main() {
 		res := canopus.NewResponse(msg, nil)
 
 		// Save to file
-		log.Println("BLock Data Returned:", res.GetPayload())
 
-		log.Println("Payload Size", len(res.GetPayload()))
+		payload := req.GetMessage().Payload.GetBytes()
+		log.Println("len", len(payload))
+		err := ioutil.WriteFile("output.html", payload, 0644)
+		if err != nil {
+			log.Println(err)
+		}
 
 		return res
 	})
