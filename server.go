@@ -311,7 +311,7 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 					var blockPayloadEnd uint32
 					var blockPayload []byte
 
-					blockPayloadStart = currSeq * uint32(blockSize) + (currSeq * 1)
+					blockPayloadStart = currSeq*uint32(blockSize) + (currSeq * 1)
 
 					more := true
 					if currSeq == totalBlocks {
@@ -324,7 +324,7 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 					blockPayload = payload[blockPayloadStart:blockPayloadEnd]
 
 					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
-					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt })
+					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt})
 					msg.MessageID = GenerateMessageID()
 					msg.Payload = NewBytesPayload(blockPayload)
 

@@ -287,7 +287,7 @@ func ValidateMessage(msg *Message) error {
 
 		if len(opts) > 1 {
 			if !IsRepeatableOption(opts[0]) {
-				if opts[0].GetCode() & 0x01 == 1 {
+				if opts[0].GetCode()&0x01 == 1 {
 					return ErrUnknownCriticalOption
 				}
 			}

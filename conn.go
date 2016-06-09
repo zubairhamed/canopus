@@ -15,15 +15,6 @@ func NewUDPConnection(c *net.UDPConn) Connection {
 	}
 }
 
-// NewCanopusUDPConnection creates a new CanopousConnect given an existing UDP
-// connection and address
-func NewUDPConnectionWithAddr(c *net.UDPConn, a net.Addr) Connection {
-	return &UDPConnection{
-		conn: c,
-		addr: a,
-	}
-}
-
 type UDPConnection struct {
 	conn *net.UDPConn
 	addr net.Addr

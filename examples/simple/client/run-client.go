@@ -15,14 +15,12 @@ func main() {
 		req.SetStringPayload("Hello, canopus")
 		req.SetRequestURI("/hello")
 
-		for {
-			resp, err := client.Send(req)
-			if err != nil {
-				log.Println(err)
-			} else {
-				log.Println("Got Response:")
-				log.Println(resp.GetMessage().Payload.String())
-			}
+		resp, err := client.Send(req)
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Println("Got Response:")
+			log.Println(resp.GetMessage().Payload.String())
 		}
 	})
 
