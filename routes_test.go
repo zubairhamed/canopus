@@ -20,6 +20,14 @@ func TestRoutes(t *testing.T) {
 	assert.True(t, re.MatchString("/test/abc"))
 	assert.False(t, re.MatchString("/test/abc/def"))
 
+	re, static = CreateCompilableRoutePath("/test/:var/foo")
+	assert.False(t, static)
+	assert.True(t, re.MatchString("/test/abc/foo"))
+	assert.False(t, re.MatchString("/test/abc"))
+	assert.False(t, re.MatchString("/test/abc/def"))
+	assert.False(t, re.MatchString("/test//foo"))
+	assert.False(t, re.MatchString("/test/foo"))
+
 	re, static = CreateCompilableRoutePath("/test.abc/:var")
 	assert.False(t, static)
 	assert.True(t, re.MatchString("/test.abc/abc"))
