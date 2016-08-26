@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"errors"
 )
 
 type ProxyType int
@@ -276,6 +277,12 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	msg := req.GetMessage()
 	opt := msg.GetOption(OptionBlock1)
 
+	if (s.localConn == nil) {
+		err := errors.New("Server not connected")
+		s.events.Error(err)
+		return nil, err
+	}
+
 	if opt == nil { // Block1 was not set
 		if MessageSizeAllowed(req) != true {
 			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
@@ -348,16 +355,7 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 
 	s.events.Message(msg, false)
 
-	// conn, err := net.DialUDP("udp6", s.localAddr, s.remoteAddr)
-
-	conn, err := net.ListenUDP("udp6", s.localAddr)
-	defer conn.Close()
-
-	if err != nil {
-		return nil, err
-	}
-
-	response, err := SendMessageTo(msg, NewUDPConnection(conn), s.remoteAddr)
+	response, err := SendMessageTo(msg, NewUDPConnection(s.localConn), s.remoteAddr)
 
 	if err != nil {
 		s.events.Error(err)
