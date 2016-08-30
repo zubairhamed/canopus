@@ -6,11 +6,9 @@ import (
 
 func main() {
 	go runServer()
-	runClient()
+	go runClient()
 
-	for {
-
-	}
+	<- make(chan struct{})
 }
 
 func runClient() {

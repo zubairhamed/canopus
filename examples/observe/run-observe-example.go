@@ -6,15 +6,15 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+	"os"
+	"os/signal"
 )
 
 func main() {
 	go runServer()
-	runClient()
+	go runClient()
 
-	for {
-
-	}
+	<- make(chan struct{})
 }
 
 func runServer() {

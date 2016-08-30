@@ -7,11 +7,9 @@ import (
 func main() {
 	go runProxyServer()
 	go runServer()
-	runClient()
+	go runClient()
 
-	for {
-
-	}
+	<- make(chan struct{})
 }
 
 func runProxyServer() {
