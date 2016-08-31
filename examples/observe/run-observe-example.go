@@ -6,8 +6,6 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
-	"os"
-	"os/signal"
 )
 
 func main() {
