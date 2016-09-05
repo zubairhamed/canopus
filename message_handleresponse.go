@@ -11,10 +11,8 @@ func handleResponse(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDP
 		return
 	}
 
-	log.Println("Incoming Response", msg.MessageID)
 	ch := GetResponseChannel(s, msg.MessageID)
 	if ch != nil {
-		PrintMessage(msg)
 		resp := &CoapResponseChannel{
 			Response: NewResponse(msg, nil),
 		}
