@@ -16,7 +16,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 		if err != nil {
 			s.GetEvents().Error(err)
 			if err == ErrUnknownCriticalOption {
-				handleReqUnknownCriticalOption(msg, conn, addr)
+				handleReqUnknownCriticalOption(s, msg, conn, addr)
 				return
 			}
 		}
@@ -96,7 +96,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 						exp := blockOpt.Exponent()
 
 						if exp == 7 {
-							handleReqBadRequest(msg, conn, addr)
+							handleReqBadRequest(s, msg, conn, addr)
 							return
 						}
 
@@ -110,7 +110,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 						s.UpdateBlockMessageFragment(addr.String(), msg, seqNum)
 
 						if hasMore {
-							handleReqContinue(msg, conn, addr)
+							handleReqContinue(s, msg, conn, addr)
 							// Auto Respond to client
 
 						} else {
@@ -138,7 +138,7 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 				if err == nil {
 					s.GetEvents().Message(respMsg, false)
 
-					SendMessageTo(respMsg, NewUDPConnection(conn), addr)
+					SendMessageTo(s, respMsg, NewUDPConnection(conn), addr)
 				} else {
 
 				}
@@ -147,38 +147,38 @@ func handleRequest(s CoapServer, err error, msg *Message, conn *net.UDPConn, add
 	}
 }
 
-func handleReqUnknownCriticalOption(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func handleReqUnknownCriticalOption(c CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if msg.MessageType == MessageConfirmable {
-		SendMessageTo(BadOptionMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
+		SendMessageTo(c, BadOptionMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 	}
 	return
 }
 
-func handleReqBadRequest(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func handleReqBadRequest(c CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if msg.MessageType == MessageConfirmable {
-		SendMessageTo(BadRequestMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
+		SendMessageTo(c, BadRequestMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
 	}
 	return
 }
 
-func handleReqContinue(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func handleReqContinue(c CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if msg.MessageType == MessageConfirmable {
-		SendMessageTo(ContinueMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
+		SendMessageTo(c, ContinueMessage(msg.MessageID, msg.MessageType), NewUDPConnection(conn), addr)
 	}
 	return
 }
 
-func handleReqUnsupportedMethodRequest(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func handleReqUnsupportedMethodRequest(c CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	ret := NotImplementedMessage(msg.MessageID, MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
-	s.GetEvents().Message(ret, false)
-	SendMessageTo(ret, NewUDPConnection(conn), addr)
+	c.GetEvents().Message(ret, false)
+	SendMessageTo(c, ret, NewUDPConnection(conn), addr)
 }
 
 func handleReqProxyRequest(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	if !s.AllowProxyForwarding(msg, addr) {
-		SendMessageTo(ForbiddenMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
+		SendMessageTo(s, ForbiddenMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
 	}
 
 	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
@@ -196,7 +196,7 @@ func handleReqNoMatchingRoute(s CoapServer, msg *Message, conn *net.UDPConn, add
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 	ret.Token = msg.Token
 
-	SendMessageTo(ret, NewUDPConnection(conn), addr)
+	SendMessageTo(s, ret, NewUDPConnection(conn), addr)
 }
 
 func handleReqNoMatchingMethod(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
@@ -204,7 +204,7 @@ func handleReqNoMatchingMethod(s CoapServer, msg *Message, conn *net.UDPConn, ad
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	s.GetEvents().Message(ret, false)
-	SendMessageTo(ret, NewUDPConnection(conn), addr)
+	SendMessageTo(s, ret, NewUDPConnection(conn), addr)
 }
 
 func handleReqUnsupportedContentFormat(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
@@ -212,7 +212,7 @@ func handleReqUnsupportedContentFormat(s CoapServer, msg *Message, conn *net.UDP
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	s.GetEvents().Message(ret, false)
-	SendMessageTo(ret, NewUDPConnection(conn), addr)
+	SendMessageTo(s, ret, NewUDPConnection(conn), addr)
 }
 
 func handleReqDuplicateMessageID(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
@@ -220,14 +220,14 @@ func handleReqDuplicateMessageID(s CoapServer, msg *Message, conn *net.UDPConn, 
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	s.GetEvents().Message(ret, false)
-	SendMessageTo(ret, NewUDPConnection(conn), addr)
+	SendMessageTo(s, ret, NewUDPConnection(conn), addr)
 }
 
 func handleRequestAutoAcknowledge(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
 	ack := NewMessageOfType(MessageAcknowledgment, msg.MessageID)
 
 	s.GetEvents().Message(ack, false)
-	SendMessageTo(ack, NewUDPConnection(conn), addr)
+	SendMessageTo(s, ack, NewUDPConnection(conn), addr)
 }
 
 func handleReqObserve(s CoapServer, req CoapRequest, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {

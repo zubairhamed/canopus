@@ -16,7 +16,7 @@ func main() {
 }
 
 func runServer() {
-	server := canopus.NewLocalServer()
+	server := canopus.NewLocalServer("TestServer", )
 	server.Get("/watch/this", routeHandler)
 
 	GenerateRandomChangeNotifications(server)
@@ -57,7 +57,7 @@ func routeHandler(req canopus.CoapRequest) canopus.CoapResponse {
 }
 
 func runClient() {
-	client := canopus.NewCoapServer("0")
+	client := canopus.NewCoapServer("TestServer", "0")
 
 	client.OnStart(func(server canopus.CoapServer) {
 		client.Dial("localhost:5683")

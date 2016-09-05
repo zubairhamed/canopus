@@ -16,6 +16,8 @@ func init() {
 	CurrentMessageID = rand.Intn(65535)
 }
 
+const UDP = "udp"
+
 // Types of Messages
 const (
 	MessageConfirmable    = 0
@@ -194,6 +196,7 @@ var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long,
 
 // Interfaces
 type CoapServer interface {
+	GetName() string
 	Start()
 	Stop()
 	SetProxyFilter(fn ProxyFilter)
