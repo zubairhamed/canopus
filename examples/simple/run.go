@@ -13,7 +13,7 @@ func main() {
 }
 
 func runClient() {
-	client := canopus.NewCoapServer("0")
+	client := canopus.NewCoapServer("TestServer", "0")
 
 	client.OnStart(func(server canopus.CoapServer) {
 		client.Dial("localhost:5683")
@@ -50,7 +50,7 @@ func runClient() {
 }
 
 func runServer() {
-	server := canopus.NewLocalServer()
+	server := canopus.NewLocalServer("TestServer", )
 
 	server.Get("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called")

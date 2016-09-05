@@ -7,13 +7,13 @@ import (
 
 func TestServerInstantiate(t *testing.T) {
 	var s CoapServer
-	s = NewCoapServer(":1000")
+	s = NewCoapServer("TestServer", ":1000")
 
 	assert.NotNil(t, s)
 	assert.Equal(t, 1000, s.GetLocalAddress().Port)
 	assert.Equal(t, "udp", s.GetLocalAddress().Network())
 
-	s = NewLocalServer()
+	s = NewLocalServer("TestServer")
 	assert.NotNil(t, s)
 	assert.Equal(t, 5683, s.GetLocalAddress().Port)
 	assert.Equal(t, "udp", s.GetLocalAddress().Network())

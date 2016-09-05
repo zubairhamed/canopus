@@ -13,7 +13,7 @@ func main() {
 }
 
 func runProxyServer() {
-	server := canopus.NewLocalServer()
+	server := canopus.NewLocalServer("TestServer", )
 	server.ProxyCoap(true)
 
 	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
@@ -28,7 +28,7 @@ func runProxyServer() {
 }
 
 func runServer() {
-	server := canopus.NewCoapServer(":5684")
+	server := canopus.NewCoapServer("TestServer", ":5684")
 
 	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
 		canopus.PrintMessage(req.GetMessage())
@@ -43,7 +43,7 @@ func runServer() {
 }
 
 func runClient() {
-	client := canopus.NewCoapServer(":0")
+	client := canopus.NewCoapServer("TestServer", ":0")
 
 	client.OnStart(func(server canopus.CoapServer) {
 		client.Dial("localhost:5683")
