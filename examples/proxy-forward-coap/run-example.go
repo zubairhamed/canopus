@@ -9,11 +9,11 @@ func main() {
 	go runServer()
 	go runClient()
 
-	<- make(chan struct{})
+	<-make(chan struct{})
 }
 
 func runProxyServer() {
-	server := canopus.NewLocalServer("TestServer", )
+	server := canopus.NewLocalServer("TestServer")
 	server.ProxyCoap(true)
 
 	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {

@@ -10,7 +10,7 @@ func main() {
 	go runClient()
 	go runServer()
 
-	<- make(chan struct{})
+	<-make(chan struct{})
 }
 
 func runClient() {
@@ -49,7 +49,7 @@ func runClient() {
 }
 
 func runServer() {
-	server := canopus.NewLocalServer("TestServer", )
+	server := canopus.NewLocalServer("TestServer")
 
 	server.Get("/blockinfo", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called")

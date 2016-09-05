@@ -12,11 +12,11 @@ func main() {
 	go runServer()
 	go runClient()
 
-	<- make(chan struct{})
+	<-make(chan struct{})
 }
 
 func runServer() {
-	server := canopus.NewLocalServer("TestServer", )
+	server := canopus.NewLocalServer("TestServer")
 	server.Get("/watch/this", routeHandler)
 
 	GenerateRandomChangeNotifications(server)

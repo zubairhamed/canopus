@@ -8,7 +8,7 @@ func main() {
 	go runServer()
 	go runClient()
 
-	<- make(chan struct{})
+	<-make(chan struct{})
 }
 
 func runClient() {
@@ -31,7 +31,7 @@ func runClient() {
 }
 
 func runServer() {
-	server := canopus.NewLocalServer("TestServer", )
+	server := canopus.NewLocalServer("TestServer")
 	server.ProxyHTTP(true)
 
 	server.Start()

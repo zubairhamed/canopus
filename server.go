@@ -2,13 +2,13 @@ package canopus
 
 import (
 	"bytes"
+	"errors"
 	"log"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"errors"
 )
 
 type ProxyType int
@@ -23,7 +23,7 @@ func NewLocalServer(name string) CoapServer {
 }
 
 func NewCoapServer(name string, local string) CoapServer {
-	return NewServer(name,local, "")
+	return NewServer(name, local, "")
 }
 
 func NewCoapClient(name string) CoapServer {
@@ -47,21 +47,21 @@ func NewServer(name, local, remote string) CoapServer {
 	}
 
 	return &DefaultCoapServer{
-		name: 					   name,
-		remoteAddr:        remoteAddr,
-		localAddr:         localAddr,
-		events:            NewEvents(),
-		observations:      make(map[string][]*Observation),
-		fnHandleCOAPProxy: NullProxyHandler,
-		fnHandleHTTPProxy: NullProxyHandler,
-		fnProxyFilter:     NullProxyFilter,
-		stopChannel:       make(chan int),
+		name:                    name,
+		remoteAddr:              remoteAddr,
+		localAddr:               localAddr,
+		events:                  NewEvents(),
+		observations:            make(map[string][]*Observation),
+		fnHandleCOAPProxy:       NullProxyHandler,
+		fnHandleHTTPProxy:       NullProxyHandler,
+		fnProxyFilter:           NullProxyFilter,
+		stopChannel:             make(chan int),
 		coapResponseChannelsMap: make(map[uint16]chan *CoapResponseChannel),
 	}
 }
 
 type DefaultCoapServer struct {
-	name 	string
+	name       string
 	localAddr  *net.UDPAddr
 	remoteAddr *net.UDPAddr
 
@@ -146,7 +146,7 @@ func (s *DefaultCoapServer) handleIncomingData(conn *net.UDPConn) {
 			return
 
 		default:
-		// continue
+			// continue
 		}
 
 		len, addr, err := conn.ReadFromUDP(readBuf)
@@ -288,7 +288,7 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 	msg := req.GetMessage()
 	opt := msg.GetOption(OptionBlock1)
 
-	if (s.localConn == nil) {
+	if s.localConn == nil {
 		err := errors.New("Server not connected")
 		s.events.Error(err)
 		return nil, err
@@ -347,7 +347,7 @@ func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
 					msg.Payload = NewBytesPayload(blockPayload)
 
 					// send message
-					response, err := SendMessageTo(s,msg, NewUDPConnection(s.localConn), s.remoteAddr)
+					response, err := SendMessageTo(s, msg, NewUDPConnection(s.localConn), s.remoteAddr)
 					if err != nil {
 						s.events.Error(err)
 						wg.Done()

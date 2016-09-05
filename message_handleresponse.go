@@ -1,8 +1,8 @@
 package canopus
 
 import (
-	"net"
 	"log"
+	"net"
 )
 
 func handleResponse(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {

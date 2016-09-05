@@ -6,7 +6,7 @@ import (
 
 type CoapResponseChannel struct {
 	Response CoapResponse
-	Error		 error
+	Error    error
 }
 
 func doSendMessage(c CoapServer, msg *Message, conn Connection, addr *net.UDPAddr, ch chan *CoapResponseChannel) {
@@ -48,7 +48,7 @@ func SendMessageTo(c CoapServer, msg *Message, conn Connection, addr *net.UDPAdd
 
 	ch := NewResponseChannel()
 	go doSendMessage(c, msg, conn, addr, ch)
-	respCh := <- ch
+	respCh := <-ch
 
 	return respCh.Response, respCh.Error
 }
