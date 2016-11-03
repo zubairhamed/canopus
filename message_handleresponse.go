@@ -1,11 +1,8 @@
 package canopus
 
-import (
-	"log"
-	"net"
-)
+import "log"
 
-func handleResponse(s CoapServer, msg *Message) {
+func handleResponse(s CoapServer, msg *Message, session *Session) {
 	if msg.GetOption(OptionObserve) != nil {
 		handleAcknowledgeObserveRequest(s, msg)
 		return

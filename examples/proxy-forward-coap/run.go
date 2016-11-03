@@ -13,7 +13,7 @@ func main() {
 }
 
 func runProxyServer() {
-	server := canopus.NewLocalServer("TestServer")
+	server := canopus.NewServer()
 	server.ProxyCoap(true)
 
 	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
@@ -24,22 +24,22 @@ func runProxyServer() {
 
 		return res
 	})
-	server.Start()
+	server.ListenAndServe(":5683", nil)
 }
 
 func runServer() {
-	server := canopus.NewCoapServer("TestServer", ":5684")
+	server := canopus.NewServer()
 
 	server.Get("/proxycall", func(req canopus.CoapRequest) canopus.CoapResponse {
 		canopus.PrintMessage(req.GetMessage())
 		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
-		msg.SetStringPayload("Data from :5684 -- " + req.GetMessage().Payload.String())
+		msg.SetStringPayload("Data from :5685 -- " + req.GetMessage().Payload.String())
 		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.Start()
+	server.ListenAndServe(":5685", nil)
 }
 
 func runClient() {
@@ -50,7 +50,7 @@ func runClient() {
 	}
 
 	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
-	req.SetProxyURI("coap://localhost:5684/proxycall")
+	req.SetProxyURI("coap://localhost:5685/proxycall")
 
 	canopus.PrintMessage(req.GetMessage())
 	resp, err := conn.Send(req)

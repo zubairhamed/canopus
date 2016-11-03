@@ -1,9 +1,10 @@
 package canopus
 
 import (
+	"log"
 	"net"
 	"sync"
-	"log"
+
 	"github.com/jvermillard/nativedtls"
 	"github.com/wendal/errors"
 )
@@ -13,7 +14,6 @@ func NewClient() *CoapClient {
 }
 
 type CoapClient struct {
-
 }
 
 func (c *CoapClient) Dial(address string) (conn CoapConnection, err error) {
@@ -76,8 +76,7 @@ type CoapConnection interface {
 	fmt.Println("Rcvd:", string(buff))
 
 	c.Close()
- */
-
+*/
 
 type DTLSCoapConnection struct {
 	UDPCoapConnection
@@ -202,7 +201,6 @@ func (c *DTLSCoapConnection) Close() {
 	c.dtlsClient.Close()
 }
 
-
 type UDPCoapConnection struct {
 	conn net.Conn
 }
@@ -213,7 +211,6 @@ func (c *UDPCoapConnection) ObserveResource(resource string) (tok string, err er
 	req.GetMessage().AddOption(OptionObserve, 0)
 
 	resp, err := c.Send(req)
-
 	tok = string(resp.GetMessage().Token)
 
 	return
@@ -222,8 +219,8 @@ func (c *UDPCoapConnection) ObserveResource(resource string) (tok string, err er
 func (c *UDPCoapConnection) CancelObserveResource(resource string, token string) (err error) {
 	req := NewRequest(MessageConfirmable, Get, GenerateMessageID())
 	req.SetRequestURI(resource)
-	req.GetMessage().Token = []byte(token)
-	req.GetMessage().AddOption(OptionObserve, 1)
+	req.GetMessage().AddOption(OptionObserve, 0)
+
 	_, err = c.Send(req)
 	return
 }
@@ -237,7 +234,7 @@ func (c *UDPCoapConnection) Close() {
 	c.conn.Close()
 }
 
-func (c *UDPCoapConnection) Observe(ch chan *ObserveMessage)  {
+func (c *UDPCoapConnection) Observe(ch chan *ObserveMessage) {
 	conn := c.conn
 
 	readBuf := make([]byte, MaxPacketSize)
@@ -379,13 +376,13 @@ func (c *UDPCoapConnection) sendMessage(msg *Message) (resp CoapResponse, err er
 func NewObserveMessage(r string, val interface{}, msg *Message) *ObserveMessage {
 	return &ObserveMessage{
 		Resource: r,
-		Value: val,
-		Msg: msg,
+		Value:    val,
+		Msg:      msg,
 	}
 }
 
 type ObserveMessage struct {
 	Resource string
-	Value interface{}
-	Msg *Message
+	Value    interface{}
+	Msg      *Message
 }

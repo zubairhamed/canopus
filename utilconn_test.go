@@ -1,9 +1,10 @@
 package canopus
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSendMessages(t *testing.T) {

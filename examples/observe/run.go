@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/zubairhamed/canopus"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
-	"fmt"
+
+	"github.com/zubairhamed/canopus"
 )
 
 func main() {
@@ -16,8 +17,8 @@ func main() {
 }
 
 func runServer() {
-	server := canopus.NewLocalServer("TestServer")
-	server.Get("/watch/this", func (req canopus.CoapRequest) canopus.CoapResponse {
+	server := canopus.NewServer()
+	server.Get("/watch/this", func(req canopus.CoapRequest) canopus.CoapResponse {
 		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
 		msg.SetStringPayload("Acknowledged")
 		res := canopus.NewResponse(msg, nil)
@@ -46,7 +47,7 @@ func runServer() {
 		fmt.Println("[SERVER << ] Observe Requested for " + resource)
 	})
 
-	server.Start()
+	server.ListenAndServe(":5683", nil)
 }
 
 func runClient() {
@@ -66,7 +67,7 @@ func runClient() {
 	go func() {
 		for {
 			select {
-			case obsMsg, open := <- obsChannel:
+			case obsMsg, open := <-obsChannel:
 				if open {
 					if notifyCount == 5 {
 						fmt.Println("[CLIENT >> ] Canceling observe after 5 notifications..")
@@ -89,6 +90,6 @@ func runClient() {
 			}
 		}
 	}()
-	<- done
+	<-done
 	fmt.Println("Done")
 }

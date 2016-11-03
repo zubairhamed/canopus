@@ -2,9 +2,10 @@ package canopus
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEvents(t *testing.T) {

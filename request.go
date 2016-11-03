@@ -1,7 +1,6 @@
 package canopus
 
 import (
-	"net"
 	"strconv"
 	"strings"
 )
@@ -59,20 +58,17 @@ func NewRequestFromMessage(msg *Message) CoapRequest {
 	}
 }
 
-func NewClientRequestFromMessage(msg *Message, attrs map[string]string, conn *net.UDPConn, addr *net.UDPAddr) CoapRequest {
+func NewClientRequestFromMessage(msg *Message, attrs map[string]string, session *Session) CoapRequest {
 	return &DefaultCoapRequest{
-		msg:   msg,
-		attrs: attrs,
-		conn:  conn,
-		addr:  addr,
+		msg:     msg,
+		attrs:   attrs,
+		session: session,
 	}
 }
 
 type CoapRequest interface {
 	SetProxyURI(uri string)
 	SetMediaType(mt MediaType)
-	GetConnection() *net.UDPConn
-	GetAddress() *net.UDPAddr
 	GetAttributes() map[string]string
 	GetAttribute(o string) string
 	GetAttributeAsInt(o string) int
@@ -89,11 +85,10 @@ type CoapRequest interface {
 // Wraps a CoAP Message as a Request
 // Provides various methods which proxies the Message object methods
 type DefaultCoapRequest struct {
-	msg    *Message
-	attrs  map[string]string
-	conn   *net.UDPConn
-	addr   *net.UDPAddr
-	server *CoapServer
+	msg     *Message
+	attrs   map[string]string
+	session *Session
+	server  *CoapServer
 }
 
 func (c *DefaultCoapRequest) SetProxyURI(uri string) {
@@ -104,12 +99,8 @@ func (c *DefaultCoapRequest) SetMediaType(mt MediaType) {
 	c.msg.AddOption(OptionContentFormat, mt)
 }
 
-func (c *DefaultCoapRequest) GetConnection() *net.UDPConn {
-	return c.conn
-}
-
-func (c *DefaultCoapRequest) GetAddress() *net.UDPAddr {
-	return c.addr
+func (c *DefaultCoapRequest) GetSession() *Session {
+	return c.session
 }
 
 func (c *DefaultCoapRequest) GetAttributes() map[string]string {

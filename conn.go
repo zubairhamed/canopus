@@ -9,7 +9,7 @@ import (
 // ----------------------------------------------------------------
 
 // NewCanopusUDPConnection creates a new default CanopousConnect
-func NewUDPConnection(c *net.UDPConn) Connection {
+func NewUDPConnection(c *net.UDPConn) *UDPConnection {
 	return &UDPConnection{
 		conn: c,
 	}

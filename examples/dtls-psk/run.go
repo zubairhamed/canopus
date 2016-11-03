@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/zubairhamed/canopus"
 	"log"
+
+	"github.com/zubairhamed/canopus"
 )
 
 func main() {

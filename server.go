@@ -2,13 +2,11 @@ package canopus
 
 import (
 	"bytes"
-	"errors"
 	"log"
 	"net"
 	"strconv"
-	"sync"
-	"time"
 	"strings"
+	"time"
 )
 
 type ProxyType int
@@ -39,10 +37,10 @@ func createServer() CoapServer {
 		fnProxyFilter:           NullProxyFilter,
 		stopChannel:             make(chan int),
 		coapResponseChannelsMap: make(map[uint16]chan *CoapResponseChannel),
-		messageIds: make(map[uint16]time.Time),
-		incomingBlockMessages: make(map[string]*BlockMessage),
-		outgoingBlockMessages: make(map[string]*BlockMessage),
-		sessions: make(map[string]Session),
+		messageIds:              make(map[uint16]time.Time),
+		incomingBlockMessages:   make(map[string]*BlockMessage),
+		outgoingBlockMessages:   make(map[string]*BlockMessage),
+		sessions:                make(map[string]*Session),
 	}
 }
 
@@ -70,7 +68,7 @@ type DefaultCoapServer struct {
 
 	coapResponseChannelsMap map[uint16]chan *CoapResponseChannel
 
-	sessions       map[string]Session
+	sessions map[string]*Session
 }
 
 func (s *DefaultCoapServer) GetName() string {
@@ -133,17 +131,7 @@ func (s *DefaultCoapServer) ListenAndServeDTLS(addr string, cfg *ServerConfigura
 func (s *DefaultCoapServer) ListenAndServe(addr string, cfg *ServerConfiguration) {
 	s.addDiscoveryRoute()
 
-	localHost := addr
-	if !strings.Contains(localHost, ":") {
-		localHost = ":" + localHost
-	}
-	localAddr, _ := net.ResolveUDPAddr("udp6", localHost)
-
-	conn, err := net.ListenUDP(UDP, localAddr)
-	if err != nil {
-		s.events.Error(err)
-		log.Fatal(err)
-	}
+	conn := s.createConn(addr)
 
 	// s.localConn = conn
 
@@ -157,7 +145,65 @@ func (s *DefaultCoapServer) ListenAndServe(addr string, cfg *ServerConfiguration
 	}
 }
 
-func (s *DefaultCoapServer) handleIncomingData(conn *net.UDPConn) {
+type DTLSCoapServerConnection struct {
+}
+
+type UDPCoapServerConnection struct {
+	conn net.PacketConn
+}
+
+func (uc *UDPCoapServerConnection) ReadFrom(b []byte) (n int, addr net.Addr, err error) {
+	return uc.conn.ReadFrom(b)
+}
+
+func (uc *UDPCoapServerConnection) WriteTo(b []byte, addr net.Addr) (n int, err error) {
+	return uc.conn.WriteTo(b, addr)
+}
+
+func (uc *UDPCoapServerConnection) Close() error {
+	return uc.conn.Close()
+}
+
+func (uc *UDPCoapServerConnection) LocalAddr() net.Addr {
+	return uc.conn.LocalAddr()
+}
+
+func (uc *UDPCoapServerConnection) SetDeadline(t time.Time) error {
+	return uc.conn.SetDeadline(t)
+}
+
+func (uc *UDPCoapServerConnection) SetReadDeadline(t time.Time) error {
+	return uc.conn.SetReadDeadline(t)
+}
+
+func (uc *UDPCoapServerConnection) SetWriteDeadline(t time.Time) error {
+	return uc.conn.SetWriteDeadline(t)
+}
+
+func (s *DefaultCoapServer) createConn(addr string) CanopusConnection {
+	// if use dTLS
+	localHost := addr
+	if !strings.Contains(localHost, ":") {
+		localHost = ":" + localHost
+	}
+	localAddr, err := net.ResolveUDPAddr("udp6", localHost)
+	if err != nil {
+		// s.events.Error(err)
+		panic(err.Error())
+	}
+
+	conn, err := net.ListenUDP(UDP, localAddr)
+	if err != nil {
+		// s.events.Error(err)
+		panic(err.Error())
+	}
+
+	return &UDPCoapServerConnection{
+		conn: conn,
+	}
+}
+
+func (s *DefaultCoapServer) handleIncomingData(conn CanopusConnection) {
 	readBuf := make([]byte, MaxPacketSize)
 	for {
 		select {
@@ -170,20 +216,17 @@ func (s *DefaultCoapServer) handleIncomingData(conn *net.UDPConn) {
 
 		len, addr, err := conn.ReadFrom(readBuf)
 		if err == nil {
-			// msgBuf := make([]byte, len)
-			// copy(msgBuf, readBuf[:len])
-
-			msgBuf := readBuf[:len]
+			// msgBuf := readBuf[:len]
+			msgBuf := make([]byte, len)
+			copy(msgBuf, readBuf[:len])
 
 			ssn := s.sessions[addr.String()]
 			if ssn == nil {
-				ssn = s.createSession(addr)
+				ssn = s.createSession(addr, conn)
 				s.sessions[addr.String()] = ssn
 			}
-
-			ssn.AppendBytes(msgBuf)
+			ssn.Write(msgBuf)
 			go s.handleSession(ssn)
-			// go s.handleMessage(msgBuf, conn, addr)
 		} else {
 			log.Println("Error occured reading UDP", err)
 		}
@@ -242,24 +285,37 @@ func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 	s.fnProxyFilter = fn
 }
 
-func (s *DefaultCoapServer) handleSession(session Session) {
-
-}
-
-func (s *DefaultCoapServer) createSession(addr net.Addr) Session {
-
-}
-
-func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+func (s *DefaultCoapServer) handleSession(session *Session) {
+	msgBuf := session.Read()
 	msg, err := BytesToMessage(msgBuf)
-	s.events.Message(msg, true)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	if msg.MessageType == MessageAcknowledgment {
-		handleResponse(s, msg)
+		handleResponse(s, msg, session)
 	} else {
-		handleRequest(s, err, msg, conn, addr)
+		handleRequest(s, msg, session)
 	}
 }
+
+func (s *DefaultCoapServer) createSession(addr net.Addr, conn CanopusConnection) *Session {
+	return &Session{
+		addr: addr,
+		conn: conn,
+	}
+}
+
+//func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+//	msg, err := BytesToMessage(msgBuf)
+//	s.events.Message(msg, true)
+//
+//	if msg.MessageType == MessageAcknowledgment {
+//		handleResponse(s, msg)
+//	} else {
+//		handleRequest(s, err, msg, conn, addr)
+//	}
+//}
 
 func (s *DefaultCoapServer) Get(path string, fn RouteHandler) *Route {
 	return s.add(MethodGet, path, fn)
@@ -299,98 +355,98 @@ func (s *DefaultCoapServer) NewRoute(path string, method CoapCode, fn RouteHandl
 	return route
 }
 
-func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
-	msg := req.GetMessage()
-	opt := msg.GetOption(OptionBlock1)
-
-	if s.localConn == nil {
-		err := errors.New("Server not connected")
-		s.events.Error(err)
-		return nil, err
-	}
-
-	if opt == nil { // Block1 was not set
-		if MessageSizeAllowed(req) != true {
-			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
-		}
-	} else { // Block1 was set
-		// log.Println("Block 1 was set")
-	}
-
-	if opt != nil {
-		blockOpt := Block1OptionFromOption(opt)
-		if blockOpt.Value == nil {
-			if MessageSizeAllowed(req) != true {
-				return nil, ErrMessageSizeTooLongBlockOptionValNotSet
-			} else {
-				// - Block # = one and only block (sz = unspecified), whereas 0 = 16bits
-				// - MOre bit = 0
-			}
-		} else {
-			payload := msg.Payload.GetBytes()
-			payloadLen := uint32(len(payload))
-			blockSize := blockOpt.BlockSizeLength()
-			currSeq := uint32(0)
-			totalBlocks := uint32(payloadLen / blockSize)
-			completed := false
-
-			var wg sync.WaitGroup
-			wg.Add(1)
-
-			for completed == false {
-				if currSeq <= totalBlocks {
-
-					var blockPayloadStart uint32
-					var blockPayloadEnd uint32
-					var blockPayload []byte
-
-					blockPayloadStart = currSeq*uint32(blockSize) + (currSeq * 1)
-
-					more := true
-					if currSeq == totalBlocks {
-						more = false
-						blockPayloadEnd = payloadLen
-					} else {
-						blockPayloadEnd = blockPayloadStart + uint32(blockSize)
-					}
-
-					blockPayload = payload[blockPayloadStart:blockPayloadEnd]
-
-					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
-					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt})
-					msg.MessageID = GenerateMessageID()
-					msg.Payload = NewBytesPayload(blockPayload)
-
-					// send message
-					response, err := SendMessageTo(s, msg, NewUDPConnection(s.localConn), s.remoteAddr)
-					if err != nil {
-						s.events.Error(err)
-						wg.Done()
-						return nil, err
-					}
-					s.events.Message(response.GetMessage(), true)
-					currSeq = currSeq + 1
-
-				} else {
-					completed = true
-					wg.Done()
-				}
-			}
-		}
-	}
-
-	s.events.Message(msg, false)
-
-	response, err := SendMessageTo(s, msg, NewUDPConnection(s.localConn), s.remoteAddr)
-
-	if err != nil {
-		s.events.Error(err)
-		return response, err
-	}
-	s.events.Message(response.GetMessage(), true)
-
-	return response, err
-}
+//func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
+//	msg := req.GetMessage()
+//	opt := msg.GetOption(OptionBlock1)
+//
+//	if s.localConn == nil {
+//		err := errors.New("Server not connected")
+//		s.events.Error(err)
+//		return nil, err
+//	}
+//
+//	if opt == nil { // Block1 was not set
+//		if MessageSizeAllowed(req) != true {
+//			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
+//		}
+//	} else { // Block1 was set
+//		// log.Println("Block 1 was set")
+//	}
+//
+//	if opt != nil {
+//		blockOpt := Block1OptionFromOption(opt)
+//		if blockOpt.Value == nil {
+//			if MessageSizeAllowed(req) != true {
+//				return nil, ErrMessageSizeTooLongBlockOptionValNotSet
+//			} else {
+//				// - Block # = one and only block (sz = unspecified), whereas 0 = 16bits
+//				// - MOre bit = 0
+//			}
+//		} else {
+//			payload := msg.Payload.GetBytes()
+//			payloadLen := uint32(len(payload))
+//			blockSize := blockOpt.BlockSizeLength()
+//			currSeq := uint32(0)
+//			totalBlocks := uint32(payloadLen / blockSize)
+//			completed := false
+//
+//			var wg sync.WaitGroup
+//			wg.Add(1)
+//
+//			for completed == false {
+//				if currSeq <= totalBlocks {
+//
+//					var blockPayloadStart uint32
+//					var blockPayloadEnd uint32
+//					var blockPayload []byte
+//
+//					blockPayloadStart = currSeq*uint32(blockSize) + (currSeq * 1)
+//
+//					more := true
+//					if currSeq == totalBlocks {
+//						more = false
+//						blockPayloadEnd = payloadLen
+//					} else {
+//						blockPayloadEnd = blockPayloadStart + uint32(blockSize)
+//					}
+//
+//					blockPayload = payload[blockPayloadStart:blockPayloadEnd]
+//
+//					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
+//					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt})
+//					msg.MessageID = GenerateMessageID()
+//					msg.Payload = NewBytesPayload(blockPayload)
+//
+//					// send message
+//					response, err := SendMessageTo(s, msg, NewUDPConnection(s.localConn), s.remoteAddr)
+//					if err != nil {
+//						s.events.Error(err)
+//						wg.Done()
+//						return nil, err
+//					}
+//					s.events.Message(response.GetMessage(), true)
+//					currSeq = currSeq + 1
+//
+//				} else {
+//					completed = true
+//					wg.Done()
+//				}
+//			}
+//		}
+//	}
+//
+//	s.events.Message(msg, false)
+//
+//	response, err := SendMessageTo(s, msg, NewUDPConnection(s.localConn), s.remoteAddr)
+//
+//	if err != nil {
+//		s.events.Error(err)
+//		return response, err
+//	}
+//	s.events.Message(response.GetMessage(), true)
+//
+//	return response, err
+//}
 
 func (s *DefaultCoapServer) storeNewOutgoingBlockMessage(client string, payload []byte) {
 	bm := NewBlockMessage()
@@ -398,8 +454,9 @@ func (s *DefaultCoapServer) storeNewOutgoingBlockMessage(client string, payload 
 	s.outgoingBlockMessages[client] = bm
 }
 
-func (s *DefaultCoapServer) SendTo(req CoapRequest, addr *net.UDPAddr) (CoapResponse, error) {
-	return SendMessageTo(s, req.GetMessage(), NewUDPConnection(s.localConn), addr)
+func (s *DefaultCoapServer) SendTo(req CoapRequest, addr net.Addr) (CoapResponse, error) {
+	// return SendMessageTo(s, req.GetMessage(), NewUDPConnection(s.localConn), addr)
+	return nil, nil
 }
 
 func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
@@ -421,37 +478,37 @@ func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 			r.NotifyCount++
 			req.GetMessage().AddOption(OptionObserve, r.NotifyCount)
 
-			go s.SendTo(req, r.Addr)
+			go SendMessage(req.GetMessage(), r.Session)
 		}
 	}
 }
 
-func (s *DefaultCoapServer) AddObservation(resource, token string, addr *net.UDPAddr) {
-	s.observations[resource] = append(s.observations[resource], NewObservation(addr, token, resource))
+func (s *DefaultCoapServer) AddObservation(resource, token string, session *Session) {
+	s.observations[resource] = append(s.observations[resource], NewObservation(session, token, resource))
 }
 
-func (s *DefaultCoapServer) HasObservation(resource string, addr *net.UDPAddr) bool {
+func (s *DefaultCoapServer) HasObservation(resource string, addr net.Addr) bool {
 	obs := s.observations[resource]
 	if obs == nil {
 		return false
 	}
 
 	for _, o := range obs {
-		if o.Addr.String() == addr.String() {
+		if o.Session.GetAddress().String() == addr.String() {
 			return true
 		}
 	}
 	return false
 }
 
-func (s *DefaultCoapServer) RemoveObservation(resource string, addr *net.UDPAddr) {
+func (s *DefaultCoapServer) RemoveObservation(resource string, addr net.Addr) {
 	obs := s.observations[resource]
 	if obs == nil {
 		return
 	}
 
 	for idx, o := range obs {
-		if o.Addr.String() == addr.String() {
+		if o.Session.GetAddress().String() == addr.String() {
 			s.observations[resource] = append(obs[:idx], obs[idx+1:]...)
 			return
 		}
@@ -520,23 +577,23 @@ func (s *DefaultCoapServer) ProxyCoap(enabled bool) {
 	}
 }
 
-func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr *net.UDPAddr) bool {
+func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr net.Addr) bool {
 	return s.fnProxyFilter(msg, addr)
 }
 
-func (s *DefaultCoapServer) ForwardCoap(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	s.fnHandleCOAPProxy(s, msg, conn, addr)
+func (s *DefaultCoapServer) ForwardCoap(msg *Message, session *Session) {
+	s.fnHandleCOAPProxy(s, msg, session)
 }
 
-func (s *DefaultCoapServer) ForwardHTTP(msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
-	s.fnHandleHTTPProxy(s, msg, conn, addr)
+func (s *DefaultCoapServer) ForwardHTTP(msg *Message, session *Session) {
+	s.fnHandleHTTPProxy(s, msg, session)
 }
 
 func (s *DefaultCoapServer) GetRoutes() []*Route {
 	return s.routes
 }
 
-func (s *DefaultCoapServer) GetLocalAddress() *net.UDPAddr {
+func (s *DefaultCoapServer) GetLocalAddress() net.Addr {
 	return s.localAddr
 }
 
@@ -575,9 +632,9 @@ func GetResponseChannel(c CoapServer, msgId uint16) (ch chan *CoapResponseChanne
 	return
 }
 
-func NewObservation(addr *net.UDPAddr, token string, resource string) *Observation {
+func NewObservation(session *Session, token string, resource string) *Observation {
 	return &Observation{
-		Addr:        addr,
+		Session:     session,
 		Token:       token,
 		Resource:    resource,
 		NotifyCount: 0,
@@ -585,7 +642,7 @@ func NewObservation(addr *net.UDPAddr, token string, resource string) *Observati
 }
 
 type Observation struct {
-	Addr        *net.UDPAddr
+	Session     *Session
 	Token       string
 	Resource    string
 	NotifyCount int
