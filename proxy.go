@@ -32,31 +32,27 @@ func COAPProxyHandler(c CoapServer, msg *Message, conn *net.UDPConn, addr *net.U
 		return
 	}
 
-	client := NewCoapClient("Proxy Client")
-	client.OnStart(func(server CoapServer) {
-		client.Dial(parsedURL.Host)
+	client := NewClient()
+	clientConn, err := client.Dial(parsedURL.Host)
 
-		msg.RemoveOptions(OptionProxyURI)
-		req := NewRequestFromMessage(msg)
-		req.SetRequestURI(parsedURL.RequestURI())
+	msg.RemoveOptions(OptionProxyURI)
+	req := NewRequestFromMessage(msg)
+	req.SetRequestURI(parsedURL.RequestURI())
 
-		response, err := client.Send(req)
-		if err != nil {
-			SendMessageTo(c, BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
-			client.Stop()
-			return
-		}
+	response, err := clientConn.Send(req)
+	if err != nil {
+		SendMessageTo(c, BadGatewayMessage(msg.MessageID, MessageAcknowledgment), NewUDPConnection(conn), addr)
+		clientConn.Close()
+		return
+	}
 
-		_, err = SendMessageTo(c, response.GetMessage(), NewUDPConnection(conn), addr)
-		if err != nil {
-			log.Println("Error occured responding to proxy request")
-			client.Stop()
-			return
-		}
-		client.Stop()
-
-	})
-	client.Start()
+	_, err = SendMessageTo(c, response.GetMessage(), NewUDPConnection(conn), addr)
+	if err != nil {
+		log.Println("Error occured responding to proxy request")
+		clientConn.Close()
+		return
+	}
+	clientConn.Close()
 }
 
 // Handles requests for proxying from CoAP to HTTP

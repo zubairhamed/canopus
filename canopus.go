@@ -197,7 +197,8 @@ var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long,
 // Interfaces
 type CoapServer interface {
 	GetName() string
-	Start()
+	ListenAndServe(addr string, cfg *ServerConfiguration)
+	ListenAndServeDTLS(addr string, cfg *ServerConfiguration)
 	Stop()
 	SetProxyFilter(fn ProxyFilter)
 	Get(path string, fn RouteHandler) *Route

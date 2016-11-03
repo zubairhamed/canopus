@@ -6,9 +6,9 @@ import (
 	"log"
 	"net"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
+	"strings"
 )
 
 type ProxyType int
@@ -18,38 +18,20 @@ const (
 	ProxyCOAP ProxyType = 1
 )
 
-func NewLocalServer(name string) CoapServer {
-	return NewServer(name, "5683", "")
+type ServerConfiguration struct {
+	EnableResourceDiscovery bool
 }
 
-func NewCoapServer(name string, local string) CoapServer {
-	return NewServer(name, local, "")
+func NewServer() CoapServer {
+	return createServer()
 }
 
-func NewCoapClient(name string) CoapServer {
-	return NewServer(name, "0", "")
-}
-
-func NewServer(name, local, remote string) CoapServer {
-	localHost := local
-	if !strings.Contains(localHost, ":") {
-		localHost = ":" + localHost
-	}
-	localAddr, _ := net.ResolveUDPAddr("udp6", localHost)
-
-	var remoteAddr *net.UDPAddr
-	if remote != "" {
-		remoteHost := remote
-		if !strings.Contains(remoteHost, ":") {
-			remoteHost = ":" + remoteHost
-		}
-		remoteAddr, _ = net.ResolveUDPAddr("udp6", remoteHost)
-	}
+func createServer() CoapServer {
 
 	return &DefaultCoapServer{
-		name:                    name,
-		remoteAddr:              remoteAddr,
-		localAddr:               localAddr,
+		//name:                    name,
+		//remoteAddr:              remoteAddr,
+		//localAddr:               localAddr,
 		events:                  NewEvents(),
 		observations:            make(map[string][]*Observation),
 		fnHandleCOAPProxy:       NullProxyHandler,
@@ -57,6 +39,10 @@ func NewServer(name, local, remote string) CoapServer {
 		fnProxyFilter:           NullProxyFilter,
 		stopChannel:             make(chan int),
 		coapResponseChannelsMap: make(map[uint16]chan *CoapResponseChannel),
+		messageIds: make(map[uint16]time.Time),
+		incomingBlockMessages: make(map[string]*BlockMessage),
+		outgoingBlockMessages: make(map[string]*BlockMessage),
+		sessions: make(map[string]Session),
 	}
 }
 
@@ -83,6 +69,8 @@ type DefaultCoapServer struct {
 	stopChannel chan int
 
 	coapResponseChannelsMap map[uint16]chan *CoapResponseChannel
+
+	sessions       map[string]Session
 }
 
 func (s *DefaultCoapServer) GetName() string {
@@ -93,7 +81,7 @@ func (s *DefaultCoapServer) GetEvents() *Events {
 	return s.events
 }
 
-func (s *DefaultCoapServer) Start() {
+func (s *DefaultCoapServer) addDiscoveryRoute() {
 	var discoveryRoute RouteHandler = func(req CoapRequest) CoapResponse {
 		msg := req.GetMessage()
 
@@ -135,7 +123,38 @@ func (s *DefaultCoapServer) Start() {
 	}
 
 	s.NewRoute("/.well-known/core", Get, discoveryRoute)
-	s.serveServer()
+}
+
+func (s *DefaultCoapServer) ListenAndServeDTLS(addr string, cfg *ServerConfiguration) {
+	s.addDiscoveryRoute()
+	// s.serve()
+}
+
+func (s *DefaultCoapServer) ListenAndServe(addr string, cfg *ServerConfiguration) {
+	s.addDiscoveryRoute()
+
+	localHost := addr
+	if !strings.Contains(localHost, ":") {
+		localHost = ":" + localHost
+	}
+	localAddr, _ := net.ResolveUDPAddr("udp6", localHost)
+
+	conn, err := net.ListenUDP(UDP, localAddr)
+	if err != nil {
+		s.events.Error(err)
+		log.Fatal(err)
+	}
+
+	// s.localConn = conn
+
+	if conn == nil {
+		log.Fatal("An error occured starting up CoAP Server")
+	} else {
+		log.Println("Started CoAP Server ", conn.LocalAddr())
+		go s.handleIncomingData(conn)
+		go s.events.Started(s)
+		go s.handleMessageIDPurge()
+	}
 }
 
 func (s *DefaultCoapServer) handleIncomingData(conn *net.UDPConn) {
@@ -149,38 +168,26 @@ func (s *DefaultCoapServer) handleIncomingData(conn *net.UDPConn) {
 			// continue
 		}
 
-		len, addr, err := conn.ReadFromUDP(readBuf)
+		len, addr, err := conn.ReadFrom(readBuf)
 		if err == nil {
-			msgBuf := make([]byte, len)
-			copy(msgBuf, readBuf)
-			go s.handleMessage(msgBuf, conn, addr)
+			// msgBuf := make([]byte, len)
+			// copy(msgBuf, readBuf[:len])
+
+			msgBuf := readBuf[:len]
+
+			ssn := s.sessions[addr.String()]
+			if ssn == nil {
+				ssn = s.createSession(addr)
+				s.sessions[addr.String()] = ssn
+			}
+
+			ssn.AppendBytes(msgBuf)
+			go s.handleSession(ssn)
+			// go s.handleMessage(msgBuf, conn, addr)
 		} else {
 			log.Println("Error occured reading UDP", err)
 		}
 
-	}
-}
-
-func (s *DefaultCoapServer) serveServer() {
-	s.messageIds = make(map[uint16]time.Time)
-	s.incomingBlockMessages = make(map[string]*BlockMessage)
-	s.outgoingBlockMessages = make(map[string]*BlockMessage)
-
-	conn, err := net.ListenUDP(UDP, s.localAddr)
-	if err != nil {
-		s.events.Error(err)
-		log.Fatal(err)
-	}
-
-	s.localConn = conn
-
-	if conn == nil {
-		log.Fatal("An error occured starting up CoAP Server")
-	} else {
-		log.Println("Started CoAP Server ", conn.LocalAddr())
-		go s.handleIncomingData(conn)
-		go s.events.Started(s)
-		go s.handleMessageIDPurge()
 	}
 }
 
@@ -235,12 +242,20 @@ func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 	s.fnProxyFilter = fn
 }
 
+func (s *DefaultCoapServer) handleSession(session Session) {
+
+}
+
+func (s *DefaultCoapServer) createSession(addr net.Addr) Session {
+
+}
+
 func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 	msg, err := BytesToMessage(msgBuf)
 	s.events.Message(msg, true)
 
 	if msg.MessageType == MessageAcknowledgment {
-		handleResponse(s, msg, conn, addr)
+		handleResponse(s, msg)
 	} else {
 		handleRequest(s, err, msg, conn, addr)
 	}

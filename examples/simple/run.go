@@ -13,44 +13,26 @@ func main() {
 }
 
 func runClient() {
-	client := canopus.NewCoapServer("TestServer", "0")
+	client := canopus.NewClient()
+	conn, err := client.Dial("localhost:5683")
+	if err != nil {
+		panic(err.Error())
+	}
 
-	client.OnStart(func(server canopus.CoapServer) {
-		client.Dial("localhost:5683")
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
+	req.SetStringPayload("Hello, canopus")
+	req.SetRequestURI("/hello")
 
-		req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
-		req.SetStringPayload("Hello, canopus")
-		req.SetRequestURI("/hello")
+	resp, err := conn.Send(req)
+	if err != nil {
+		panic(err.Error())
+	}
 
-		resp, err := client.Send(req)
-		if err != nil {
-			log.Println(err)
-		} else {
-			log.Println("Got Response:")
-			log.Println(resp.GetMessage().Payload.String())
-		}
-	})
-
-	client.OnError(func(err error) {
-		log.Println("An error occured")
-		log.Println(err)
-	})
-
-	client.OnMessage(func(msg *canopus.Message, inbound bool) {
-		//if inbound {
-		//	log.Println(">>>>> INBOUND <<<<<")
-		//} else {
-		//	log.Println(">>>>> OUTBOUND <<<<<")
-		//}
-		//
-		//canopus.PrintMessage(msg)
-	})
-
-	client.Start()
+	log.Println("Got Response:" + resp.GetMessage().Payload.String())
 }
 
 func runServer() {
-	server := canopus.NewLocalServer("TestServer")
+	server := canopus.NewServer()
 
 	server.Get("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called")
@@ -97,5 +79,5 @@ func runServer() {
 		canopus.PrintMessage(msg)
 	})
 
-	server.Start()
+	server.ListenAndServe(":5683", nil)
 }

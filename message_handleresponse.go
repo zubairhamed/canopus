@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func handleResponse(s CoapServer, msg *Message, conn *net.UDPConn, addr *net.UDPAddr) {
+func handleResponse(s CoapServer, msg *Message) {
 	if msg.GetOption(OptionObserve) != nil {
 		handleAcknowledgeObserveRequest(s, msg)
 		return
