@@ -18,6 +18,7 @@ func _doSendMessage(msg *Message, session *Session, ch chan *CoapResponseChannel
 	addr := session.GetAddress()
 
 	_, err = conn.WriteTo(b, addr)
+	session.FlushBuffer()
 	if err != nil {
 		resp.Error = err
 		ch <- resp
@@ -27,9 +28,8 @@ func _doSendMessage(msg *Message, session *Session, ch chan *CoapResponseChannel
 		resp.Response = NewResponse(NewEmptyMessage(msg.MessageID), nil)
 		ch <- resp
 	}
-	session.Flush()
 
-	// AddResponseChannel(c, msg.MessageID, ch)
+	AddResponseChannel(session.GetServer(), msg.MessageID, ch)
 }
 
 func SendMessage(msg *Message, session *Session) (CoapResponse, error) {

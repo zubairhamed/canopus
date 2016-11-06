@@ -1,7 +1,5 @@
 package canopus
 
-import "log"
-
 func handleResponse(s CoapServer, msg *Message, session *Session) {
 	if msg.GetOption(OptionObserve) != nil {
 		handleAcknowledgeObserveRequest(s, msg)
@@ -15,8 +13,6 @@ func handleResponse(s CoapServer, msg *Message, session *Session) {
 		}
 		ch <- resp
 		DeleteResponseChannel(s, msg.MessageID)
-	} else {
-		log.Println("Channel is nil", msg.MessageID)
 	}
 }
 

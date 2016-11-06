@@ -40,7 +40,7 @@ func runClient() {
 }
 
 func runServer() {
-	server := canopus.NewLocalServer("TestServer")
+	server := canopus.NewServer()
 
 	server.Get("/blockinfo", func(req canopus.CoapRequest) canopus.CoapResponse {
 		log.Println("Hello Called")
@@ -74,5 +74,5 @@ func runServer() {
 		// canopus.PrintMessage(msg)
 	})
 
-	server.Start()
+	server.ListenAndServe(":5683", nil)
 }

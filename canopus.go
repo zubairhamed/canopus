@@ -196,7 +196,7 @@ var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long,
 
 // Interfaces
 type CoapServer interface {
-	GetName() string
+	// GetName() string
 	ListenAndServe(addr string, cfg *ServerConfiguration)
 	ListenAndServeDTLS(addr string, cfg *ServerConfiguration)
 	Stop()
@@ -211,8 +211,8 @@ type CoapServer interface {
 	// Send(req CoapRequest) (CoapResponse, error)
 	SendTo(req CoapRequest, addr net.Addr) (CoapResponse, error)
 	NotifyChange(resource, value string, confirm bool)
-	Dial(host string)
-	Dial6(host string)
+	//Dial(host string)
+	//Dial6(host string)
 
 	OnNotify(fn FnEventNotify)
 	OnStart(fn FnEventStart)
@@ -227,7 +227,7 @@ type CoapServer interface {
 	ProxyHTTP(enabled bool)
 	ProxyCoap(enabled bool)
 	GetEvents() *Events
-	GetLocalAddress() net.Addr
+	// GetLocalAddress() net.Addr
 
 	AllowProxyForwarding(*Message, net.Addr) bool
 	GetRoutes() []*Route

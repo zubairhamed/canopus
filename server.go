@@ -45,12 +45,12 @@ func createServer() CoapServer {
 }
 
 type DefaultCoapServer struct {
-	name       string
-	localAddr  *net.UDPAddr
-	remoteAddr *net.UDPAddr
+	// name       string
+	// localAddr  *net.UDPAddr
+	// remoteAddr *net.UDPAddr
 
-	localConn  *net.UDPConn
-	remoteConn *net.UDPConn
+	// localConn  *net.UDPConn
+	// remoteConn *net.UDPConn
 
 	messageIds            map[uint16]time.Time
 	incomingBlockMessages map[string]*BlockMessage
@@ -71,9 +71,9 @@ type DefaultCoapServer struct {
 	sessions map[string]*Session
 }
 
-func (s *DefaultCoapServer) GetName() string {
-	return s.name
-}
+//func (s *DefaultCoapServer) GetName() string {
+//	return s.name
+//}
 
 func (s *DefaultCoapServer) GetEvents() *Events {
 	return s.events
@@ -222,7 +222,7 @@ func (s *DefaultCoapServer) handleIncomingData(conn CanopusConnection) {
 
 			ssn := s.sessions[addr.String()]
 			if ssn == nil {
-				ssn = s.createSession(addr, conn)
+				ssn = s.createSession(addr, conn, s)
 				s.sessions[addr.String()] = ssn
 			}
 			ssn.Write(msgBuf)
@@ -235,7 +235,7 @@ func (s *DefaultCoapServer) handleIncomingData(conn CanopusConnection) {
 }
 
 func (s *DefaultCoapServer) Stop() {
-	s.localConn.Close()
+	// s.localConn.Close()
 	close(s.stopChannel)
 }
 
@@ -297,12 +297,22 @@ func (s *DefaultCoapServer) handleSession(session *Session) {
 	} else {
 		handleRequest(s, msg, session)
 	}
+
+	s.closeSession(session)
+	// s.closeSession(session)
+
+	// TODO: Close Session?
 }
 
-func (s *DefaultCoapServer) createSession(addr net.Addr, conn CanopusConnection) *Session {
+func (s *DefaultCoapServer) closeSession(ssn *Session) {
+	delete(s.sessions, ssn.GetAddress().String())
+}
+
+func (s *DefaultCoapServer) createSession(addr net.Addr, conn CanopusConnection, server CoapServer) *Session {
 	return &Session{
-		addr: addr,
-		conn: conn,
+		addr:   addr,
+		conn:   conn,
+		server: server,
 	}
 }
 
@@ -515,15 +525,15 @@ func (s *DefaultCoapServer) RemoveObservation(resource string, addr net.Addr) {
 	}
 }
 
-func (s *DefaultCoapServer) Dial(host string) {
-	s.Dial6(host)
-}
-
-func (s *DefaultCoapServer) Dial6(host string) {
-	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
-
-	s.remoteAddr = remoteAddr
-}
+//func (s *DefaultCoapServer) Dial(host string) {
+//	s.Dial6(host)
+//}
+//
+//func (s *DefaultCoapServer) Dial6(host string) {
+//	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
+//
+//	// s.remoteAddr = remoteAddr
+//}
 
 func (s *DefaultCoapServer) OnNotify(fn FnEventNotify) {
 	s.events.OnNotify(fn)
@@ -593,9 +603,9 @@ func (s *DefaultCoapServer) GetRoutes() []*Route {
 	return s.routes
 }
 
-func (s *DefaultCoapServer) GetLocalAddress() net.Addr {
-	return s.localAddr
-}
+//func (s *DefaultCoapServer) GetLocalAddress() net.Addr {
+//	return s.localAddr
+//}
 
 func (s *DefaultCoapServer) IsDuplicateMessage(msg *Message) bool {
 	_, ok := s.messageIds[msg.MessageID]

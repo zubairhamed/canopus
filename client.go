@@ -226,7 +226,6 @@ func (c *UDPCoapConnection) CancelObserveResource(resource string, token string)
 }
 
 func (c *UDPCoapConnection) StopObserve(ch chan *ObserveMessage) {
-	log.Println("StopObserve")
 	close(ch)
 }
 
@@ -281,7 +280,7 @@ func (c *UDPCoapConnection) Send(req CoapRequest) (resp CoapResponse, err error)
 				// - Block # = one and only block (sz = unspecified), whereas 0 = 16bits
 				// - MOre bit = 0
 			}
-		} else {
+		} else { // BLock transfer request
 			payload := msg.Payload.GetBytes()
 			payloadLen := uint32(len(payload))
 			blockSize := blockOpt.BlockSizeLength()
@@ -369,6 +368,12 @@ func (c *UDPCoapConnection) sendMessage(msg *Message) (resp CoapResponse, err er
 		return
 	}
 	resp = NewResponse(respMsg, nil)
+
+	if msg.MessageType == MessageConfirmable {
+		ack := NewMessageOfType(MessageAcknowledgment, msg.MessageID)
+
+		c.Send(NewRequestFromMessage(ack))
+	}
 
 	return
 }

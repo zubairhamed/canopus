@@ -46,8 +46,9 @@ func handleRequest(s CoapServer, msg *Message, session *Session) {
 
 			// Duplicate Message ID Check
 			if s.IsDuplicateMessage(msg) {
-				log.Println("Duplicate Message ID ", msg.MessageID)
+				PrintMessage(msg)
 				if msg.MessageType == MessageConfirmable {
+					log.Println("Duplicate Message ID ", msg.MessageID)
 					handleReqDuplicateMessageID(msg, session)
 				}
 				return
@@ -58,9 +59,8 @@ func handleRequest(s CoapServer, msg *Message, session *Session) {
 			// Auto acknowledge
 			// TODO: Necessary?
 			if msg.MessageType == MessageConfirmable && route.AutoAck {
-				handleRequestAutoAcknowledge(msg, session)
+				handleRequestAcknowledge(msg, session)
 			}
-
 			req := NewClientRequestFromMessage(msg, attrs, session)
 			if msg.MessageType == MessageConfirmable {
 
@@ -70,7 +70,6 @@ func handleRequest(s CoapServer, msg *Message, session *Session) {
 					handleReqObserve(s, req, msg, session)
 				}
 			}
-
 			opt := req.GetMessage().GetOption(OptionBlock1)
 			if opt != nil {
 				blockOpt := Block1OptionFromOption(opt)
@@ -123,7 +122,6 @@ func handleRequest(s CoapServer, msg *Message, session *Session) {
 					}
 				}
 			}
-
 			resp := route.Handler(req)
 			_, nilresponse := resp.(NilResponse)
 			if !nilresponse {
@@ -134,10 +132,7 @@ func handleRequest(s CoapServer, msg *Message, session *Session) {
 				err := ValidateMessage(respMsg)
 				if err == nil {
 					s.GetEvents().Message(respMsg, false)
-
 					SendMessage(respMsg, session)
-				} else {
-
 				}
 			}
 		}
@@ -218,7 +213,7 @@ func handleReqDuplicateMessageID(msg *Message, session *Session) {
 	SendMessage(ret, session)
 }
 
-func handleRequestAutoAcknowledge(msg *Message, session *Session) {
+func handleRequestAcknowledge(msg *Message, session *Session) {
 	ack := NewMessageOfType(MessageAcknowledgment, msg.MessageID)
 
 	SendMessage(ack, session)
