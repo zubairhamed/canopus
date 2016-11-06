@@ -15,14 +15,14 @@ func NullProxyFilter(*Message, net.Addr) bool {
 	return true
 }
 
-type ProxyHandler func(c CoapServer, msg *Message, session *Session)
+type ProxyHandler func(c CoapServer, msg *Message, session Session)
 
 // The default handler when proxying is disabled
-func NullProxyHandler(c CoapServer, msg *Message, session *Session) {
+func NullProxyHandler(c CoapServer, msg *Message, session Session) {
 	SendMessage(ProxyingNotSupportedMessage(msg.MessageID, MessageAcknowledgment), session)
 }
 
-func COAPProxyHandler(c CoapServer, msg *Message, session *Session) {
+func COAPProxyHandler(c CoapServer, msg *Message, session Session) {
 	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
 
 	parsedURL, err := url.Parse(proxyURI)
@@ -56,7 +56,7 @@ func COAPProxyHandler(c CoapServer, msg *Message, session *Session) {
 }
 
 // Handles requests for proxying from CoAP to HTTP
-func HTTPProxyHandler(c CoapServer, msg *Message, session *Session) {
+func HTTPProxyHandler(c CoapServer, msg *Message, session Session) {
 	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
 	requestMethod := msg.Code
 

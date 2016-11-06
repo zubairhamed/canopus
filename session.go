@@ -2,33 +2,33 @@ package canopus
 
 import "net"
 
-type Session struct {
+type ServerSession struct {
 	buf    []byte
 	addr   net.Addr
 	conn   CanopusConnection
 	server CoapServer
 }
 
-func (s *Session) GetConnection() CanopusConnection {
+func (s *ServerSession) GetConnection() CanopusConnection {
 	return s.conn
 }
 
-func (s *Session) GetAddress() net.Addr {
+func (s *ServerSession) GetAddress() net.Addr {
 	return s.addr
 }
 
-func (s *Session) Write(b []byte) {
+func (s *ServerSession) Write(b []byte) {
 	s.buf = append(s.buf, b...)
 }
 
-func (s *Session) FlushBuffer() {
+func (s *ServerSession) FlushBuffer() {
 	s.buf = nil
 }
 
-func (s *Session) Read() []byte {
+func (s *ServerSession) Read() []byte {
 	return s.buf
 }
 
-func (s *Session) GetServer() CoapServer {
+func (s *ServerSession) GetServer() CoapServer {
 	return s.server
 }

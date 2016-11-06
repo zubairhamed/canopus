@@ -1,6 +1,6 @@
 package canopus
 
-func handleResponse(s CoapServer, msg *Message, session *Session) {
+func handleResponse(s CoapServer, msg *Message, session Session) {
 	if msg.GetOption(OptionObserve) != nil {
 		handleAcknowledgeObserveRequest(s, msg)
 		return

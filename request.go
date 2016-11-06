@@ -58,7 +58,7 @@ func NewRequestFromMessage(msg *Message) CoapRequest {
 	}
 }
 
-func NewClientRequestFromMessage(msg *Message, attrs map[string]string, session *Session) CoapRequest {
+func NewClientRequestFromMessage(msg *Message, attrs map[string]string, session Session) CoapRequest {
 	return &DefaultCoapRequest{
 		msg:     msg,
 		attrs:   attrs,
@@ -87,7 +87,7 @@ type CoapRequest interface {
 type DefaultCoapRequest struct {
 	msg     *Message
 	attrs   map[string]string
-	session *Session
+	session Session
 	server  *CoapServer
 }
 
@@ -99,7 +99,7 @@ func (c *DefaultCoapRequest) SetMediaType(mt MediaType) {
 	c.msg.AddOption(OptionContentFormat, mt)
 }
 
-func (c *DefaultCoapRequest) GetSession() *Session {
+func (c *DefaultCoapRequest) GetSession() Session {
 	return c.session
 }
 

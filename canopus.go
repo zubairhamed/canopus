@@ -196,7 +196,6 @@ var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long,
 
 // Interfaces
 type CoapServer interface {
-	// GetName() string
 	ListenAndServe(addr string, cfg *ServerConfiguration)
 	ListenAndServeDTLS(addr string, cfg *ServerConfiguration)
 	Stop()
@@ -208,11 +207,7 @@ type CoapServer interface {
 	Options(path string, fn RouteHandler) *Route
 	Patch(path string, fn RouteHandler) *Route
 	NewRoute(path string, method CoapCode, fn RouteHandler) *Route
-	// Send(req CoapRequest) (CoapResponse, error)
-	SendTo(req CoapRequest, addr net.Addr) (CoapResponse, error)
 	NotifyChange(resource, value string, confirm bool)
-	//Dial(host string)
-	//Dial6(host string)
 
 	OnNotify(fn FnEventNotify)
 	OnStart(fn FnEventStart)
@@ -227,14 +222,13 @@ type CoapServer interface {
 	ProxyHTTP(enabled bool)
 	ProxyCoap(enabled bool)
 	GetEvents() *Events
-	// GetLocalAddress() net.Addr
 
 	AllowProxyForwarding(*Message, net.Addr) bool
 	GetRoutes() []*Route
-	ForwardCoap(msg *Message, session *Session)
-	ForwardHTTP(msg *Message, session *Session)
+	ForwardCoap(msg *Message, session Session)
+	ForwardHTTP(msg *Message, session Session)
 
-	AddObservation(resource, token string, session *Session)
+	AddObservation(resource, token string, session Session)
 	HasObservation(resource string, addr net.Addr) bool
 	RemoveObservation(resource string, addr net.Addr)
 
@@ -245,17 +239,6 @@ type CoapServer interface {
 	FlushBlockMessagePayload(string) MessagePayload
 }
 
-// Connection is a simple wrapper interface around a connection
-// This was primarily conceived so that mocks could be
-// created to unit test connection code
-//type Connection interface {
-//	GetConnection() net.Conn
-//	Write(b []byte) (int, error)
-//	SetReadDeadline(t time.Time) error
-//	Read() (buf []byte, n int, err error)
-//	WriteTo(b []byte, addr net.Addr) (int, error)
-//}
-
 type CanopusConnection interface {
 	ReadFrom(b []byte) (n int, addr net.Addr, err error)
 	WriteTo(b []byte, addr net.Addr) (n int, err error)
@@ -264,4 +247,23 @@ type CanopusConnection interface {
 	SetDeadline(t time.Time) error
 	SetReadDeadline(t time.Time) error
 	SetWriteDeadline(t time.Time) error
+}
+
+type Option interface {
+	Name() string
+	IsElective() bool
+	IsCritical() bool
+	StringValue() string
+	IntValue() int
+	GetCode() OptionCode
+	GetValue() interface{}
+}
+
+type Session interface {
+	GetConnection() CanopusConnection
+	GetAddress() net.Addr
+	Write(b []byte)
+	FlushBuffer()
+	Read() []byte
+	GetServer() CoapServer
 }

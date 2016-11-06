@@ -27,9 +27,6 @@ func NewServer() CoapServer {
 func createServer() CoapServer {
 
 	return &DefaultCoapServer{
-		//name:                    name,
-		//remoteAddr:              remoteAddr,
-		//localAddr:               localAddr,
 		events:                  NewEvents(),
 		observations:            make(map[string][]*Observation),
 		fnHandleCOAPProxy:       NullProxyHandler,
@@ -40,18 +37,11 @@ func createServer() CoapServer {
 		messageIds:              make(map[uint16]time.Time),
 		incomingBlockMessages:   make(map[string]*BlockMessage),
 		outgoingBlockMessages:   make(map[string]*BlockMessage),
-		sessions:                make(map[string]*Session),
+		sessions:                make(map[string]Session),
 	}
 }
 
 type DefaultCoapServer struct {
-	// name       string
-	// localAddr  *net.UDPAddr
-	// remoteAddr *net.UDPAddr
-
-	// localConn  *net.UDPConn
-	// remoteConn *net.UDPConn
-
 	messageIds            map[uint16]time.Time
 	incomingBlockMessages map[string]*BlockMessage
 	outgoingBlockMessages map[string]*BlockMessage
@@ -68,12 +58,8 @@ type DefaultCoapServer struct {
 
 	coapResponseChannelsMap map[uint16]chan *CoapResponseChannel
 
-	sessions map[string]*Session
+	sessions map[string]Session
 }
-
-//func (s *DefaultCoapServer) GetName() string {
-//	return s.name
-//}
 
 func (s *DefaultCoapServer) GetEvents() *Events {
 	return s.events
@@ -110,16 +96,12 @@ func (s *DefaultCoapServer) addDiscoveryRoute() {
 				}
 
 				buf.WriteString(",")
-				// buf.WriteString("</" + r.Path + ">;ct=0,")
 			}
 		}
 		ack.Payload = NewPlainTextPayload(buf.String())
-
 		resp := NewResponseWithMessage(ack)
-
 		return resp
 	}
-
 	s.NewRoute("/.well-known/core", Get, discoveryRoute)
 }
 
@@ -132,8 +114,6 @@ func (s *DefaultCoapServer) ListenAndServe(addr string, cfg *ServerConfiguration
 	s.addDiscoveryRoute()
 
 	conn := s.createConn(addr)
-
-	// s.localConn = conn
 
 	if conn == nil {
 		log.Fatal("An error occured starting up CoAP Server")
@@ -285,7 +265,7 @@ func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 	s.fnProxyFilter = fn
 }
 
-func (s *DefaultCoapServer) handleSession(session *Session) {
+func (s *DefaultCoapServer) handleSession(session Session) {
 	msgBuf := session.Read()
 	msg, err := BytesToMessage(msgBuf)
 	if err != nil {
@@ -304,28 +284,17 @@ func (s *DefaultCoapServer) handleSession(session *Session) {
 	// TODO: Close Session?
 }
 
-func (s *DefaultCoapServer) closeSession(ssn *Session) {
+func (s *DefaultCoapServer) closeSession(ssn Session) {
 	delete(s.sessions, ssn.GetAddress().String())
 }
 
-func (s *DefaultCoapServer) createSession(addr net.Addr, conn CanopusConnection, server CoapServer) *Session {
-	return &Session{
+func (s *DefaultCoapServer) createSession(addr net.Addr, conn CanopusConnection, server CoapServer) Session {
+	return &ServerSession{
 		addr:   addr,
 		conn:   conn,
 		server: server,
 	}
 }
-
-//func (s *DefaultCoapServer) handleMessage(msgBuf []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-//	msg, err := BytesToMessage(msgBuf)
-//	s.events.Message(msg, true)
-//
-//	if msg.MessageType == MessageAcknowledgment {
-//		handleResponse(s, msg)
-//	} else {
-//		handleRequest(s, err, msg, conn, addr)
-//	}
-//}
 
 func (s *DefaultCoapServer) Get(path string, fn RouteHandler) *Route {
 	return s.add(MethodGet, path, fn)
@@ -365,108 +334,10 @@ func (s *DefaultCoapServer) NewRoute(path string, method CoapCode, fn RouteHandl
 	return route
 }
 
-//func (s *DefaultCoapServer) Send(req CoapRequest) (CoapResponse, error) {
-//	msg := req.GetMessage()
-//	opt := msg.GetOption(OptionBlock1)
-//
-//	if s.localConn == nil {
-//		err := errors.New("Server not connected")
-//		s.events.Error(err)
-//		return nil, err
-//	}
-//
-//	if opt == nil { // Block1 was not set
-//		if MessageSizeAllowed(req) != true {
-//			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
-//		}
-//	} else { // Block1 was set
-//		// log.Println("Block 1 was set")
-//	}
-//
-//	if opt != nil {
-//		blockOpt := Block1OptionFromOption(opt)
-//		if blockOpt.Value == nil {
-//			if MessageSizeAllowed(req) != true {
-//				return nil, ErrMessageSizeTooLongBlockOptionValNotSet
-//			} else {
-//				// - Block # = one and only block (sz = unspecified), whereas 0 = 16bits
-//				// - MOre bit = 0
-//			}
-//		} else {
-//			payload := msg.Payload.GetBytes()
-//			payloadLen := uint32(len(payload))
-//			blockSize := blockOpt.BlockSizeLength()
-//			currSeq := uint32(0)
-//			totalBlocks := uint32(payloadLen / blockSize)
-//			completed := false
-//
-//			var wg sync.WaitGroup
-//			wg.Add(1)
-//
-//			for completed == false {
-//				if currSeq <= totalBlocks {
-//
-//					var blockPayloadStart uint32
-//					var blockPayloadEnd uint32
-//					var blockPayload []byte
-//
-//					blockPayloadStart = currSeq*uint32(blockSize) + (currSeq * 1)
-//
-//					more := true
-//					if currSeq == totalBlocks {
-//						more = false
-//						blockPayloadEnd = payloadLen
-//					} else {
-//						blockPayloadEnd = blockPayloadStart + uint32(blockSize)
-//					}
-//
-//					blockPayload = payload[blockPayloadStart:blockPayloadEnd]
-//
-//					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
-//					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt})
-//					msg.MessageID = GenerateMessageID()
-//					msg.Payload = NewBytesPayload(blockPayload)
-//
-//					// send message
-//					response, err := SendMessageTo(s, msg, NewUDPConnection(s.localConn), s.remoteAddr)
-//					if err != nil {
-//						s.events.Error(err)
-//						wg.Done()
-//						return nil, err
-//					}
-//					s.events.Message(response.GetMessage(), true)
-//					currSeq = currSeq + 1
-//
-//				} else {
-//					completed = true
-//					wg.Done()
-//				}
-//			}
-//		}
-//	}
-//
-//	s.events.Message(msg, false)
-//
-//	response, err := SendMessageTo(s, msg, NewUDPConnection(s.localConn), s.remoteAddr)
-//
-//	if err != nil {
-//		s.events.Error(err)
-//		return response, err
-//	}
-//	s.events.Message(response.GetMessage(), true)
-//
-//	return response, err
-//}
-
 func (s *DefaultCoapServer) storeNewOutgoingBlockMessage(client string, payload []byte) {
 	bm := NewBlockMessage()
 	bm.MessageBuf = payload
 	s.outgoingBlockMessages[client] = bm
-}
-
-func (s *DefaultCoapServer) SendTo(req CoapRequest, addr net.Addr) (CoapResponse, error) {
-	// return SendMessageTo(s, req.GetMessage(), NewUDPConnection(s.localConn), addr)
-	return nil, nil
 }
 
 func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
@@ -493,7 +364,7 @@ func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 	}
 }
 
-func (s *DefaultCoapServer) AddObservation(resource, token string, session *Session) {
+func (s *DefaultCoapServer) AddObservation(resource, token string, session Session) {
 	s.observations[resource] = append(s.observations[resource], NewObservation(session, token, resource))
 }
 
@@ -524,16 +395,6 @@ func (s *DefaultCoapServer) RemoveObservation(resource string, addr net.Addr) {
 		}
 	}
 }
-
-//func (s *DefaultCoapServer) Dial(host string) {
-//	s.Dial6(host)
-//}
-//
-//func (s *DefaultCoapServer) Dial6(host string) {
-//	remoteAddr, _ := net.ResolveUDPAddr("udp6", host)
-//
-//	// s.remoteAddr = remoteAddr
-//}
 
 func (s *DefaultCoapServer) OnNotify(fn FnEventNotify) {
 	s.events.OnNotify(fn)
@@ -591,21 +452,17 @@ func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr net.Addr) bo
 	return s.fnProxyFilter(msg, addr)
 }
 
-func (s *DefaultCoapServer) ForwardCoap(msg *Message, session *Session) {
+func (s *DefaultCoapServer) ForwardCoap(msg *Message, session Session) {
 	s.fnHandleCOAPProxy(s, msg, session)
 }
 
-func (s *DefaultCoapServer) ForwardHTTP(msg *Message, session *Session) {
+func (s *DefaultCoapServer) ForwardHTTP(msg *Message, session Session) {
 	s.fnHandleHTTPProxy(s, msg, session)
 }
 
 func (s *DefaultCoapServer) GetRoutes() []*Route {
 	return s.routes
 }
-
-//func (s *DefaultCoapServer) GetLocalAddress() net.Addr {
-//	return s.localAddr
-//}
 
 func (s *DefaultCoapServer) IsDuplicateMessage(msg *Message) bool {
 	_, ok := s.messageIds[msg.MessageID]
@@ -642,7 +499,7 @@ func GetResponseChannel(c CoapServer, msgId uint16) (ch chan *CoapResponseChanne
 	return
 }
 
-func NewObservation(session *Session, token string, resource string) *Observation {
+func NewObservation(session Session, token string, resource string) *Observation {
 	return &Observation{
 		Session:     session,
 		Token:       token,
@@ -652,7 +509,7 @@ func NewObservation(session *Session, token string, resource string) *Observatio
 }
 
 type Observation struct {
-	Session     *Session
+	Session     Session
 	Token       string
 	Resource    string
 	NotifyCount int

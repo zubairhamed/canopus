@@ -2,7 +2,7 @@ package canopus
 
 import "log"
 
-func handleRequest(s CoapServer, msg *Message, session *Session) {
+func handleRequest(s CoapServer, msg *Message, session Session) {
 	if msg.MessageType != MessageReset {
 		// Unsupported Method
 		if msg.Code != Get && msg.Code != Post && msg.Code != Put && msg.Code != Delete {
@@ -139,28 +139,28 @@ func handleRequest(s CoapServer, msg *Message, session *Session) {
 	}
 }
 
-func handleReqUnknownCriticalOption(msg *Message, session *Session) {
+func handleReqUnknownCriticalOption(msg *Message, session Session) {
 	if msg.MessageType == MessageConfirmable {
 		SendMessage(BadOptionMessage(msg.MessageID, MessageAcknowledgment), session)
 	}
 	return
 }
 
-func handleReqBadRequest(msg *Message, session *Session) {
+func handleReqBadRequest(msg *Message, session Session) {
 	if msg.MessageType == MessageConfirmable {
 		SendMessage(BadRequestMessage(msg.MessageID, msg.MessageType), session)
 	}
 	return
 }
 
-func handleReqContinue(msg *Message, session *Session) {
+func handleReqContinue(msg *Message, session Session) {
 	if msg.MessageType == MessageConfirmable {
 		SendMessage(ContinueMessage(msg.MessageID, msg.MessageType), session)
 	}
 	return
 }
 
-func handleReqUnsupportedMethodRequest(msg *Message, session *Session) {
+func handleReqUnsupportedMethodRequest(msg *Message, session Session) {
 	ret := NotImplementedMessage(msg.MessageID, MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
@@ -168,7 +168,7 @@ func handleReqUnsupportedMethodRequest(msg *Message, session *Session) {
 	SendMessage(ret, session)
 }
 
-func handleReqProxyRequest(s CoapServer, msg *Message, session *Session) {
+func handleReqProxyRequest(s CoapServer, msg *Message, session Session) {
 	if !s.AllowProxyForwarding(msg, session.GetAddress()) {
 		SendMessage(ForbiddenMessage(msg.MessageID, MessageAcknowledgment), session)
 	}
@@ -183,7 +183,7 @@ func handleReqProxyRequest(s CoapServer, msg *Message, session *Session) {
 	}
 }
 
-func handleReqNoMatchingRoute(msg *Message, session *Session) {
+func handleReqNoMatchingRoute(msg *Message, session Session) {
 	ret := NotFoundMessage(msg.MessageID, MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 	ret.Token = msg.Token
@@ -191,14 +191,14 @@ func handleReqNoMatchingRoute(msg *Message, session *Session) {
 	SendMessage(ret, session)
 }
 
-func handleReqNoMatchingMethod(msg *Message, session *Session) {
+func handleReqNoMatchingMethod(msg *Message, session Session) {
 	ret := MethodNotAllowedMessage(msg.MessageID, MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	SendMessage(ret, session)
 }
 
-func handleReqUnsupportedContentFormat(msg *Message, session *Session) {
+func handleReqUnsupportedContentFormat(msg *Message, session Session) {
 	ret := UnsupportedContentFormatMessage(msg.MessageID, MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
@@ -206,20 +206,20 @@ func handleReqUnsupportedContentFormat(msg *Message, session *Session) {
 	SendMessage(ret, session)
 }
 
-func handleReqDuplicateMessageID(msg *Message, session *Session) {
+func handleReqDuplicateMessageID(msg *Message, session Session) {
 	ret := EmptyMessage(msg.MessageID, MessageReset)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	SendMessage(ret, session)
 }
 
-func handleRequestAcknowledge(msg *Message, session *Session) {
+func handleRequestAcknowledge(msg *Message, session Session) {
 	ack := NewMessageOfType(MessageAcknowledgment, msg.MessageID)
 
 	SendMessage(ack, session)
 }
 
-func handleReqObserve(s CoapServer, req CoapRequest, msg *Message, session *Session) {
+func handleReqObserve(s CoapServer, req CoapRequest, msg *Message, session Session) {
 	// TODO: if server doesn't allow observing, return error
 	addr := session.GetAddress()
 

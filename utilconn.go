@@ -5,7 +5,7 @@ type CoapResponseChannel struct {
 	Error    error
 }
 
-func _doSendMessage(msg *Message, session *Session, ch chan *CoapResponseChannel) {
+func _doSendMessage(msg *Message, session Session, ch chan *CoapResponseChannel) {
 	resp := &CoapResponseChannel{}
 
 	b, err := MessageToBytes(msg)
@@ -32,7 +32,7 @@ func _doSendMessage(msg *Message, session *Session, ch chan *CoapResponseChannel
 	AddResponseChannel(session.GetServer(), msg.MessageID, ch)
 }
 
-func SendMessage(msg *Message, session *Session) (CoapResponse, error) {
+func SendMessage(msg *Message, session Session) (CoapResponse, error) {
 	if session.GetConnection() == nil {
 		return nil, ErrNilConn
 	}
