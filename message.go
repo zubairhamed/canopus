@@ -19,6 +19,7 @@ func NewMessage(messageType uint8, code CoapCode, messageID uint16) Message {
 		MessageType: messageType,
 		MessageID:   messageID,
 		Code:        code,
+		Token:       []byte(GenerateToken(8)),
 	}
 }
 
@@ -297,18 +298,19 @@ func ValidateMessage(msg Message) error {
 	return nil
 }
 
-func NewBlockMessage() *BlockMessage {
-	return &BlockMessage{
+func NewBlockMessage() BlockMessage {
+	return &CoapBlockMessage{
 		Sequence: 0,
 	}
 }
 
-type BlockMessage struct {
+type CoapBlockMessage struct {
+	CoapMessage
 	MessageBuf []byte
 	Sequence   uint32
 }
 
-type BySequence []*BlockMessage
+type BySequence []*CoapBlockMessage
 
 func (o BySequence) Len() int {
 	return len(o)
@@ -332,6 +334,14 @@ type CoapMessage struct {
 	Options     []Option
 }
 
+func (m *CoapMessage) SetMessageType(t uint8) {
+	m.MessageType = t
+}
+
+func (m *CoapMessage) SetToken(t []byte) {
+	m.Token = t
+}
+
 func (m *CoapMessage) SetPayload(p MessagePayload) {
 	m.Payload = p
 }
@@ -348,7 +358,7 @@ func (m *CoapMessage) GetPayload() MessagePayload {
 	return m.Payload
 }
 
-func (m *CoapMessage) GetMessageType() int {
+func (m *CoapMessage) GetMessageType() uint8 {
 	return m.MessageType
 }
 
@@ -600,120 +610,120 @@ func MethodString(c CoapCode) string {
 
 // Response Code Messages
 // Creates a Non-Confirmable Empty Message
-func EmptyMessage(messageID uint16, messageType uint8) *Message {
+func EmptyMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeEmpty, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 201 - Created
-func CreatedMessage(messageID uint16, messageType uint8) *Message {
+func CreatedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeCreated, messageID)
 }
 
 // // Creates a Non-Confirmable with CoAP Code 202 - Deleted
-func DeletedMessage(messageID uint16, messageType uint8) *Message {
+func DeletedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeDeleted, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 203 - Valid
-func ValidMessage(messageID uint16, messageType uint8) *Message {
+func ValidMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeValid, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 204 - Changed
-func ChangedMessage(messageID uint16, messageType uint8) *Message {
+func ChangedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeChanged, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 205 - Content
-func ContentMessage(messageID uint16, messageType uint8) *Message {
+func ContentMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeContent, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 400 - Bad Request
-func BadRequestMessage(messageID uint16, messageType uint8) *Message {
+func BadRequestMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeBadRequest, messageID)
 }
 
-func ContinueMessage(messageID uint16, messageType uint8) *Message {
+func ContinueMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeContinue, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 401 - Unauthorized
-func UnauthorizedMessage(messageID uint16, messageType uint8) *Message {
+func UnauthorizedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeUnauthorized, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 402 - Bad Option
-func BadOptionMessage(messageID uint16, messageType uint8) *Message {
+func BadOptionMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeBadOption, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 403 - Forbidden
-func ForbiddenMessage(messageID uint16, messageType uint8) *Message {
+func ForbiddenMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeForbidden, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 404 - Not Found
-func NotFoundMessage(messageID uint16, messageType uint8) *Message {
+func NotFoundMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeNotFound, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 405 - Method Not Allowed
-func MethodNotAllowedMessage(messageID uint16, messageType uint8) *Message {
+func MethodNotAllowedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeMethodNotAllowed, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 406 - Not Acceptable
-func NotAcceptableMessage(messageID uint16, messageType uint8) *Message {
+func NotAcceptableMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeNotAcceptable, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 409 - Conflict
-func ConflictMessage(messageID uint16, messageType uint8) *Message {
+func ConflictMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeConflict, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 412 - Precondition Failed
-func PreconditionFailedMessage(messageID uint16, messageType uint8) *Message {
+func PreconditionFailedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodePreconditionFailed, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 413 - Request Entity Too Large
-func RequestEntityTooLargeMessage(messageID uint16, messageType uint8) *Message {
+func RequestEntityTooLargeMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeRequestEntityTooLarge, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 415 - Unsupported Content Format
-func UnsupportedContentFormatMessage(messageID uint16, messageType uint8) *Message {
+func UnsupportedContentFormatMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeUnsupportedContentFormat, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 500 - Internal Server Error
-func InternalServerErrorMessage(messageID uint16, messageType uint8) *Message {
+func InternalServerErrorMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeInternalServerError, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 501 - Not Implemented
-func NotImplementedMessage(messageID uint16, messageType uint8) *Message {
+func NotImplementedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeNotImplemented, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 502 - Bad Gateway
-func BadGatewayMessage(messageID uint16, messageType uint8) *Message {
+func BadGatewayMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeBadGateway, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 503 - Service Unavailable
-func ServiceUnavailableMessage(messageID uint16, messageType uint8) *Message {
+func ServiceUnavailableMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeServiceUnavailable, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 504 - Gateway Timeout
-func GatewayTimeoutMessage(messageID uint16, messageType uint8) *Message {
+func GatewayTimeoutMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeGatewayTimeout, messageID)
 }
 
 // Creates a Non-Confirmable with CoAP Code 505 - Proxying Not Supported
-func ProxyingNotSupportedMessage(messageID uint16, messageType uint8) *Message {
+func ProxyingNotSupportedMessage(messageID uint16, messageType uint8) Message {
 	return NewMessage(messageType, CoapCodeProxyingNotSupported, messageID)
 }

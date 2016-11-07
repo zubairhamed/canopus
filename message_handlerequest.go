@@ -7,7 +7,7 @@ import (
 func handleRequest(s CoapServer, msg Message, session Session) {
 	if msg.GetMessageType() != MessageReset {
 		// Unsupported Method
-		if msg.Code != Get && msg.Code != Post && msg.Code != Put && msg.Code != Delete {
+		if msg.GetCode() != Get && msg.GetCode() != Post && msg.GetCode() != Put && msg.GetCode() != Delete {
 			handleReqUnsupportedMethodRequest(msg, session)
 			return
 		}
@@ -24,7 +24,7 @@ func handleRequest(s CoapServer, msg Message, session Session) {
 		if IsProxyRequest(msg) {
 			handleReqProxyRequest(s, msg, session)
 		} else {
-			route, attrs, err := MatchingRoute(msg.GetURIPath(), MethodString(msg.Code), msg.GetOptions(OptionContentFormat), s.GetRoutes())
+			route, attrs, err := MatchingRoute(msg.GetURIPath(), MethodString(msg.GetCode()), msg.GetOptions(OptionContentFormat), s.GetRoutes())
 			if err != nil {
 				s.GetEvents().Error(err)
 				if err == ErrNoMatchingRoute {
@@ -49,8 +49,8 @@ func handleRequest(s CoapServer, msg Message, session Session) {
 			// Duplicate Message ID Check
 			if s.IsDuplicateMessage(msg) {
 				PrintMessage(msg)
-				if msg.MessageType == MessageConfirmable {
-					log.Println("Duplicate Message ID ", msg.MessageID)
+				if msg.GetMessageType() == MessageConfirmable {
+					log.Println("Duplicate Message ID ", msg.GetMessageId())
 					handleReqDuplicateMessageID(msg, session)
 				}
 				return
@@ -60,11 +60,11 @@ func handleRequest(s CoapServer, msg Message, session Session) {
 
 			// Auto acknowledge
 			// TODO: Necessary?
-			if msg.MessageType == MessageConfirmable && route.AutoAck {
+			if msg.GetMessageType() == MessageConfirmable && route.AutoAcknowledge() {
 				handleRequestAcknowledge(msg, session)
 			}
 			req := NewClientRequestFromMessage(msg, attrs, session)
-			if msg.MessageType == MessageConfirmable {
+			if msg.GetMessageType() == MessageConfirmable {
 
 				// Observation Request
 				obsOpt := msg.GetOption(OptionObserve)
@@ -113,8 +113,8 @@ func handleRequest(s CoapServer, msg Message, session Session) {
 
 						} else {
 							// TODO: Check if message is too large
-							msg = NewMessage(msg.MessageType, msg.Code, msg.MessageID)
-							msg.Payload = s.FlushBlockMessagePayload(session.GetAddress().String())
+							msg = NewMessage(msg.GetMessageType(), msg.GetCode(), msg.GetMessageId())
+							msg.SetPayload(s.FlushBlockMessagePayload(session.GetAddress().String()))
 							req = NewClientRequestFromMessage(msg, attrs, session)
 						}
 					} else if blockOpt.Code == OptionBlock2 {
@@ -124,11 +124,12 @@ func handleRequest(s CoapServer, msg Message, session Session) {
 					}
 				}
 			}
-			resp := route.Handler(req)
+
+			resp := route.Handle(req)
 			_, nilresponse := resp.(NilResponse)
 			if !nilresponse {
 				respMsg := resp.GetMessage()
-				respMsg.Token = req.GetMessage().Token
+				respMsg.SetToken(req.GetMessage().GetToken())
 
 				// TODO: Validate Message before sending (e.g missing messageId)
 				err := ValidateMessage(respMsg)
@@ -142,28 +143,28 @@ func handleRequest(s CoapServer, msg Message, session Session) {
 }
 
 func handleReqUnknownCriticalOption(msg Message, session Session) {
-	if msg.MessageType == MessageConfirmable {
-		SendMessage(BadOptionMessage(msg.MessageID, MessageAcknowledgment), session)
+	if msg.GetMessageType() == MessageConfirmable {
+		SendMessage(BadOptionMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 	}
 	return
 }
 
 func handleReqBadRequest(msg Message, session Session) {
-	if msg.MessageType == MessageConfirmable {
-		SendMessage(BadRequestMessage(msg.MessageID, msg.MessageType), session)
+	if msg.GetMessageType() == MessageConfirmable {
+		SendMessage(BadRequestMessage(msg.GetMessageId(), msg.GetMessageType()), session)
 	}
 	return
 }
 
 func handleReqContinue(msg Message, session Session) {
-	if msg.MessageType == MessageConfirmable {
-		SendMessage(ContinueMessage(msg.MessageID, msg.MessageType), session)
+	if msg.GetMessageType() == MessageConfirmable {
+		SendMessage(ContinueMessage(msg.GetMessageId(), msg.GetMessageType()), session)
 	}
 	return
 }
 
 func handleReqUnsupportedMethodRequest(msg Message, session Session) {
-	ret := NotImplementedMessage(msg.MessageID, MessageAcknowledgment)
+	ret := NotImplementedMessage(msg.GetMessageId(), MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	// c.GetEvents().Message(ret, false)
@@ -172,7 +173,7 @@ func handleReqUnsupportedMethodRequest(msg Message, session Session) {
 
 func handleReqProxyRequest(s CoapServer, msg Message, session Session) {
 	if !s.AllowProxyForwarding(msg, session.GetAddress()) {
-		SendMessage(ForbiddenMessage(msg.MessageID, MessageAcknowledgment), session)
+		SendMessage(ForbiddenMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 	}
 
 	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
@@ -186,22 +187,22 @@ func handleReqProxyRequest(s CoapServer, msg Message, session Session) {
 }
 
 func handleReqNoMatchingRoute(msg Message, session Session) {
-	ret := NotFoundMessage(msg.MessageID, MessageAcknowledgment)
+	ret := NotFoundMessage(msg.GetMessageId(), MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
-	ret.Token = msg.Token
+	ret.SetToken(msg.GetToken())
 
 	SendMessage(ret, session)
 }
 
 func handleReqNoMatchingMethod(msg Message, session Session) {
-	ret := MethodNotAllowedMessage(msg.MessageID, MessageAcknowledgment)
+	ret := MethodNotAllowedMessage(msg.GetMessageId(), MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	SendMessage(ret, session)
 }
 
 func handleReqUnsupportedContentFormat(msg Message, session Session) {
-	ret := UnsupportedContentFormatMessage(msg.MessageID, MessageAcknowledgment)
+	ret := UnsupportedContentFormatMessage(msg.GetMessageId(), MessageAcknowledgment)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	// s.GetEvents().Message(ret, false)
@@ -209,14 +210,14 @@ func handleReqUnsupportedContentFormat(msg Message, session Session) {
 }
 
 func handleReqDuplicateMessageID(msg Message, session Session) {
-	ret := EmptyMessage(msg.MessageID, MessageReset)
+	ret := EmptyMessage(msg.GetMessageId(), MessageReset)
 	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
 
 	SendMessage(ret, session)
 }
 
 func handleRequestAcknowledge(msg Message, session Session) {
-	ack := NewMessageOfType(MessageAcknowledgment, msg.MessageID)
+	ack := NewMessageOfType(MessageAcknowledgment, msg.GetMessageId())
 
 	SendMessage(ack, session)
 }
@@ -235,7 +236,7 @@ func handleReqObserve(s CoapServer, req Request, msg Message, session Session) {
 		s.GetEvents().ObserveCancelled(resource, msg)
 	} else {
 		// Register observation of client
-		s.AddObservation(msg.GetURIPath(), string(msg.Token), session)
+		s.AddObservation(msg.GetURIPath(), string(msg.GetToken()), session)
 
 		// Observe Request & Fire OnObserve Event
 		s.GetEvents().Observe(resource, msg)

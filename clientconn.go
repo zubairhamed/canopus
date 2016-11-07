@@ -152,7 +152,7 @@ func (c *UDPClientConnection) ObserveResource(resource string) (tok string, err 
 	req.GetMessage().AddOption(OptionObserve, 0)
 
 	resp, err := c.Send(req)
-	tok = string(resp.GetMessage())
+	tok = string(resp.GetMessage().GetToken())
 
 	return
 }
@@ -166,7 +166,7 @@ func (c *UDPClientConnection) CancelObserveResource(resource string, token strin
 	return
 }
 
-func (c *UDPClientConnection) StopObserve(ch chan *ObserveMessage) {
+func (c *UDPClientConnection) StopObserve(ch chan ObserveMessage) {
 	close(ch)
 }
 
@@ -174,7 +174,7 @@ func (c *UDPClientConnection) Close() {
 	c.conn.Close()
 }
 
-func (c *UDPClientConnection) Observe(ch chan *ObserveMessage) {
+func (c *UDPClientConnection) Observe(ch chan ObserveMessage) {
 	conn := c.conn
 
 	readBuf := make([]byte, MaxPacketSize)

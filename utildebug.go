@@ -26,7 +26,7 @@ func PrintMessage(msg Message) {
 	log.Println("MessageType: ", msg.GetMessageType())
 	log.Println("Token: ", string(msg.GetToken()))
 	log.Println("Token Length: ", msg.GetTokenLength())
-	log.Println("Payload: ", payload.PayloadAsString(msg.GetPayload()))
+	log.Println("Payload: ", PayloadAsString(msg.GetPayload()))
 	PrintOptions(msg)
 	log.Println("= = = = = = = = = = = = = = = = ")
 

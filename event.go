@@ -109,14 +109,14 @@ func (ce *ServerEvents) Error(err error) {
 }
 
 // Fires the "OnObserve" event for a given resource
-func (ce *ServerEvents) Observe(resource string, msg Message) {
+func (ce *ServerEvents) Observe(resource string, msg ObserveMessage) {
 	for _, fn := range ce.evtFnObserve {
 		fn(resource, msg)
 	}
 }
 
 // Fires the "OnObserveCancelled" event for a given resource
-func (ce *ServerEvents) ObserveCancelled(resource string, msg Message) {
+func (ce *ServerEvents) ObserveCancelled(resource string, msg ObserveMessage) {
 	for _, fn := range ce.evtFnObserveCancel {
 		fn(resource, msg)
 	}

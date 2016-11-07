@@ -12,20 +12,18 @@ func NullProxyFilter(Message, net.Addr) bool {
 	return true
 }
 
-type ProxyHandler func(c CoapServer, msg *Message, session Session)
-
 // The default handler when proxying is disabled
-func NullProxyHandler(c CoapServer, msg *Message, session Session) {
-	SendMessage(ProxyingNotSupportedMessage(msg.MessageID, MessageAcknowledgment), session)
+func NullProxyHandler(c CoapServer, msg Message, session Session) {
+	SendMessage(ProxyingNotSupportedMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 }
 
-func COAPProxyHandler(c CoapServer, msg *Message, session Session) {
+func COAPProxyHandler(c CoapServer, msg Message, session Session) {
 	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
 
 	parsedURL, err := url.Parse(proxyURI)
 	if err != nil {
 		log.Println("Error parsing proxy URI")
-		SendMessage(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), session)
+		SendMessage(BadGatewayMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 		return
 	}
 
@@ -38,7 +36,7 @@ func COAPProxyHandler(c CoapServer, msg *Message, session Session) {
 
 	response, err := clientConn.Send(req)
 	if err != nil {
-		SendMessage(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), session)
+		SendMessage(BadGatewayMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 		clientConn.Close()
 		return
 	}
@@ -53,14 +51,14 @@ func COAPProxyHandler(c CoapServer, msg *Message, session Session) {
 }
 
 // Handles requests for proxying from CoAP to HTTP
-func HTTPProxyHandler(c CoapServer, msg *Message, session Session) {
+func HTTPProxyHandler(c CoapServer, msg Message, session Session) {
 	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
-	requestMethod := msg.Code
+	requestMethod := msg.GetCode()
 
 	client := &http.Client{}
 	req, err := http.NewRequest(MethodString(CoapCode(msg.GetMethod())), proxyURI, nil)
 	if err != nil {
-		SendMessage(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), session)
+		SendMessage(BadGatewayMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 		return
 	}
 
@@ -72,14 +70,14 @@ func HTTPProxyHandler(c CoapServer, msg *Message, session Session) {
 	// TODO: Set timeout handler, and on timeout return 5.04
 	resp, err := client.Do(req)
 	if err != nil {
-		SendMessage(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), session)
+		SendMessage(BadGatewayMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 		return
 	}
 
 	defer resp.Body.Close()
 
 	contents, _ := ioutil.ReadAll(resp.Body)
-	msg.Payload = NewBytesPayload(contents)
+	msg.SetPayload(NewBytesPayload(contents))
 	respMsg := NewRequestFromMessage(msg)
 
 	if requestMethod == Get {
@@ -90,8 +88,8 @@ func HTTPProxyHandler(c CoapServer, msg *Message, session Session) {
 	}
 
 	// TODO: Check payload length against Size1 options
-	if len(respMsg.GetMessage().Payload.String()) > MaxPacketSize {
-		SendMessage(BadGatewayMessage(msg.MessageID, MessageAcknowledgment), session)
+	if len(respMsg.GetMessage().GetPayload().String()) > MaxPacketSize {
+		SendMessage(BadGatewayMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 		return
 	}
 

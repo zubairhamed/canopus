@@ -294,8 +294,8 @@ type Response interface {
 type ClientConnection interface {
 	ObserveResource(resource string) (tok string, err error)
 	CancelObserveResource(resource string, token string) (err error)
-	StopObserve(ch chan Message)
-	Observe(ch chan Message)
+	StopObserve(ch chan ObserveMessage)
+	Observe(ch chan ObserveMessage)
 	Send(req Request) (resp Response, err error)
 	Close()
 }
@@ -317,7 +317,8 @@ type Message interface {
 	SetToken([]byte)
 	GetMessageId() uint16
 	SetMessageId(uint16)
-	GetMessageType() int
+	GetMessageType() uint8
+	SetMessageType(uint8)
 	GetAcceptedContent() MediaType
 	GetCodeString() string
 	GetCode() CoapCode
@@ -342,6 +343,12 @@ type Message interface {
 }
 
 type Route interface {
+	Matches(path string) (bool, map[string]string)
+	GetMethod() string
+	GetMediaTypes() []MediaType
+	GetConfiguredPath() string
+	AutoAcknowledge() bool
+	Handle(req Request) Response
 }
 
 type FnEventNotify func(string, interface{}, Message)
@@ -349,8 +356,8 @@ type FnEventStart func(CoapServer)
 type FnEventClose func(CoapServer)
 type FnEventDiscover func()
 type FnEventError func(error)
-type FnEventObserve func(string, Message)
-type FnEventObserveCancel func(string, Message)
+type FnEventObserve func(string, ObserveMessage)
+type FnEventObserveCancel func(string, ObserveMessage)
 type FnEventMessage func(Message, bool)
 type FnEventBlockMessage func(Message, bool)
 
@@ -371,6 +378,24 @@ type ObserveMessage interface {
 }
 
 type Events interface {
+	OnNotify(fn FnEventNotify)
+	OnStart(fn FnEventStart)
+	OnClose(fn FnEventClose)
+	OnDiscover(fn FnEventDiscover)
+	OnError(fn FnEventError)
+	OnObserve(fn FnEventObserve)
+	OnObserveCancel(fn FnEventObserveCancel)
+	OnMessage(fn FnEventMessage)
+	OnBlockMessage(fn FnEventBlockMessage)
+	Notify(resource string, value interface{}, msg Message)
+	Started(server CoapServer)
+	Closed(server CoapServer)
+	Discover()
+	Error(err error)
+	Observe(resource string, msg ObserveMessage)
+	ObserveCancelled(resource string, msg ObserveMessage)
+	Message(msg Message, inbound bool)
+	BlockMessage(msg Message, inbound bool)
 }
 
 type Configuration interface {
@@ -378,3 +403,7 @@ type Configuration interface {
 
 // Proxy Filter
 type ProxyFilter func(Message, net.Addr) bool
+type ProxyHandler func(c CoapServer, msg Message, session Session)
+
+type BlockMessage interface {
+}

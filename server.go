@@ -46,8 +46,8 @@ type DefaultCoapServer struct {
 	incomingBlockMessages map[string]Message
 	outgoingBlockMessages map[string]Message
 
-	routes       []*Route
-	events       *Events
+	routes       []Route
+	events       Events
 	observations map[string][]*Observation
 
 	fnHandleHTTPProxy ProxyHandler
@@ -61,7 +61,7 @@ type DefaultCoapServer struct {
 	sessions map[string]Session
 }
 
-func (s *DefaultCoapServer) GetEvents() *Events {
+func (s *DefaultCoapServer) GetEvents() Events {
 	return s.events
 }
 
@@ -69,24 +69,24 @@ func (s *DefaultCoapServer) addDiscoveryRoute() {
 	var discoveryRoute RouteHandler = func(req Request) Response {
 		msg := req.GetMessage()
 
-		ack := ContentMessage(msg.MessageID, MessageAcknowledgment)
-		ack.Token = make([]byte, len(msg.Token))
-		copy(ack.Token, msg.Token)
+		ack := ContentMessage(msg.GetMessageId(), MessageAcknowledgment)
+		ack.SetToken(make([]byte, len(msg.GetToken())))
+		ack.SetToken(msg.GetToken())
 
 		ack.AddOption(OptionContentFormat, MediaTypeApplicationLinkFormat)
 
 		var buf bytes.Buffer
 		for _, r := range s.routes {
-			if r.Path != ".well-known/core" {
+			if r.GetConfiguredPath() != ".well-known/core" {
 				buf.WriteString("</")
-				buf.WriteString(r.Path)
+				buf.WriteString(r.GetConfiguredPath())
 				buf.WriteString(">")
 
 				// Media Types
-				lenMt := len(r.MediaTypes)
+				lenMt := len(r.GetMediaTypes())
 				if lenMt > 0 {
 					buf.WriteString(";ct=")
-					for idx, mt := range r.MediaTypes {
+					for idx, mt := range r.GetMediaTypes() {
 
 						buf.WriteString(strconv.Itoa(int(mt)))
 						if idx+1 < lenMt {
@@ -98,19 +98,21 @@ func (s *DefaultCoapServer) addDiscoveryRoute() {
 				buf.WriteString(",")
 			}
 		}
-		ack.Payload = payload.NewPlainTextPayload(buf.String())
-		resp := message.NewResponseWithMessage(ack)
+
+		ack.SetPayload(NewPlainTextPayload(buf.String()))
+		resp := NewResponseWithMessage(ack)
+
 		return resp
 	}
 	s.NewRoute("/.well-known/core", Get, discoveryRoute)
 }
 
-func (s *DefaultCoapServer) ListenAndServeDTLS(addr string, cfg *ServerConfiguration) {
+func (s *DefaultCoapServer) ListenAndServeDTLS(addr string, cfg Configuration) {
 	s.addDiscoveryRoute()
 	// s.serve()
 }
 
-func (s *DefaultCoapServer) ListenAndServe(addr string, cfg *ServerConfiguration) {
+func (s *DefaultCoapServer) ListenAndServe(addr string, cfg Configuration) {
 	s.addDiscoveryRoute()
 
 	conn := s.createConn(addr)
@@ -184,18 +186,19 @@ func (s *DefaultCoapServer) Stop() {
 	close(s.stopChannel)
 }
 
-func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg *Message, seq uint32) {
+func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg Message, seq uint32) {
 	msgs := s.incomingBlockMessages[client]
 
 	if msgs == nil {
-		msgs = &message.BlockMessage{
+		msgs = &CoapBlockMessage{
 			Sequence:   0,
 			MessageBuf: []byte{},
 		}
 	}
 
-	msgs.Sequence = seq
-	msgs.MessageBuf = append(msgs.MessageBuf, msg.Payload.GetBytes()...)
+	blockMsgs := msgs.(*CoapBlockMessage)
+	blockMsgs.Sequence = seq
+	blockMsgs.MessageBuf = append(blockMsgs.MessageBuf, msg.GetPayload().GetBytes()...)
 
 	s.incomingBlockMessages[client] = msgs
 }
@@ -203,7 +206,8 @@ func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg *Messa
 func (s *DefaultCoapServer) FlushBlockMessagePayload(origin string) MessagePayload {
 	msgs := s.incomingBlockMessages[origin]
 
-	payload := msgs.MessageBuf
+	blockMsg := msgs.(*CoapBlockMessage)
+	payload := blockMsg.MessageBuf
 
 	return NewBytesPayload(payload)
 }
@@ -237,7 +241,7 @@ func (s *DefaultCoapServer) handleSession(session Session) {
 		panic(err.Error())
 	}
 
-	if msg.MessageType == MessageAcknowledgment {
+	if msg.GetMessageType() == MessageAcknowledgment {
 		handleResponse(s, msg, session)
 	} else {
 		handleRequest(s, msg, session)
@@ -261,46 +265,46 @@ func (s *DefaultCoapServer) createSession(addr net.Addr, conn ServerConnection, 
 	}
 }
 
-func (s *DefaultCoapServer) Get(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Get(path string, fn RouteHandler) Route {
 	return s.add(MethodGet, path, fn)
 }
 
-func (s *DefaultCoapServer) Delete(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Delete(path string, fn RouteHandler) Route {
 	return s.add(MethodDelete, path, fn)
 }
 
-func (s *DefaultCoapServer) Put(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Put(path string, fn RouteHandler) Route {
 	return s.add(MethodPut, path, fn)
 }
 
-func (s *DefaultCoapServer) Post(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Post(path string, fn RouteHandler) Route {
 	return s.add(MethodPost, path, fn)
 }
 
-func (s *DefaultCoapServer) Options(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Options(path string, fn RouteHandler) Route {
 	return s.add(MethodOptions, path, fn)
 }
 
-func (s *DefaultCoapServer) Patch(path string, fn RouteHandler) *Route {
+func (s *DefaultCoapServer) Patch(path string, fn RouteHandler) Route {
 	return s.add(MethodPatch, path, fn)
 }
 
-func (s *DefaultCoapServer) add(method string, path string, fn RouteHandler) *Route {
-	route := CreateNewRoute(path, method, fn)
+func (s *DefaultCoapServer) add(method string, path string, fn RouteHandler) Route {
+	route := CreateNewRegExRoute(path, method, fn)
 	s.routes = append(s.routes, route)
 
 	return route
 }
 
-func (s *DefaultCoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) *Route {
-	route := CreateNewRoute(path, MethodString(method), fn)
+func (s *DefaultCoapServer) NewRoute(path string, method CoapCode, fn RouteHandler) Route {
+	route := CreateNewRegExRoute(path, MethodString(method), fn)
 	s.routes = append(s.routes, route)
 
 	return route
 }
 
 func (s *DefaultCoapServer) storeNewOutgoingBlockMessage(client string, payload []byte) {
-	bm := NewBlockMessage()
+	bm := NewBlockMessage().(*CoapBlockMessage)
 	bm.MessageBuf = payload
 	s.outgoingBlockMessages[client] = bm
 }
@@ -309,7 +313,7 @@ func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 	t := s.observations[resource]
 
 	if t != nil {
-		var req CoapRequest
+		var req Request
 
 		if confirm {
 			req = NewRequest(MessageConfirmable, CoapCodeContent, GenerateMessageID())
@@ -413,30 +417,30 @@ func (s *DefaultCoapServer) ProxyCoap(enabled bool) {
 	}
 }
 
-func (s *DefaultCoapServer) AllowProxyForwarding(msg *Message, addr net.Addr) bool {
+func (s *DefaultCoapServer) AllowProxyForwarding(msg Message, addr net.Addr) bool {
 	return s.fnProxyFilter(msg, addr)
 }
 
-func (s *DefaultCoapServer) ForwardCoap(msg *Message, session Session) {
+func (s *DefaultCoapServer) ForwardCoap(msg Message, session Session) {
 	s.fnHandleCOAPProxy(s, msg, session)
 }
 
-func (s *DefaultCoapServer) ForwardHTTP(msg *Message, session Session) {
+func (s *DefaultCoapServer) ForwardHTTP(msg Message, session Session) {
 	s.fnHandleHTTPProxy(s, msg, session)
 }
 
-func (s *DefaultCoapServer) GetRoutes() []*Route {
+func (s *DefaultCoapServer) GetRoutes() []Route {
 	return s.routes
 }
 
-func (s *DefaultCoapServer) IsDuplicateMessage(msg *Message) bool {
-	_, ok := s.messageIds[msg.MessageID]
+func (s *DefaultCoapServer) IsDuplicateMessage(msg Message) bool {
+	_, ok := s.messageIds[msg.GetMessageId()]
 
 	return ok
 }
 
-func (s *DefaultCoapServer) UpdateMessageTS(msg *Message) {
-	s.messageIds[msg.MessageID] = time.Now()
+func (s *DefaultCoapServer) UpdateMessageTS(msg Message) {
+	s.messageIds[msg.GetMessageId()] = time.Now()
 }
 
 func NewResponseChannel() (ch chan *CoapResponseChannel) {
@@ -483,7 +487,7 @@ type Observation struct {
 func _doSendMessage(msg Message, session Session, ch chan *CoapResponseChannel) {
 	resp := &CoapResponseChannel{}
 
-	b, err := message.MessageToBytes(msg)
+	b, err := MessageToBytes(msg)
 	if err != nil {
 		resp.Error = err
 		ch <- resp
@@ -499,15 +503,15 @@ func _doSendMessage(msg Message, session Session, ch chan *CoapResponseChannel) 
 		ch <- resp
 	}
 
-	if msg.MessageType == MessageNonConfirmable {
-		resp.Response = NewResponse(NewEmptyMessage(msg.MessageID), nil)
+	if msg.GetMessageType() == MessageNonConfirmable {
+		resp.Response = NewResponse(NewEmptyMessage(msg.GetMessageId()), nil)
 		ch <- resp
 	}
 
-	AddResponseChannel(session.GetServer(), msg.MessageID, ch)
+	AddResponseChannel(session.GetServer(), msg.GetMessageId(), ch)
 }
 
-func SendMessage(msg *Message, session Session) (Response, error) {
+func SendMessage(msg Message, session Session) (Response, error) {
 	if session.GetConnection() == nil {
 		return nil, ErrNilConn
 	}
@@ -520,7 +524,7 @@ func SendMessage(msg *Message, session Session) (Response, error) {
 		return nil, ErrNilAddr
 	}
 
-	ch := server.NewResponseChannel()
+	ch := NewResponseChannel()
 	go _doSendMessage(msg, session, ch)
 	respCh := <-ch
 

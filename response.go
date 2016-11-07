@@ -47,7 +47,7 @@ func NewResponseWithMessage(msg Message) Response {
 }
 
 type DefaultResponse struct {
-	msg *Message
+	msg Message
 	err error
 }
 

@@ -5,17 +5,10 @@ import (
 	"regexp"
 )
 
-// CreateCompilableRoutePath creates a RegEx for a valid route path
-func CreateCompilableRoutePath(route string) (*regexp.Regexp, bool) {
+// CreateNewRoute creates a new Route object
+func CreateNewRegExRoute(path string, method string, fn RouteHandler) Route {
 	var re *regexp.Regexp
-	var isStatic bool
-
-	regexpString := route
-
-	isStaticRegexp := regexp.MustCompile(`[\(\)\?\<\>:]`)
-	if !isStaticRegexp.MatchString(route) {
-		isStatic = true
-	}
+	regexpString := path
 
 	// Dots
 	re = regexp.MustCompile(`([^\\])\.`)
@@ -36,24 +29,27 @@ func CreateCompilableRoutePath(route string) (*regexp.Regexp, bool) {
 
 	s := fmt.Sprintf(`\A%s\z`, regexpString)
 
-	return regexp.MustCompile(s), isStatic
-}
-
-// CreateNewRoute creates a new Route object
-func CreateNewRoute(path string, method string, fn RouteHandler) *Route {
-	re, _ := CreateCompilableRoutePath(path)
-
-	return &Route{
+	return &RegExRoute{
 		AutoAck: false,
 		Path:    path,
 		Method:  method,
 		Handler: fn,
-		RegEx:   re,
+		RegEx:   regexp.MustCompile(s),
 	}
 }
 
-// MatchesRoutePath checks if a given path matches a regex route
-func MatchesRoutePath(path string, re *regexp.Regexp) (bool, map[string]string) {
+// Route represents a CoAP Route/Resource
+type RegExRoute struct {
+	Path       string
+	Method     string
+	Handler    RouteHandler
+	RegEx      *regexp.Regexp
+	AutoAck    bool
+	MediaTypes []MediaType
+}
+
+func (r *RegExRoute) Matches(path string) (bool, map[string]string) {
+	re := r.RegEx
 	matches := re.FindAllStringSubmatch(path, -1)
 	attrs := make(map[string]string)
 	if len(matches) > 0 {
@@ -66,30 +62,40 @@ func MatchesRoutePath(path string, re *regexp.Regexp) (bool, map[string]string) 
 	return false, attrs
 }
 
-// Route represents a CoAP Route/Resource
-type CoapRoute struct {
-	Path       string
-	Method     string
-	Handler    RouteHandler
-	RegEx      *regexp.Regexp
-	AutoAck    bool
-	MediaTypes []MediaType
+func (r *RegExRoute) GetMethod() string {
+	return r.Method
+}
+
+func (r *RegExRoute) GetMediaTypes() []MediaType {
+	return r.MediaTypes
+}
+
+func (r *RegExRoute) GetConfiguredPath() string {
+	return r.Path
+}
+
+func (r *RegExRoute) AutoAcknowledge() bool {
+	return r.AutoAck
+}
+
+func (r *RegExRoute) Handle(req Request) Response {
+	return r.Handler(req)
 }
 
 // MatchingRoute checks if a given path matches any defined routes/resources
 func MatchingRoute(path string, method string, cf interface{}, routes []Route) (Route, map[string]string, error) {
 	for _, route := range routes {
-		if method == route.Method {
-			match, attrs := MatchesRoutePath(path, route.RegEx)
+		if method == route.GetMethod() {
+			match, attrs := route.Matches(path)
 
 			if match {
-				if len(route.MediaTypes) > 0 {
+				if len(route.GetMediaTypes()) > 0 {
 					if cf == nil {
 						return route, attrs, ErrUnsupportedContentFormat
 					}
 
 					foundMediaType := false
-					for _, o := range route.MediaTypes {
+					for _, o := range route.GetMediaTypes() {
 						if uint32(o) == cf {
 							foundMediaType = true
 							break

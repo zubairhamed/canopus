@@ -7,47 +7,32 @@ import (
 
 // Creates a New Request Instance
 func NewRequest(messageType uint8, messageMethod CoapCode, messageID uint16) Request {
-	msg := NewMessage(messageType, messageMethod, messageID)
-	msg.Token = []byte(GenerateToken(8))
-
 	return &DefaultCoapRequest{
-		msg: msg,
+		msg: NewMessage(messageType, messageMethod, messageID),
 	}
 }
 
 func NewConfirmableGetRequest() Request {
-	msg := NewMessage(MessageConfirmable, Get, GenerateMessageID())
-	msg.Token = []byte(GenerateToken(8))
-
 	return &DefaultCoapRequest{
-		msg: msg,
+		msg: NewMessage(MessageConfirmable, Get, GenerateMessageID()),
 	}
 }
 
 func NewConfirmablePostRequest() Request {
-	msg := NewMessage(MessageConfirmable, Post, GenerateMessageID())
-	msg.Token = []byte(GenerateToken(8))
-
 	return &DefaultCoapRequest{
-		msg: msg,
+		msg: NewMessage(MessageConfirmable, Post, GenerateMessageID()),
 	}
 }
 
 func NewConfirmablePutRequest() Request {
-	msg := NewMessage(MessageConfirmable, Put, GenerateMessageID())
-	msg.Token = []byte(GenerateToken(8))
-
 	return &DefaultCoapRequest{
-		msg: msg,
+		msg: NewMessage(MessageConfirmable, Put, GenerateMessageID()),
 	}
 }
 
 func NewConfirmableDeleteRequest() Request {
-	msg := NewMessage(MessageConfirmable, Delete, GenerateMessageID())
-	msg.Token = []byte(GenerateToken(8))
-
 	return &DefaultCoapRequest{
-		msg: msg,
+		msg: NewMessage(MessageConfirmable, Delete, GenerateMessageID()),
 	}
 }
 
@@ -107,11 +92,11 @@ func (c *DefaultCoapRequest) GetMessage() Message {
 }
 
 func (c *DefaultCoapRequest) SetStringPayload(s string) {
-	c.msg.SetPayload(payload.NewPlainTextPayload(s))
+	c.msg.SetPayload(NewPlainTextPayload(s))
 }
 
 func (c *DefaultCoapRequest) SetPayload(b []byte) {
-	c.msg.SetPayload(payload.NewBytesPayload(b))
+	c.msg.SetPayload(NewBytesPayload(b))
 }
 
 func (c *DefaultCoapRequest) SetRequestURI(uri string) {
@@ -120,9 +105,9 @@ func (c *DefaultCoapRequest) SetRequestURI(uri string) {
 
 func (c *DefaultCoapRequest) SetConfirmable(con bool) {
 	if con {
-		c.msg.GetMessageType() = MessageConfirmable
+		c.msg.SetMessageType(MessageConfirmable)
 	} else {
-		c.msg.GetMessageType() = MessageNonConfirmable
+		c.msg.SetMessageType(MessageNonConfirmable)
 	}
 }
 
