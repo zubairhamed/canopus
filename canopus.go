@@ -125,6 +125,10 @@ const MessageIDPurgeDuration = 60
 
 type RouteHandler func(Request) Response
 
+// Proxy Filter
+type ProxyFilter func(Message, net.Addr) bool
+type ProxyHandler func(c CoapServer, msg Message, session Session)
+
 type MediaType int
 
 const (
@@ -199,13 +203,13 @@ type CoapServer interface {
 	ListenAndServe(addr string, cfg Configuration)
 	ListenAndServeDTLS(addr string, cfg Configuration)
 	Stop()
-	SetProxyFilter(fn ProxyFilter)
 	Get(path string, fn RouteHandler) Route
 	Delete(path string, fn RouteHandler) Route
 	Put(path string, fn RouteHandler) Route
 	Post(path string, fn RouteHandler) Route
 	Options(path string, fn RouteHandler) Route
 	Patch(path string, fn RouteHandler) Route
+
 	NewRoute(path string, method CoapCode, fn RouteHandler) Route
 	NotifyChange(resource, value string, confirm bool)
 
@@ -219,8 +223,9 @@ type CoapServer interface {
 	OnMessage(fn FnEventMessage)
 	OnBlockMessage(fn FnEventBlockMessage)
 
-	ProxyHTTP(enabled bool)
-	ProxyCoap(enabled bool)
+	ProxyOverHttp(enabled bool)
+	ProxyOverCoap(enabled bool)
+
 	GetEvents() Events
 
 	AllowProxyForwarding(Message, net.Addr) bool
@@ -231,12 +236,6 @@ type CoapServer interface {
 	AddObservation(resource, token string, session Session)
 	HasObservation(resource string, addr net.Addr) bool
 	RemoveObservation(resource string, addr net.Addr)
-
-	IsDuplicateMessage(msg Message) bool
-	UpdateMessageTS(msg Message)
-
-	UpdateBlockMessageFragment(string, Message, uint32)
-	FlushBlockMessagePayload(string) MessagePayload
 }
 
 type ServerConnection interface {
@@ -269,18 +268,19 @@ type Session interface {
 }
 
 type Request interface {
-	SetProxyURI(uri string)
-	SetMediaType(mt MediaType)
 	GetAttributes() map[string]string
 	GetAttribute(o string) string
 	GetAttributeAsInt(o string) int
 	GetMessage() Message
+	GetURIQuery(q string) string
+
+	SetProxyURI(uri string)
+	SetMediaType(mt MediaType)
 	SetPayload([]byte)
 	SetStringPayload(s string)
 	SetRequestURI(uri string)
 	SetConfirmable(con bool)
 	SetToken(t string)
-	GetURIQuery(q string) string
 	SetURIQuery(k string, v string)
 }
 
@@ -314,11 +314,8 @@ type MessagePayload interface {
 
 type Message interface {
 	GetToken() []byte
-	SetToken([]byte)
 	GetMessageId() uint16
-	SetMessageId(uint16)
 	GetMessageType() uint8
-	SetMessageType(uint8)
 	GetAcceptedContent() MediaType
 	GetCodeString() string
 	GetCode() CoapCode
@@ -331,22 +328,28 @@ type Message interface {
 	GetOptionsAsString(id OptionCode) []string
 	GetLocationPath() string
 	GetURIPath() string
+	GetPayload() MessagePayload
+
+	SetToken([]byte)
+	SetMessageId(uint16)
+	SetMessageType(uint8)
+	SetBlock1Option(opt Option)
+	SetStringPayload(s string)
+	SetPayload(MessagePayload)
+
 	AddOption(code OptionCode, value interface{})
 	AddOptions(opts []Option)
-	SetBlock1Option(opt Option)
 	CloneOptions(cm Message, opts ...OptionCode)
 	ReplaceOptions(code OptionCode, opts []Option)
 	RemoveOptions(id OptionCode)
-	SetStringPayload(s string)
-	SetPayload(MessagePayload)
-	GetPayload() MessagePayload
 }
 
 type Route interface {
-	Matches(path string) (bool, map[string]string)
 	GetMethod() string
 	GetMediaTypes() []MediaType
 	GetConfiguredPath() string
+
+	Matches(path string) (bool, map[string]string)
 	AutoAcknowledge() bool
 	Handle(req Request) Response
 }
@@ -356,8 +359,8 @@ type FnEventStart func(CoapServer)
 type FnEventClose func(CoapServer)
 type FnEventDiscover func()
 type FnEventError func(error)
-type FnEventObserve func(string, ObserveMessage)
-type FnEventObserveCancel func(string, ObserveMessage)
+type FnEventObserve func(string, Message)
+type FnEventObserveCancel func(string, Message)
 type FnEventMessage func(Message, bool)
 type FnEventBlockMessage func(Message, bool)
 
@@ -375,6 +378,9 @@ const (
 )
 
 type ObserveMessage interface {
+	GetResource() string
+	GetValue() interface{}
+	GetMessage() Message
 }
 
 type Events interface {
@@ -387,23 +393,20 @@ type Events interface {
 	OnObserveCancel(fn FnEventObserveCancel)
 	OnMessage(fn FnEventMessage)
 	OnBlockMessage(fn FnEventBlockMessage)
+
 	Notify(resource string, value interface{}, msg Message)
 	Started(server CoapServer)
 	Closed(server CoapServer)
 	Discover()
 	Error(err error)
-	Observe(resource string, msg ObserveMessage)
-	ObserveCancelled(resource string, msg ObserveMessage)
+	Observe(resource string, msg Message)
+	ObserveCancelled(resource string, msg Message)
 	Message(msg Message, inbound bool)
 	BlockMessage(msg Message, inbound bool)
 }
 
 type Configuration interface {
 }
-
-// Proxy Filter
-type ProxyFilter func(Message, net.Addr) bool
-type ProxyHandler func(c CoapServer, msg Message, session Session)
 
 type BlockMessage interface {
 }

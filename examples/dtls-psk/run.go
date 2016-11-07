@@ -29,16 +29,16 @@ func runClient() {
 		panic(err.Error())
 	}
 
-	log.Println("Got Response:" + resp.GetMessage().Payload.String())
+	log.Println("Got Response:" + resp.GetMessage().GetPayload().String())
 }
 
 func runServer() {
 	server := canopus.NewServer()
 
-	server.Get("/hello", func(req canopus.CoapRequest) canopus.CoapResponse {
+	server.Get("/hello", func(req canopus.Request) canopus.Response {
 		log.Println("Hello Called")
-		msg := canopus.ContentMessage(req.GetMessage().MessageID, canopus.MessageAcknowledgment)
-		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
+		msg := canopus.ContentMessage(req.GetMessage().GetMessageId(), canopus.MessageAcknowledgment)
+		msg.SetStringPayload("Acknowledged: " + req.GetMessage().GetPayload().String())
 		res := canopus.NewResponse(msg, nil)
 
 		return res

@@ -7,44 +7,45 @@ import (
 
 // Creates a New Request Instance
 func NewRequest(messageType uint8, messageMethod CoapCode, messageID uint16) Request {
-	return &DefaultCoapRequest{
-		msg: NewMessage(messageType, messageMethod, messageID),
+	msg := NewMessage(messageType, messageMethod, messageID)
+	return &CoapRequest{
+		msg: msg,
 	}
 }
 
 func NewConfirmableGetRequest() Request {
-	return &DefaultCoapRequest{
+	return &CoapRequest{
 		msg: NewMessage(MessageConfirmable, Get, GenerateMessageID()),
 	}
 }
 
 func NewConfirmablePostRequest() Request {
-	return &DefaultCoapRequest{
+	return &CoapRequest{
 		msg: NewMessage(MessageConfirmable, Post, GenerateMessageID()),
 	}
 }
 
 func NewConfirmablePutRequest() Request {
-	return &DefaultCoapRequest{
+	return &CoapRequest{
 		msg: NewMessage(MessageConfirmable, Put, GenerateMessageID()),
 	}
 }
 
 func NewConfirmableDeleteRequest() Request {
-	return &DefaultCoapRequest{
+	return &CoapRequest{
 		msg: NewMessage(MessageConfirmable, Delete, GenerateMessageID()),
 	}
 }
 
 // Creates a new request messages from a CoAP Message
 func NewRequestFromMessage(msg Message) Request {
-	return &DefaultCoapRequest{
+	return &CoapRequest{
 		msg: msg,
 	}
 }
 
 func NewClientRequestFromMessage(msg Message, attrs map[string]string, session Session) Request {
-	return &DefaultCoapRequest{
+	return &CoapRequest{
 		msg:     msg,
 		attrs:   attrs,
 		session: session,
@@ -53,69 +54,69 @@ func NewClientRequestFromMessage(msg Message, attrs map[string]string, session S
 
 // Wraps a CoAP Message as a Request
 // Provides various methods which proxies the Message object methods
-type DefaultCoapRequest struct {
+type CoapRequest struct {
 	msg     Message
 	attrs   map[string]string
 	session Session
 	server  *CoapServer
 }
 
-func (c *DefaultCoapRequest) SetProxyURI(uri string) {
+func (c *CoapRequest) SetProxyURI(uri string) {
 	c.msg.AddOption(OptionProxyURI, uri)
 }
 
-func (c *DefaultCoapRequest) SetMediaType(mt MediaType) {
+func (c *CoapRequest) SetMediaType(mt MediaType) {
 	c.msg.AddOption(OptionContentFormat, mt)
 }
 
-func (c *DefaultCoapRequest) GetSession() Session {
+func (c *CoapRequest) GetSession() Session {
 	return c.session
 }
 
-func (c *DefaultCoapRequest) GetAttributes() map[string]string {
+func (c *CoapRequest) GetAttributes() map[string]string {
 	return c.attrs
 }
 
-func (c *DefaultCoapRequest) GetAttribute(o string) string {
+func (c *CoapRequest) GetAttribute(o string) string {
 	return c.attrs[o]
 }
 
-func (c *DefaultCoapRequest) GetAttributeAsInt(o string) int {
+func (c *CoapRequest) GetAttributeAsInt(o string) int {
 	attr := c.GetAttribute(o)
 	i, _ := strconv.Atoi(attr)
 
 	return i
 }
 
-func (c *DefaultCoapRequest) GetMessage() Message {
+func (c *CoapRequest) GetMessage() Message {
 	return c.msg
 }
 
-func (c *DefaultCoapRequest) SetStringPayload(s string) {
-	c.msg.SetPayload(NewPlainTextPayload(s))
+func (c *CoapRequest) SetStringPayload(s string) {
+	c.msg.(*CoapMessage).SetPayload(NewPlainTextPayload(s))
 }
 
-func (c *DefaultCoapRequest) SetPayload(b []byte) {
-	c.msg.SetPayload(NewBytesPayload(b))
+func (c *CoapRequest) SetPayload(b []byte) {
+	c.msg.(*CoapMessage).SetPayload(NewBytesPayload(b))
 }
 
-func (c *DefaultCoapRequest) SetRequestURI(uri string) {
+func (c *CoapRequest) SetRequestURI(uri string) {
 	c.msg.AddOptions(NewPathOptions(uri))
 }
 
-func (c *DefaultCoapRequest) SetConfirmable(con bool) {
+func (c *CoapRequest) SetConfirmable(con bool) {
 	if con {
-		c.msg.SetMessageType(MessageConfirmable)
+		c.msg.(*CoapMessage).SetMessageType(MessageConfirmable)
 	} else {
-		c.msg.SetMessageType(MessageNonConfirmable)
+		c.msg.(*CoapMessage).SetMessageType(MessageNonConfirmable)
 	}
 }
 
-func (c *DefaultCoapRequest) SetToken(t string) {
-	c.msg.SetToken([]byte(t))
+func (c *CoapRequest) SetToken(t string) {
+	c.msg.(*CoapMessage).SetToken([]byte(t))
 }
 
-func (c *DefaultCoapRequest) GetURIQuery(q string) string {
+func (c *CoapRequest) GetURIQuery(q string) string {
 	qs := c.GetMessage().GetOptionsAsString(OptionURIQuery)
 
 	for _, o := range qs {
@@ -129,6 +130,6 @@ func (c *DefaultCoapRequest) GetURIQuery(q string) string {
 	return ""
 }
 
-func (c *DefaultCoapRequest) SetURIQuery(k string, v string) {
+func (c *CoapRequest) SetURIQuery(k string, v string) {
 	c.GetMessage().AddOption(OptionURIQuery, k+"="+v)
 }

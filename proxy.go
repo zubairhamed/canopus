@@ -31,7 +31,7 @@ func COAPProxyHandler(c CoapServer, msg Message, session Session) {
 	clientConn, err := client.Dial(parsedURL.Host)
 
 	msg.RemoveOptions(OptionProxyURI)
-	req := NewRequestFromMessage(msg)
+	req := NewRequestFromMessage(msg).(*CoapRequest)
 	req.SetRequestURI(parsedURL.RequestURI())
 
 	response, err := clientConn.Send(req)
@@ -77,8 +77,9 @@ func HTTPProxyHandler(c CoapServer, msg Message, session Session) {
 	defer resp.Body.Close()
 
 	contents, _ := ioutil.ReadAll(resp.Body)
-	msg.SetPayload(NewBytesPayload(contents))
-	respMsg := NewRequestFromMessage(msg)
+	modifiedMsg := msg.(*CoapMessage)
+	modifiedMsg.SetPayload(NewBytesPayload(contents))
+	respMsg := NewRequestFromMessage(modifiedMsg)
 
 	if requestMethod == Get {
 		etag := resp.Header.Get("ETag")

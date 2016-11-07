@@ -18,9 +18,8 @@ func main() {
 
 func runServer() {
 	server := canopus.NewServer()
-	server.Get("/watch/this", func(req canopus.CoapRequest) canopus.CoapResponse {
-		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().MessageID)
-		msg.SetStringPayload("Acknowledged")
+	server.Get("/watch/this", func(req canopus.Request) canopus.Response {
+		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().GetMessageId(), canopus.NewPlainTextPayload("Acknowledged"))
 		res := canopus.NewResponse(msg, nil)
 
 		return res
@@ -39,11 +38,11 @@ func runServer() {
 		}
 	}()
 
-	server.OnMessage(func(msg *canopus.Message, inbound bool) {
+	server.OnMessage(func(msg canopus.Message, inbound bool) {
 		canopus.PrintMessage(msg)
 	})
 
-	server.OnObserve(func(resource string, msg *canopus.Message) {
+	server.OnObserve(func(resource string, msg canopus.Message) {
 		fmt.Println("[SERVER << ] Observe Requested for " + resource)
 	})
 
@@ -59,7 +58,7 @@ func runClient() {
 		panic(err.Error())
 	}
 
-	obsChannel := make(chan *canopus.ObserveMessage)
+	obsChannel := make(chan canopus.ObserveMessage)
 	done := make(chan bool)
 	go conn.Observe(obsChannel)
 
@@ -78,8 +77,8 @@ func runClient() {
 					} else {
 						notifyCount++
 						// msg := obsMsg.Msg
-						resource := obsMsg.Resource
-						val := obsMsg.Value
+						resource := obsMsg.GetResource()
+						val := obsMsg.GetValue()
 
 						fmt.Println("[CLIENT >> ] Got Change Notification for resource and value: ", notifyCount, resource, val)
 					}

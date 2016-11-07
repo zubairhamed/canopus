@@ -57,7 +57,20 @@ func NewObserveMessage(r string, val interface{}, msg Message) ObserveMessage {
 }
 
 type CoapObserveMessage struct {
+	CoapMessage
 	Resource string
 	Value    interface{}
 	Msg      Message
+}
+
+func (m *CoapObserveMessage) GetResource() string {
+	return m.Resource
+}
+
+func (m *CoapObserveMessage) GetValue() interface{} {
+	return m.Value
+}
+
+func (m *CoapObserveMessage) GetMessage() Message {
+	return m.GetMessage()
 }

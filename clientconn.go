@@ -67,11 +67,12 @@ func (c *DTLSClientConnection) Send(req Request) (resp Response, err error) {
 
 					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
 					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt})
-					msg.SetMessageId(GenerateMessageID())
-					msg.SetPayload(NewBytesPayload(blockPayload))
+					modifiedMsg := msg.(*CoapMessage)
+					modifiedMsg.SetMessageId(GenerateMessageID())
+					modifiedMsg.SetPayload(NewBytesPayload(blockPayload))
 
 					// send message
-					_, err2 := c.sendMessage(msg)
+					_, err2 := c.sendMessage(modifiedMsg)
 					if err2 != nil {
 						wg.Done()
 						return
@@ -253,8 +254,9 @@ func (c *UDPClientConnection) Send(req Request) (resp Response, err error) {
 
 					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
 					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt})
-					msg.SetMessageId(GenerateMessageID())
-					msg.SetPayload(NewBytesPayload(blockPayload))
+					modifiedMsg := msg.(*CoapMessage)
+					modifiedMsg.SetMessageId(GenerateMessageID())
+					modifiedMsg.SetPayload(NewBytesPayload(blockPayload))
 
 					// send message
 					_, err2 := c.sendMessage(msg)
@@ -311,7 +313,7 @@ func (c *UDPClientConnection) sendMessage(msg Message) (resp Response, err error
 	resp = NewResponse(respMsg, nil)
 
 	if msg.GetMessageType() == MessageConfirmable {
-		ack := NewMessageOfType(MessageAcknowledgment, msg.GetMessageId())
+		ack := NewMessageOfType(MessageAcknowledgment, msg.GetMessageId(), nil)
 
 		c.Send(NewRequestFromMessage(ack))
 	}

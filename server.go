@@ -61,6 +61,185 @@ type DefaultCoapServer struct {
 	sessions map[string]Session
 }
 
+func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
+	if msg.GetMessageType() != MessageReset {
+		// Unsupported Method
+		if msg.GetCode() != Get && msg.GetCode() != Post && msg.GetCode() != Put && msg.GetCode() != Delete {
+			s.handleReqUnsupportedMethodRequest(msg, session)
+			return
+		}
+
+		//if err != nil {
+		//	s.GetEvents().Error(err)
+		//	if err == ErrUnknownCriticalOption {
+		//		handleReqUnknownCriticalOption(s, msg, conn, addr)
+		//		return
+		//	}
+		//}
+
+		// Proxy
+		if IsProxyRequest(msg) {
+			s.handleReqProxyRequest(msg, session)
+		} else {
+			route, attrs, err := MatchingRoute(msg.GetURIPath(), MethodString(msg.GetCode()), msg.GetOptions(OptionContentFormat), s.GetRoutes())
+			if err != nil {
+				s.GetEvents().Error(err)
+				if err == ErrNoMatchingRoute {
+					s.handleReqNoMatchingRoute(msg, session)
+					return
+				}
+
+				if err == ErrNoMatchingMethod {
+					s.handleReqNoMatchingMethod(msg, session)
+					return
+				}
+
+				if err == ErrUnsupportedContentFormat {
+					s.handleReqUnsupportedContentFormat(msg, session)
+					return
+				}
+
+				log.Println("Error occured parsing inbound message")
+				return
+			}
+
+			// Duplicate Message ID Check
+			if s.isDuplicateMessage(msg) {
+				PrintMessage(msg)
+				if msg.GetMessageType() == MessageConfirmable {
+					log.Println("Duplicate Message ID ", msg.GetMessageId())
+					s.handleReqDuplicateMessageID(msg, session)
+				}
+				return
+			}
+
+			s.updateMessageTS(msg)
+
+			// Auto acknowledge
+			// TODO: Necessary?
+			if msg.GetMessageType() == MessageConfirmable && route.AutoAcknowledge() {
+				s.handleRequestAcknowledge(msg, session)
+			}
+			req := NewClientRequestFromMessage(msg, attrs, session)
+			if msg.GetMessageType() == MessageConfirmable {
+
+				// Observation Request
+				obsOpt := msg.GetOption(OptionObserve)
+				if obsOpt != nil {
+					s.handleReqObserve(req, msg, session)
+				}
+			}
+			opt := req.GetMessage().GetOption(OptionBlock1)
+			if opt != nil {
+				blockOpt := Block1OptionFromOption(opt)
+
+				// 0000 1 010
+				/*
+									[NUM][M][SZX]
+									2 ^ (2 + 4)
+									2 ^ 6 = 32
+									Size = 2 ^ (SZX + 4)
+
+									The value 7 for SZX (which would
+					      	indicate a block size of 2048) is reserved, i.e. MUST NOT be sent
+					      	and MUST lead to a 4.00 Bad Request response code upon reception
+					      	in a request.
+				*/
+
+				if blockOpt.Value != nil {
+					if blockOpt.Code == OptionBlock1 {
+						exp := blockOpt.Exponent()
+
+						if exp == 7 {
+							s.handleReqBadRequest(msg, session)
+							return
+						}
+
+						// szx := blockOpt.Size()
+						hasMore := blockOpt.HasMore()
+						seqNum := blockOpt.Sequence()
+						// fmt.Println("Out Values == ", blockOpt.Value, exp, szx, 2, hasMore, seqNum)
+
+						s.GetEvents().BlockMessage(msg, true)
+
+						s.updateBlockMessageFragment(session.GetAddress().String(), msg, seqNum)
+
+						if hasMore {
+							s.handleReqContinue(msg, session)
+
+							// Auto Respond to client
+
+						} else {
+							// TODO: Check if message is too large
+							msg = NewMessage(msg.GetMessageType(), msg.GetCode(), msg.GetMessageId())
+							msg.SetPayload(s.flushBlockMessagePayload(session.GetAddress().String()))
+							req = NewClientRequestFromMessage(msg, attrs, session)
+						}
+					} else if blockOpt.Code == OptionBlock2 {
+
+					} else {
+						// TOOO: Invalid Block option Code
+					}
+				}
+			}
+
+			resp := route.Handle(req)
+			_, nilresponse := resp.(NilResponse)
+			if !nilresponse {
+				respMsg := resp.GetMessage().(*CoapMessage)
+				respMsg.SetToken(req.GetMessage().GetToken())
+
+				// TODO: Validate Message before sending (e.g missing messageId)
+				err := ValidateMessage(respMsg)
+				if err == nil {
+					s.GetEvents().Message(respMsg, false)
+					SendMessage(respMsg, session)
+				}
+			}
+		}
+	}
+}
+
+func (s *DefaultCoapServer) handleReqObserve(req Request, msg Message, session Session) {
+	// TODO: if server doesn't allow observing, return error
+	addr := session.GetAddress()
+
+	// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
+	resource := msg.GetURIPath()
+
+	if s.HasObservation(resource, addr) {
+		// Remove observation of client
+		s.RemoveObservation(resource, addr)
+
+		// Observe Cancel Request & Fire OnObserveCancel Event
+		s.GetEvents().ObserveCancelled(resource, msg)
+	} else {
+		// Register observation of client
+		s.AddObservation(msg.GetURIPath(), string(msg.GetToken()), session)
+
+		// Observe Request & Fire OnObserve Event
+		s.GetEvents().Observe(resource, msg)
+	}
+
+	req.GetMessage().AddOption(OptionObserve, 1)
+}
+
+func (s *DefaultCoapServer) handleResponse(msg Message, session Session) {
+	if msg.GetOption(OptionObserve) != nil {
+		handleAcknowledgeObserveRequest(s, msg)
+		return
+	}
+
+	ch := GetResponseChannel(s, msg.GetMessageId())
+	if ch != nil {
+		resp := &CoapResponseChannel{
+			Response: NewResponse(msg, nil),
+		}
+		ch <- resp
+		DeleteResponseChannel(s, msg.GetMessageId())
+	}
+}
+
 func (s *DefaultCoapServer) GetEvents() Events {
 	return s.events
 }
@@ -68,12 +247,6 @@ func (s *DefaultCoapServer) GetEvents() Events {
 func (s *DefaultCoapServer) addDiscoveryRoute() {
 	var discoveryRoute RouteHandler = func(req Request) Response {
 		msg := req.GetMessage()
-
-		ack := ContentMessage(msg.GetMessageId(), MessageAcknowledgment)
-		ack.SetToken(make([]byte, len(msg.GetToken())))
-		ack.SetToken(msg.GetToken())
-
-		ack.AddOption(OptionContentFormat, MediaTypeApplicationLinkFormat)
 
 		var buf bytes.Buffer
 		for _, r := range s.routes {
@@ -99,7 +272,10 @@ func (s *DefaultCoapServer) addDiscoveryRoute() {
 			}
 		}
 
+		ack := ContentMessage(msg.GetMessageId(), MessageAcknowledgment)
+		ack.SetToken(msg.GetToken())
 		ack.SetPayload(NewPlainTextPayload(buf.String()))
+		ack.AddOption(OptionContentFormat, MediaTypeApplicationLinkFormat)
 		resp := NewResponseWithMessage(ack)
 
 		return resp
@@ -186,7 +362,7 @@ func (s *DefaultCoapServer) Stop() {
 	close(s.stopChannel)
 }
 
-func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg Message, seq uint32) {
+func (s *DefaultCoapServer) updateBlockMessageFragment(client string, msg Message, seq uint32) {
 	msgs := s.incomingBlockMessages[client]
 
 	if msgs == nil {
@@ -203,7 +379,7 @@ func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg Messag
 	s.incomingBlockMessages[client] = msgs
 }
 
-func (s *DefaultCoapServer) FlushBlockMessagePayload(origin string) MessagePayload {
+func (s *DefaultCoapServer) flushBlockMessagePayload(origin string) MessagePayload {
 	msgs := s.incomingBlockMessages[origin]
 
 	blockMsg := msgs.(*CoapBlockMessage)
@@ -242,15 +418,12 @@ func (s *DefaultCoapServer) handleSession(session Session) {
 	}
 
 	if msg.GetMessageType() == MessageAcknowledgment {
-		handleResponse(s, msg, session)
+		s.handleResponse(msg, session)
 	} else {
-		handleRequest(s, msg, session)
+		s.handleRequest(msg, session)
 	}
 
 	s.closeSession(session)
-	// s.closeSession(session)
-
-	// TODO: Close Session?
 }
 
 func (s *DefaultCoapServer) closeSession(ssn Session) {
@@ -401,7 +574,7 @@ func (s *DefaultCoapServer) OnBlockMessage(fn FnEventBlockMessage) {
 	s.events.OnBlockMessage(fn)
 }
 
-func (s *DefaultCoapServer) ProxyHTTP(enabled bool) {
+func (s *DefaultCoapServer) ProxyOverHttp(enabled bool) {
 	if enabled {
 		s.fnHandleHTTPProxy = HTTPProxyHandler
 	} else {
@@ -409,7 +582,7 @@ func (s *DefaultCoapServer) ProxyHTTP(enabled bool) {
 	}
 }
 
-func (s *DefaultCoapServer) ProxyCoap(enabled bool) {
+func (s *DefaultCoapServer) ProxyOverCoap(enabled bool) {
 	if enabled {
 		s.fnHandleCOAPProxy = COAPProxyHandler
 	} else {
@@ -433,14 +606,93 @@ func (s *DefaultCoapServer) GetRoutes() []Route {
 	return s.routes
 }
 
-func (s *DefaultCoapServer) IsDuplicateMessage(msg Message) bool {
+func (s *DefaultCoapServer) isDuplicateMessage(msg Message) bool {
 	_, ok := s.messageIds[msg.GetMessageId()]
 
 	return ok
 }
 
-func (s *DefaultCoapServer) UpdateMessageTS(msg Message) {
+func (s *DefaultCoapServer) updateMessageTS(msg Message) {
 	s.messageIds[msg.GetMessageId()] = time.Now()
+}
+
+func (s *DefaultCoapServer) handleReqUnknownCriticalOption(msg Message, session Session) {
+	if msg.GetMessageType() == MessageConfirmable {
+		SendMessage(BadOptionMessage(msg.GetMessageId(), MessageAcknowledgment), session)
+	}
+	return
+}
+
+func (s *DefaultCoapServer) handleReqBadRequest(msg Message, session Session) {
+	if msg.GetMessageType() == MessageConfirmable {
+		SendMessage(BadRequestMessage(msg.GetMessageId(), msg.GetMessageType()), session)
+	}
+	return
+}
+
+func (s *DefaultCoapServer) handleReqContinue(msg Message, session Session) {
+	if msg.GetMessageType() == MessageConfirmable {
+		SendMessage(ContinueMessage(msg.GetMessageId(), msg.GetMessageType()), session)
+	}
+	return
+}
+
+func (s *DefaultCoapServer) handleReqUnsupportedMethodRequest(msg Message, session Session) {
+	ret := NotImplementedMessage(msg.GetMessageId(), MessageAcknowledgment)
+	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
+
+	// c.GetEvents().Message(ret, false)
+	SendMessage(ret, session)
+}
+
+func (s *DefaultCoapServer) handleReqProxyRequest(msg Message, session Session) {
+	if !s.AllowProxyForwarding(msg, session.GetAddress()) {
+		SendMessage(ForbiddenMessage(msg.GetMessageId(), MessageAcknowledgment), session)
+	}
+
+	proxyURI := msg.GetOption(OptionProxyURI).StringValue()
+	if IsCoapURI(proxyURI) {
+		s.ForwardCoap(msg, session)
+	} else if IsHTTPURI(proxyURI) {
+		s.ForwardHTTP(msg, session)
+	} else {
+		//
+	}
+}
+
+func (s *DefaultCoapServer) handleReqNoMatchingRoute(msg Message, session Session) {
+	ret := NotFoundMessage(msg.GetMessageId(), MessageAcknowledgment, msg.GetToken())
+	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
+
+	SendMessage(ret, session)
+}
+
+func (s *DefaultCoapServer) handleReqNoMatchingMethod(msg Message, session Session) {
+	ret := MethodNotAllowedMessage(msg.GetMessageId(), MessageAcknowledgment)
+	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
+
+	SendMessage(ret, session)
+}
+
+func (s *DefaultCoapServer) handleReqUnsupportedContentFormat(msg Message, session Session) {
+	ret := UnsupportedContentFormatMessage(msg.GetMessageId(), MessageAcknowledgment)
+	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
+
+	// s.GetEvents().Message(ret, false)
+	SendMessage(ret, session)
+}
+
+func (s *DefaultCoapServer) handleReqDuplicateMessageID(msg Message, session Session) {
+	ret := EmptyMessage(msg.GetMessageId(), MessageReset)
+	ret.CloneOptions(msg, OptionURIPath, OptionContentFormat)
+
+	SendMessage(ret, session)
+}
+
+func (s *DefaultCoapServer) handleRequestAcknowledge(msg Message, session Session) {
+	ack := NewMessageOfType(MessageAcknowledgment, msg.GetMessageId(), nil)
+
+	SendMessage(ack, session)
 }
 
 func NewResponseChannel() (ch chan *CoapResponseChannel) {

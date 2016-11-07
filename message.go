@@ -25,16 +25,17 @@ func NewMessage(messageType uint8, code CoapCode, messageID uint16) Message {
 
 // Instantiates an empty message with a given message id
 func NewEmptyMessage(id uint16) Message {
-	msg := NewMessageOfType(MessageAcknowledgment, id)
+	msg := NewMessageOfType(MessageAcknowledgment, id, nil)
 
 	return msg
 }
 
 // Instantiates an empty message of a specific type and message id
-func NewMessageOfType(t uint8, id uint16) Message {
+func NewMessageOfType(t uint8, id uint16, payload MessagePayload) Message {
 	return &CoapMessage{
 		MessageType: t,
 		MessageID:   id,
+		Payload:     payload,
 	}
 }
 
@@ -664,7 +665,7 @@ func ForbiddenMessage(messageID uint16, messageType uint8) Message {
 }
 
 // Creates a Non-Confirmable with CoAP Code 404 - Not Found
-func NotFoundMessage(messageID uint16, messageType uint8) Message {
+func NotFoundMessage(messageID uint16, messageType uint8, token []byte) Message {
 	return NewMessage(messageType, CoapCodeNotFound, messageID)
 }
 

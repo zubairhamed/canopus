@@ -31,7 +31,7 @@ func runClient() {
 
 func runServer() {
 	server := canopus.NewServer()
-	server.ProxyHTTP(true)
+	server.ProxyOverHttp(true)
 
 	server.ListenAndServe(":5683", nil)
 }
