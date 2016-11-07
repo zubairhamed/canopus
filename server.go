@@ -35,16 +35,16 @@ func createServer() CoapServer {
 		stopChannel:             make(chan int),
 		coapResponseChannelsMap: make(map[uint16]chan *CoapResponseChannel),
 		messageIds:              make(map[uint16]time.Time),
-		incomingBlockMessages:   make(map[string]*BlockMessage),
-		outgoingBlockMessages:   make(map[string]*BlockMessage),
+		incomingBlockMessages:   make(map[string]Message),
+		outgoingBlockMessages:   make(map[string]Message),
 		sessions:                make(map[string]Session),
 	}
 }
 
 type DefaultCoapServer struct {
 	messageIds            map[uint16]time.Time
-	incomingBlockMessages map[string]*BlockMessage
-	outgoingBlockMessages map[string]*BlockMessage
+	incomingBlockMessages map[string]Message
+	outgoingBlockMessages map[string]Message
 
 	routes       []*Route
 	events       *Events
@@ -66,7 +66,7 @@ func (s *DefaultCoapServer) GetEvents() *Events {
 }
 
 func (s *DefaultCoapServer) addDiscoveryRoute() {
-	var discoveryRoute RouteHandler = func(req CoapRequest) CoapResponse {
+	var discoveryRoute RouteHandler = func(req Request) Response {
 		msg := req.GetMessage()
 
 		ack := ContentMessage(msg.MessageID, MessageAcknowledgment)
@@ -98,8 +98,8 @@ func (s *DefaultCoapServer) addDiscoveryRoute() {
 				buf.WriteString(",")
 			}
 		}
-		ack.Payload = NewPlainTextPayload(buf.String())
-		resp := NewResponseWithMessage(ack)
+		ack.Payload = payload.NewPlainTextPayload(buf.String())
+		resp := message.NewResponseWithMessage(ack)
 		return resp
 	}
 	s.NewRoute("/.well-known/core", Get, discoveryRoute)
@@ -125,42 +125,7 @@ func (s *DefaultCoapServer) ListenAndServe(addr string, cfg *ServerConfiguration
 	}
 }
 
-type DTLSCoapServerConnection struct {
-}
-
-type UDPCoapServerConnection struct {
-	conn net.PacketConn
-}
-
-func (uc *UDPCoapServerConnection) ReadFrom(b []byte) (n int, addr net.Addr, err error) {
-	return uc.conn.ReadFrom(b)
-}
-
-func (uc *UDPCoapServerConnection) WriteTo(b []byte, addr net.Addr) (n int, err error) {
-	return uc.conn.WriteTo(b, addr)
-}
-
-func (uc *UDPCoapServerConnection) Close() error {
-	return uc.conn.Close()
-}
-
-func (uc *UDPCoapServerConnection) LocalAddr() net.Addr {
-	return uc.conn.LocalAddr()
-}
-
-func (uc *UDPCoapServerConnection) SetDeadline(t time.Time) error {
-	return uc.conn.SetDeadline(t)
-}
-
-func (uc *UDPCoapServerConnection) SetReadDeadline(t time.Time) error {
-	return uc.conn.SetReadDeadline(t)
-}
-
-func (uc *UDPCoapServerConnection) SetWriteDeadline(t time.Time) error {
-	return uc.conn.SetWriteDeadline(t)
-}
-
-func (s *DefaultCoapServer) createConn(addr string) CanopusConnection {
+func (s *DefaultCoapServer) createConn(addr string) ServerConnection {
 	// if use dTLS
 	localHost := addr
 	if !strings.Contains(localHost, ":") {
@@ -178,12 +143,12 @@ func (s *DefaultCoapServer) createConn(addr string) CanopusConnection {
 		panic(err.Error())
 	}
 
-	return &UDPCoapServerConnection{
+	return &UDPServerConnection{
 		conn: conn,
 	}
 }
 
-func (s *DefaultCoapServer) handleIncomingData(conn CanopusConnection) {
+func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
 	readBuf := make([]byte, MaxPacketSize)
 	for {
 		select {
@@ -223,7 +188,7 @@ func (s *DefaultCoapServer) UpdateBlockMessageFragment(client string, msg *Messa
 	msgs := s.incomingBlockMessages[client]
 
 	if msgs == nil {
-		msgs = &BlockMessage{
+		msgs = &message.BlockMessage{
 			Sequence:   0,
 			MessageBuf: []byte{},
 		}
@@ -288,7 +253,7 @@ func (s *DefaultCoapServer) closeSession(ssn Session) {
 	delete(s.sessions, ssn.GetAddress().String())
 }
 
-func (s *DefaultCoapServer) createSession(addr net.Addr, conn CanopusConnection, server CoapServer) Session {
+func (s *DefaultCoapServer) createSession(addr net.Addr, conn ServerConnection, server CoapServer) Session {
 	return &ServerSession{
 		addr:   addr,
 		conn:   conn,
@@ -513,4 +478,56 @@ type Observation struct {
 	Token       string
 	Resource    string
 	NotifyCount int
+}
+
+func _doSendMessage(msg Message, session Session, ch chan *CoapResponseChannel) {
+	resp := &CoapResponseChannel{}
+
+	b, err := message.MessageToBytes(msg)
+	if err != nil {
+		resp.Error = err
+		ch <- resp
+	}
+
+	conn := session.GetConnection()
+	addr := session.GetAddress()
+
+	_, err = conn.WriteTo(b, addr)
+	session.FlushBuffer()
+	if err != nil {
+		resp.Error = err
+		ch <- resp
+	}
+
+	if msg.MessageType == MessageNonConfirmable {
+		resp.Response = NewResponse(NewEmptyMessage(msg.MessageID), nil)
+		ch <- resp
+	}
+
+	AddResponseChannel(session.GetServer(), msg.MessageID, ch)
+}
+
+func SendMessage(msg *Message, session Session) (Response, error) {
+	if session.GetConnection() == nil {
+		return nil, ErrNilConn
+	}
+
+	if msg == nil {
+		return nil, ErrNilMessage
+	}
+
+	if session.GetAddress() == nil {
+		return nil, ErrNilAddr
+	}
+
+	ch := server.NewResponseChannel()
+	go _doSendMessage(msg, session, ch)
+	respCh := <-ch
+
+	return respCh.Response, respCh.Error
+}
+
+type CoapResponseChannel struct {
+	Response Response
+	Error    error
 }

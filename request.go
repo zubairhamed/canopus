@@ -6,7 +6,7 @@ import (
 )
 
 // Creates a New Request Instance
-func NewRequest(messageType uint8, messageMethod CoapCode, messageID uint16) CoapRequest {
+func NewRequest(messageType uint8, messageMethod CoapCode, messageID uint16) Request {
 	msg := NewMessage(messageType, messageMethod, messageID)
 	msg.Token = []byte(GenerateToken(8))
 
@@ -15,7 +15,7 @@ func NewRequest(messageType uint8, messageMethod CoapCode, messageID uint16) Coa
 	}
 }
 
-func NewConfirmableGetRequest() CoapRequest {
+func NewConfirmableGetRequest() Request {
 	msg := NewMessage(MessageConfirmable, Get, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
@@ -24,7 +24,7 @@ func NewConfirmableGetRequest() CoapRequest {
 	}
 }
 
-func NewConfirmablePostRequest() CoapRequest {
+func NewConfirmablePostRequest() Request {
 	msg := NewMessage(MessageConfirmable, Post, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
@@ -33,7 +33,7 @@ func NewConfirmablePostRequest() CoapRequest {
 	}
 }
 
-func NewConfirmablePutRequest() CoapRequest {
+func NewConfirmablePutRequest() Request {
 	msg := NewMessage(MessageConfirmable, Put, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
@@ -42,7 +42,7 @@ func NewConfirmablePutRequest() CoapRequest {
 	}
 }
 
-func NewConfirmableDeleteRequest() CoapRequest {
+func NewConfirmableDeleteRequest() Request {
 	msg := NewMessage(MessageConfirmable, Delete, GenerateMessageID())
 	msg.Token = []byte(GenerateToken(8))
 
@@ -52,13 +52,13 @@ func NewConfirmableDeleteRequest() CoapRequest {
 }
 
 // Creates a new request messages from a CoAP Message
-func NewRequestFromMessage(msg *Message) CoapRequest {
+func NewRequestFromMessage(msg Message) Request {
 	return &DefaultCoapRequest{
 		msg: msg,
 	}
 }
 
-func NewClientRequestFromMessage(msg *Message, attrs map[string]string, session Session) CoapRequest {
+func NewClientRequestFromMessage(msg Message, attrs map[string]string, session Session) Request {
 	return &DefaultCoapRequest{
 		msg:     msg,
 		attrs:   attrs,
@@ -66,26 +66,10 @@ func NewClientRequestFromMessage(msg *Message, attrs map[string]string, session 
 	}
 }
 
-type CoapRequest interface {
-	SetProxyURI(uri string)
-	SetMediaType(mt MediaType)
-	GetAttributes() map[string]string
-	GetAttribute(o string) string
-	GetAttributeAsInt(o string) int
-	GetMessage() *Message
-	SetPayload([]byte)
-	SetStringPayload(s string)
-	SetRequestURI(uri string)
-	SetConfirmable(con bool)
-	SetToken(t string)
-	GetURIQuery(q string) string
-	SetURIQuery(k string, v string)
-}
-
 // Wraps a CoAP Message as a Request
 // Provides various methods which proxies the Message object methods
 type DefaultCoapRequest struct {
-	msg     *Message
+	msg     Message
 	attrs   map[string]string
 	session Session
 	server  *CoapServer
@@ -118,16 +102,16 @@ func (c *DefaultCoapRequest) GetAttributeAsInt(o string) int {
 	return i
 }
 
-func (c *DefaultCoapRequest) GetMessage() *Message {
+func (c *DefaultCoapRequest) GetMessage() Message {
 	return c.msg
 }
 
 func (c *DefaultCoapRequest) SetStringPayload(s string) {
-	c.msg.Payload = NewPlainTextPayload(s)
+	c.msg.SetPayload(payload.NewPlainTextPayload(s))
 }
 
 func (c *DefaultCoapRequest) SetPayload(b []byte) {
-	c.msg.Payload = NewBytesPayload(b)
+	c.msg.SetPayload(payload.NewBytesPayload(b))
 }
 
 func (c *DefaultCoapRequest) SetRequestURI(uri string) {
@@ -136,14 +120,14 @@ func (c *DefaultCoapRequest) SetRequestURI(uri string) {
 
 func (c *DefaultCoapRequest) SetConfirmable(con bool) {
 	if con {
-		c.msg.MessageType = MessageConfirmable
+		c.msg.GetMessageType() = MessageConfirmable
 	} else {
-		c.msg.MessageType = MessageNonConfirmable
+		c.msg.GetMessageType() = MessageNonConfirmable
 	}
 }
 
 func (c *DefaultCoapRequest) SetToken(t string) {
-	c.msg.Token = []byte(t)
+	c.msg.SetToken([]byte(t))
 }
 
 func (c *DefaultCoapRequest) GetURIQuery(q string) string {

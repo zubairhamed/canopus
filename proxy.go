@@ -8,10 +8,7 @@ import (
 	"net/url"
 )
 
-// Proxy Filter
-type ProxyFilter func(*Message, net.Addr) bool
-
-func NullProxyFilter(*Message, net.Addr) bool {
+func NullProxyFilter(Message, net.Addr) bool {
 	return true
 }
 

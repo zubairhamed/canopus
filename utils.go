@@ -7,6 +7,14 @@ import (
 	"time"
 )
 
+// Returns the string value for a Message Payload
+func PayloadAsString(p MessagePayload) string {
+	if p == nil {
+		return ""
+	}
+	return p.String()
+}
+
 // GenerateMessageId generate a uint16 Message ID
 func GenerateMessageID() uint16 {
 	if CurrentMessageID != 65535 {

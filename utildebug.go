@@ -5,11 +5,11 @@ import (
 )
 
 // PrintOptions pretty prints out a given Message's options
-func PrintOptions(msg *Message) {
-	opts := msg.Options
+func PrintOptions(msg Message) {
+	opts := msg.GetAllOptions()
 	log.Println(" - - - OPTIONS - - - ")
 	if len(opts) > 0 {
-		for _, opts := range msg.Options {
+		for _, opts := range msg.GetAllOptions() {
 			log.Println("Code/Number: ", opts.GetCode(), ", Name: ", OptionNumberToString(opts.GetCode()), ", Value: ", opts.GetValue())
 		}
 	} else {
@@ -18,15 +18,15 @@ func PrintOptions(msg *Message) {
 }
 
 // PrintMessage pretty prints out a given Message
-func PrintMessage(msg *Message) {
+func PrintMessage(msg Message) {
 	log.Println("= = = = = = = = = = = = = = = = ")
-	log.Println("Code: ", msg.Code)
-	log.Println("Code String: ", CoapCodeToString(msg.Code))
-	log.Println("MessageId: ", msg.MessageID)
-	log.Println("MessageType: ", msg.MessageType)
-	log.Println("Token: ", string(msg.Token))
+	log.Println("Code: ", msg.GetCode())
+	log.Println("Code String: ", CoapCodeToString(msg.GetCode()))
+	log.Println("MessageId: ", msg.GetMessageId())
+	log.Println("MessageType: ", msg.GetMessageType())
+	log.Println("Token: ", string(msg.GetToken()))
 	log.Println("Token Length: ", msg.GetTokenLength())
-	log.Println("Payload: ", PayloadAsString(msg.Payload))
+	log.Println("Payload: ", payload.PayloadAsString(msg.GetPayload()))
 	PrintOptions(msg)
 	log.Println("= = = = = = = = = = = = = = = = ")
 

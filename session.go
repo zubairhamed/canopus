@@ -1,15 +1,17 @@
 package canopus
 
-import "net"
+import (
+	"net"
+)
 
 type ServerSession struct {
 	buf    []byte
 	addr   net.Addr
-	conn   CanopusConnection
+	conn   ServerConnection
 	server CoapServer
 }
 
-func (s *ServerSession) GetConnection() CanopusConnection {
+func (s *ServerSession) GetConnection() ServerConnection {
 	return s.conn
 }
 

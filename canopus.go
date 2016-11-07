@@ -123,7 +123,7 @@ const MaxPacketSize = 1500
 // MessageIDPurgeDuration defines the number of seconds before a MessageID Purge is initiated
 const MessageIDPurgeDuration = 60
 
-type RouteHandler func(CoapRequest) CoapResponse
+type RouteHandler func(Request) Response
 
 type MediaType int
 
@@ -196,17 +196,17 @@ var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long,
 
 // Interfaces
 type CoapServer interface {
-	ListenAndServe(addr string, cfg *ServerConfiguration)
-	ListenAndServeDTLS(addr string, cfg *ServerConfiguration)
+	ListenAndServe(addr string, cfg Configuration)
+	ListenAndServeDTLS(addr string, cfg Configuration)
 	Stop()
 	SetProxyFilter(fn ProxyFilter)
-	Get(path string, fn RouteHandler) *Route
-	Delete(path string, fn RouteHandler) *Route
-	Put(path string, fn RouteHandler) *Route
-	Post(path string, fn RouteHandler) *Route
-	Options(path string, fn RouteHandler) *Route
-	Patch(path string, fn RouteHandler) *Route
-	NewRoute(path string, method CoapCode, fn RouteHandler) *Route
+	Get(path string, fn RouteHandler) Route
+	Delete(path string, fn RouteHandler) Route
+	Put(path string, fn RouteHandler) Route
+	Post(path string, fn RouteHandler) Route
+	Options(path string, fn RouteHandler) Route
+	Patch(path string, fn RouteHandler) Route
+	NewRoute(path string, method CoapCode, fn RouteHandler) Route
 	NotifyChange(resource, value string, confirm bool)
 
 	OnNotify(fn FnEventNotify)
@@ -221,25 +221,25 @@ type CoapServer interface {
 
 	ProxyHTTP(enabled bool)
 	ProxyCoap(enabled bool)
-	GetEvents() *Events
+	GetEvents() Events
 
-	AllowProxyForwarding(*Message, net.Addr) bool
-	GetRoutes() []*Route
-	ForwardCoap(msg *Message, session Session)
-	ForwardHTTP(msg *Message, session Session)
+	AllowProxyForwarding(Message, net.Addr) bool
+	GetRoutes() []Route
+	ForwardCoap(msg Message, session Session)
+	ForwardHTTP(msg Message, session Session)
 
 	AddObservation(resource, token string, session Session)
 	HasObservation(resource string, addr net.Addr) bool
 	RemoveObservation(resource string, addr net.Addr)
 
-	IsDuplicateMessage(msg *Message) bool
-	UpdateMessageTS(msg *Message)
+	IsDuplicateMessage(msg Message) bool
+	UpdateMessageTS(msg Message)
 
-	UpdateBlockMessageFragment(string, *Message, uint32)
+	UpdateBlockMessageFragment(string, Message, uint32)
 	FlushBlockMessagePayload(string) MessagePayload
 }
 
-type CanopusConnection interface {
+type ServerConnection interface {
 	ReadFrom(b []byte) (n int, addr net.Addr, err error)
 	WriteTo(b []byte, addr net.Addr) (n int, err error)
 	Close() error
@@ -260,10 +260,121 @@ type Option interface {
 }
 
 type Session interface {
-	GetConnection() CanopusConnection
+	GetConnection() ServerConnection
 	GetAddress() net.Addr
 	Write(b []byte)
 	FlushBuffer()
 	Read() []byte
 	GetServer() CoapServer
 }
+
+type Request interface {
+	SetProxyURI(uri string)
+	SetMediaType(mt MediaType)
+	GetAttributes() map[string]string
+	GetAttribute(o string) string
+	GetAttributeAsInt(o string) int
+	GetMessage() Message
+	SetPayload([]byte)
+	SetStringPayload(s string)
+	SetRequestURI(uri string)
+	SetConfirmable(con bool)
+	SetToken(t string)
+	GetURIQuery(q string) string
+	SetURIQuery(k string, v string)
+}
+
+type Response interface {
+	GetMessage() Message
+	GetError() error
+	GetPayload() []byte
+	GetURIQuery(q string) string
+}
+
+type ClientConnection interface {
+	ObserveResource(resource string) (tok string, err error)
+	CancelObserveResource(resource string, token string) (err error)
+	StopObserve(ch chan Message)
+	Observe(ch chan Message)
+	Send(req Request) (resp Response, err error)
+	Close()
+}
+
+type Client interface {
+	Dial(address string) (conn ClientConnection, err error)
+	DialDTLS(address, secret string) (conn ClientConnection, err error)
+}
+
+// Represents the payload/content of a CoAP Message
+type MessagePayload interface {
+	GetBytes() []byte
+	Length() int
+	String() string
+}
+
+type Message interface {
+	GetToken() []byte
+	SetToken([]byte)
+	GetMessageId() uint16
+	SetMessageId(uint16)
+	GetMessageType() int
+	GetAcceptedContent() MediaType
+	GetCodeString() string
+	GetCode() CoapCode
+	GetMethod() uint8
+	GetTokenLength() uint8
+	GetTokenString() string
+	GetOptions(id OptionCode) []Option
+	GetOption(id OptionCode) Option
+	GetAllOptions() []Option
+	GetOptionsAsString(id OptionCode) []string
+	GetLocationPath() string
+	GetURIPath() string
+	AddOption(code OptionCode, value interface{})
+	AddOptions(opts []Option)
+	SetBlock1Option(opt Option)
+	CloneOptions(cm Message, opts ...OptionCode)
+	ReplaceOptions(code OptionCode, opts []Option)
+	RemoveOptions(id OptionCode)
+	SetStringPayload(s string)
+	SetPayload(MessagePayload)
+	GetPayload() MessagePayload
+}
+
+type Route interface {
+}
+
+type FnEventNotify func(string, interface{}, Message)
+type FnEventStart func(CoapServer)
+type FnEventClose func(CoapServer)
+type FnEventDiscover func()
+type FnEventError func(error)
+type FnEventObserve func(string, Message)
+type FnEventObserveCancel func(string, Message)
+type FnEventMessage func(Message, bool)
+type FnEventBlockMessage func(Message, bool)
+
+type EventCode int
+
+const (
+	EventStart         EventCode = 0
+	EventClose         EventCode = 1
+	EventDiscover      EventCode = 2
+	EventMessage       EventCode = 3
+	EventError         EventCode = 4
+	EventObserve       EventCode = 5
+	EventObserveCancel EventCode = 6
+	EventNotify        EventCode = 7
+)
+
+type ObserveMessage interface {
+}
+
+type Events interface {
+}
+
+type Configuration interface {
+}
+
+// Proxy Filter
+type ProxyFilter func(Message, net.Addr) bool

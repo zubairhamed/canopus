@@ -67,7 +67,7 @@ func MatchesRoutePath(path string, re *regexp.Regexp) (bool, map[string]string) 
 }
 
 // Route represents a CoAP Route/Resource
-type Route struct {
+type CoapRoute struct {
 	Path       string
 	Method     string
 	Handler    RouteHandler
@@ -77,7 +77,7 @@ type Route struct {
 }
 
 // MatchingRoute checks if a given path matches any defined routes/resources
-func MatchingRoute(path string, method string, cf interface{}, routes []*Route) (*Route, map[string]string, error) {
+func MatchingRoute(path string, method string, cf interface{}, routes []Route) (Route, map[string]string, error) {
 	for _, route := range routes {
 		if method == route.Method {
 			match, attrs := MatchesRoutePath(path, route.RegEx)

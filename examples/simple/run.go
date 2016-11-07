@@ -14,8 +14,7 @@ func main() {
 }
 
 func runClient() {
-	client := canopus.NewClient()
-	conn, err := client.Dial("localhost:5683")
+	conn, err := canopus.NewClient().Dial("localhost:5683")
 	if err != nil {
 		panic(err.Error())
 	}

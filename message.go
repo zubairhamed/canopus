@@ -14,8 +14,8 @@ import (
 // messageType (e.g. Confirm/Non-Confirm)
 // CoAP code	404 - Not found etc
 // Message ID	uint16 unique id
-func NewMessage(messageType uint8, code CoapCode, messageID uint16) *Message {
-	return &Message{
+func NewMessage(messageType uint8, code CoapCode, messageID uint16) Message {
+	return &CoapMessage{
 		MessageType: messageType,
 		MessageID:   messageID,
 		Code:        code,
@@ -23,15 +23,15 @@ func NewMessage(messageType uint8, code CoapCode, messageID uint16) *Message {
 }
 
 // Instantiates an empty message with a given message id
-func NewEmptyMessage(id uint16) *Message {
+func NewEmptyMessage(id uint16) Message {
 	msg := NewMessageOfType(MessageAcknowledgment, id)
 
 	return msg
 }
 
 // Instantiates an empty message of a specific type and message id
-func NewMessageOfType(t uint8, id uint16) *Message {
-	return &Message{
+func NewMessageOfType(t uint8, id uint16) Message {
+	return &CoapMessage{
 		MessageType: t,
 		MessageID:   id,
 	}
@@ -53,8 +53,8 @@ func NewMessageOfType(t uint8, id uint16) *Message {
 
 // Converts an array of bytes to a Mesasge object.
 // An error is returned if a parsing error occurs
-func BytesToMessage(data []byte) (*Message, error) {
-	msg := &Message{}
+func BytesToMessage(data []byte) (Message, error) {
+	msg := &CoapMessage{}
 
 	dataLen := len(data)
 	if dataLen < 4 {
@@ -201,22 +201,22 @@ func (opts SortOptions) Less(i, j int) bool {
 }
 
 // Converts a message object to a byte array. Typically done prior to transmission
-func MessageToBytes(msg *Message) ([]byte, error) {
+func MessageToBytes(msg Message) ([]byte, error) {
 	messageID := []byte{0, 0}
-	binary.BigEndian.PutUint16(messageID, msg.MessageID)
+	binary.BigEndian.PutUint16(messageID, msg.GetMessageId())
 
 	buf := bytes.Buffer{}
-	buf.Write([]byte{(1 << 6) | (msg.MessageType << 4) | 0x0f&msg.GetTokenLength()})
-	buf.Write([]byte{byte(msg.Code)})
+	buf.Write([]byte{(1 << 6) | (msg.GetMessageType() << 4) | 0x0f&msg.GetTokenLength()})
+	buf.Write([]byte{byte(msg.GetCode())})
 	buf.Write([]byte{messageID[0]})
 	buf.Write([]byte{messageID[1]})
-	buf.Write(msg.Token)
+	buf.Write(msg.GetToken())
 
 	// Sort Options
-	sort.Sort(SortOptions(msg.Options))
+	sort.Sort(SortOptions(msg.GetAllOptions()))
 
 	lastOptionCode := 0
-	for _, opt := range msg.Options {
+	for _, opt := range msg.GetAllOptions() {
 		optCode := int(opt.GetCode())
 		optDelta := optCode - lastOptionCode
 		optDeltaValue, _ := getOptionHeaderValue(optDelta)
@@ -248,11 +248,11 @@ func MessageToBytes(msg *Message) ([]byte, error) {
 		lastOptionCode = int(optCode)
 	}
 
-	if msg.Payload != nil {
-		if msg.Payload.Length() > 0 {
+	if msg.GetPayload() != nil {
+		if msg.GetPayload().Length() > 0 {
 			buf.Write([]byte{PayloadMarker})
 		}
-		buf.Write(msg.Payload.GetBytes())
+		buf.Write(msg.GetPayload().GetBytes())
 	}
 	return buf.Bytes(), nil
 }
@@ -272,8 +272,8 @@ func getOptionHeaderValue(optValue int) (int, error) {
 }
 
 // Validates a message object and returns any error upon validation failure
-func ValidateMessage(msg *Message) error {
-	if msg.MessageType > 3 {
+func ValidateMessage(msg Message) error {
+	if msg.GetMessageType() > 3 {
 		return ErrUnknownMessageType
 	}
 
@@ -282,7 +282,7 @@ func ValidateMessage(msg *Message) error {
 	}
 
 	// Repeated Unrecognized Options
-	for _, opt := range msg.Options {
+	for _, opt := range msg.GetAllOptions() {
 		opts := msg.GetOptions(opt.GetCode())
 
 		if len(opts) > 1 {
@@ -323,7 +323,7 @@ func (o BySequence) Less(i, j int) bool {
 }
 
 // A Message object represents a CoAP payload
-type Message struct {
+type CoapMessage struct {
 	MessageType uint8
 	Code        CoapCode
 	MessageID   uint16
@@ -332,33 +332,65 @@ type Message struct {
 	Options     []Option
 }
 
-func (m *Message) GetAcceptedContent() MediaType {
+func (m *CoapMessage) SetPayload(p MessagePayload) {
+	m.Payload = p
+}
+
+func (m *CoapMessage) SetMessageId(id uint16) {
+	m.MessageID = id
+}
+
+func (m *CoapMessage) GetToken() []byte {
+	return m.Token
+}
+
+func (m *CoapMessage) GetPayload() MessagePayload {
+	return m.Payload
+}
+
+func (m *CoapMessage) GetMessageType() int {
+	return m.MessageType
+}
+
+func (m *CoapMessage) GetMessageId() uint16 {
+	return m.MessageID
+}
+
+func (m *CoapMessage) GetCode() CoapCode {
+	return m.Code
+}
+
+func (m *CoapMessage) GetAllOptions() []Option {
+	return m.Options
+}
+
+func (m *CoapMessage) GetAcceptedContent() MediaType {
 	mediaTypeCode := m.GetOption(OptionAccept).IntValue()
 
 	return MediaType(mediaTypeCode)
 }
 
-func (m *Message) GetCodeString() string {
+func (m *CoapMessage) GetCodeString() string {
 	codeClass := string(m.Code >> 5)
 	codeDetail := string(m.Code & 0x1f)
 
 	return codeClass + "." + codeDetail
 }
 
-func (m *Message) GetMethod() uint8 {
+func (m *CoapMessage) GetMethod() uint8 {
 	return (byte(m.Code) & 0x1f)
 }
 
-func (m *Message) GetTokenLength() uint8 {
+func (m *CoapMessage) GetTokenLength() uint8 {
 	return uint8(len(m.Token))
 }
 
-func (m *Message) GetTokenString() string {
+func (m *CoapMessage) GetTokenString() string {
 	return string(m.Token[:len(m.Token)])
 }
 
 // Returns an array of options given an option code
-func (m Message) GetOptions(id OptionCode) []Option {
+func (m CoapMessage) GetOptions(id OptionCode) []Option {
 	var opts []Option
 	for _, val := range m.Options {
 		if val.GetCode() == id {
@@ -369,7 +401,7 @@ func (m Message) GetOptions(id OptionCode) []Option {
 }
 
 // Returns the first option found for a given option code
-func (m Message) GetOption(id OptionCode) Option {
+func (m CoapMessage) GetOption(id OptionCode) Option {
 	for _, val := range m.Options {
 		if val.GetCode() == id {
 			return val
@@ -379,7 +411,7 @@ func (m Message) GetOption(id OptionCode) Option {
 }
 
 // Attempts to return the string value of an Option
-func (m Message) GetOptionsAsString(id OptionCode) []string {
+func (m CoapMessage) GetOptionsAsString(id OptionCode) []string {
 	opts := m.GetOptions(id)
 
 	var str []string
@@ -392,14 +424,14 @@ func (m Message) GetOptionsAsString(id OptionCode) []string {
 }
 
 // Returns the string value of the Location Path Options by joining and defining a / separator
-func (m *Message) GetLocationPath() string {
+func (m *CoapMessage) GetLocationPath() string {
 	opts := m.GetOptionsAsString(OptionLocationPath)
 
 	return strings.Join(opts, "/")
 }
 
 // Returns the string value of the Uri Path Options by joining and defining a / separator
-func (m Message) GetURIPath() string {
+func (m CoapMessage) GetURIPath() string {
 	opts := m.GetOptionsAsString(OptionURIPath)
 
 	return "/" + strings.Join(opts, "/")
@@ -407,7 +439,7 @@ func (m Message) GetURIPath() string {
 
 // Add an Option to the message. If an option is not repeatable, it will replace
 // any existing defined Option of the same type
-func (m *Message) AddOption(code OptionCode, value interface{}) {
+func (m *CoapMessage) AddOption(code OptionCode, value interface{}) {
 	opt := NewOption(code, value)
 	if IsRepeatableOption(opt) {
 		m.Options = append(m.Options, opt)
@@ -419,7 +451,7 @@ func (m *Message) AddOption(code OptionCode, value interface{}) {
 
 // Add an array of Options to the message. If an option is not repeatable, it will replace
 // any existing defined Option of the same type
-func (m *Message) AddOptions(opts []Option) {
+func (m *CoapMessage) AddOptions(opts []Option) {
 	for _, opt := range opts {
 		if IsRepeatableOption(opt) {
 			m.Options = append(m.Options, opt)
@@ -430,26 +462,26 @@ func (m *Message) AddOptions(opts []Option) {
 	}
 }
 
-func (c *Message) SetBlock1Option(opt *Block1Option) {
+func (c *CoapMessage) SetBlock1Option(opt Option) {
 	c.AddOption(OptionBlock1, opt.GetValue())
 }
 
 // Copies the given list of options from another message to this one
-func (m *Message) CloneOptions(cm *Message, opts ...OptionCode) {
+func (m *CoapMessage) CloneOptions(cm Message, opts ...OptionCode) {
 	for _, opt := range opts {
 		m.AddOptions(cm.GetOptions(opt))
 	}
 }
 
 // Replace an Option
-func (m *Message) ReplaceOptions(code OptionCode, opts []Option) {
+func (m *CoapMessage) ReplaceOptions(code OptionCode, opts []Option) {
 	m.RemoveOptions(code)
 
 	m.AddOptions(opts)
 }
 
 // Removes an Option
-func (m *Message) RemoveOptions(id OptionCode) {
+func (m *CoapMessage) RemoveOptions(id OptionCode) {
 	var opts []Option
 	for _, opt := range m.Options {
 		if opt.GetCode() != id {
@@ -460,12 +492,12 @@ func (m *Message) RemoveOptions(id OptionCode) {
 }
 
 // Adds a string payload
-func (m *Message) SetStringPayload(s string) {
+func (m *CoapMessage) SetStringPayload(s string) {
 	m.Payload = NewPlainTextPayload(s)
 }
 
 // Determines if a message contains options for proxying (i.e. Proxy-Scheme or Proxy-Uri)
-func IsProxyRequest(msg *Message) bool {
+func IsProxyRequest(msg Message) bool {
 	if msg.GetOption(OptionProxyScheme) != nil || msg.GetOption(OptionProxyURI) != nil {
 		return true
 	}
@@ -497,14 +529,6 @@ func valueToBytes(value interface{}) []byte {
 	}
 
 	return encodeInt(v)
-}
-
-// Returns the string value for a Message Payload
-func PayloadAsString(p MessagePayload) string {
-	if p == nil {
-		return ""
-	}
-	return p.String()
 }
 
 func decodeInt(b []byte) uint32 {

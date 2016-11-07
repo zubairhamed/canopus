@@ -1,22 +1,17 @@
 package canopus
 
-import "strings"
+import (
+	"strings"
+)
 
-func NoResponse() CoapResponse {
+func NoResponse() Response {
 	return NilResponse{}
-}
-
-type CoapResponse interface {
-	GetMessage() *Message
-	GetError() error
-	GetPayload() []byte
-	GetURIQuery(q string) string
 }
 
 type NilResponse struct {
 }
 
-func (c NilResponse) GetMessage() *Message {
+func (c NilResponse) GetMessage() Message {
 	return nil
 }
 
@@ -33,7 +28,7 @@ func (c NilResponse) GetURIQuery(q string) string {
 }
 
 // Creates a new Response object with a Message object and any error messages
-func NewResponse(msg *Message, err error) CoapResponse {
+func NewResponse(msg Message, err error) Response {
 	resp := &DefaultResponse{
 		msg: msg,
 		err: err,
@@ -43,7 +38,7 @@ func NewResponse(msg *Message, err error) CoapResponse {
 }
 
 // Creates a new response object with a Message object
-func NewResponseWithMessage(msg *Message) CoapResponse {
+func NewResponseWithMessage(msg Message) Response {
 	resp := &DefaultResponse{
 		msg: msg,
 	}
@@ -56,7 +51,7 @@ type DefaultResponse struct {
 	err error
 }
 
-func (c *DefaultResponse) GetMessage() *Message {
+func (c *DefaultResponse) GetMessage() Message {
 	return c.msg
 }
 
@@ -65,7 +60,7 @@ func (c *DefaultResponse) GetError() error {
 }
 
 func (c *DefaultResponse) GetPayload() []byte {
-	return c.GetMessage().Payload.GetBytes()
+	return c.GetMessage().GetPayload().GetBytes()
 }
 
 func (c *DefaultResponse) GetURIQuery(q string) string {
