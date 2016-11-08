@@ -161,7 +161,7 @@ func (c *UDPClientConnection) ObserveResource(resource string) (tok string, err 
 func (c *UDPClientConnection) CancelObserveResource(resource string, token string) (err error) {
 	req := NewRequest(MessageConfirmable, Get, GenerateMessageID())
 	req.SetRequestURI(resource)
-	req.GetMessage().AddOption(OptionObserve, 0)
+	req.GetMessage().AddOption(OptionObserve, 1)
 
 	_, err = c.Send(req)
 	return

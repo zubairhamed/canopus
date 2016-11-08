@@ -27,7 +27,7 @@ func (c *CoapClient) Dial(address string) (conn ClientConnection, err error) {
 	return
 }
 
-func (c *CoapClient) DialDTLS(address, secret string) (conn ClientConnection, err error) {
+func (c *CoapClient) DialDTLS(address, psk string) (conn ClientConnection, err error) {
 	ctx := nativedtls.NewDTLSContext()
 	if !ctx.SetCipherList("PSK-AES256-CCM8:PSK-AES128-CCM8") {
 		err = errors.New("impossible to set cipherlist")
@@ -40,12 +40,13 @@ func (c *CoapClient) DialDTLS(address, secret string) (conn ClientConnection, er
 	}
 
 	dtlsClient := nativedtls.NewDTLSClient(ctx, udpConn)
-	dtlsClient.SetPSK("Client_identity", []byte(secret))
+	dtlsClient.SetPSK("Client_identity", []byte(psk))
 
-	return &DTLSClientConnection{
+	conn = &DTLSClientConnection{
 		dtlsClient: dtlsClient,
-	}, nil
+	}
 
+	return
 }
 
 func NewObserveMessage(r string, val interface{}, msg Message) ObserveMessage {

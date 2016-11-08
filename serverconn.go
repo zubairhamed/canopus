@@ -3,9 +3,41 @@ package canopus
 import (
 	"net"
 	"time"
+
+	"github.com/jvermillard/nativedtls"
 )
 
 type DTLSServerConnection struct {
+	ctx  *nativedtls.DTLSCtx
+	conn net.PacketConn
+}
+
+func (uc *DTLSServerConnection) ReadFrom(b []byte) (n int, addr net.Addr, err error) {
+	return 0, nil, nil
+}
+
+func (uc *DTLSServerConnection) WriteTo(b []byte, addr net.Addr) (n int, err error) {
+	return 0, nil
+}
+
+func (uc *DTLSServerConnection) Close() error {
+	return nil
+}
+
+func (uc *DTLSServerConnection) LocalAddr() net.Addr {
+	return nil
+}
+
+func (uc *DTLSServerConnection) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (uc *DTLSServerConnection) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (uc *DTLSServerConnection) SetWriteDeadline(t time.Time) error {
+	return nil
 }
 
 type UDPServerConnection struct {

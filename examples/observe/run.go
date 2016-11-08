@@ -31,7 +31,7 @@ func runServer() {
 			select {
 			case <-ticker.C:
 				changeVal := strconv.Itoa(rand.Int())
-				fmt.Println("[SERVER << ] Notify Change..", changeVal)
+				fmt.Println("[SERVER << ] Change of value -->", changeVal)
 
 				server.NotifyChange("/watch/this", changeVal, false)
 			}
@@ -76,7 +76,7 @@ func runClient() {
 						return
 					} else {
 						notifyCount++
-						// msg := obsMsg.Msg
+						// msg := obsMsg.Msg\
 						resource := obsMsg.GetResource()
 						val := obsMsg.GetValue()
 

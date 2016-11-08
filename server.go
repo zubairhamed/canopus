@@ -226,7 +226,7 @@ func (s *DefaultCoapServer) handleReqObserve(req Request, msg Message, session S
 
 func (s *DefaultCoapServer) handleResponse(msg Message, session Session) {
 	if msg.GetOption(OptionObserve) != nil {
-		handleAcknowledgeObserveRequest(s, msg)
+		s.handleAcknowledgeObserveRequest(msg)
 		return
 	}
 
@@ -285,7 +285,22 @@ func (s *DefaultCoapServer) addDiscoveryRoute() {
 
 func (s *DefaultCoapServer) ListenAndServeDTLS(addr string, cfg Configuration) {
 	s.addDiscoveryRoute()
-	// s.serve()
+
+	conn := s.createConn(addr)
+
+	ctx, err := createSslContext()
+	if err != nil {
+		panic("Unable to create SSL Context:" + err.Error())
+	}
+
+	if conn == nil {
+		log.Fatal("An error occured starting up CoAPS Server")
+	} else {
+		log.Println("Started CoAPS Server ", conn.LocalAddr())
+		go s.handleIncomingDTLSData(conn, ctx)
+		go s.events.Started(s)
+		go s.handleMessageIDPurge()
+	}
 }
 
 func (s *DefaultCoapServer) ListenAndServe(addr string, cfg Configuration) {
@@ -304,14 +319,12 @@ func (s *DefaultCoapServer) ListenAndServe(addr string, cfg Configuration) {
 }
 
 func (s *DefaultCoapServer) createConn(addr string) ServerConnection {
-	// if use dTLS
 	localHost := addr
 	if !strings.Contains(localHost, ":") {
 		localHost = ":" + localHost
 	}
 	localAddr, err := net.ResolveUDPAddr("udp6", localHost)
 	if err != nil {
-		// s.events.Error(err)
 		panic(err.Error())
 	}
 
@@ -323,6 +336,48 @@ func (s *DefaultCoapServer) createConn(addr string) ServerConnection {
 
 	return &UDPServerConnection{
 		conn: conn,
+	}
+}
+
+func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *DTLSContext) {
+	// TODO: Create Session for DTLS
+	// Set Callback for PSK (read from cfg)
+	readBuf := make([]byte, MaxPacketSize)
+	for {
+		select {
+		case <-s.stopChannel:
+			return
+
+		default:
+			// continue
+		}
+
+		len, addr, err := conn.ReadFrom(readBuf)
+		if err == nil {
+			// msgBuf := readBuf[:len]
+			msgBuf := make([]byte, len)
+			copy(msgBuf, readBuf[:len])
+
+			ssn := s.sessions[addr.String()]
+			if ssn == nil {
+				ssn = &DTLSServerSession{
+					UDPServerSession: UDPServerSession{
+						addr:   addr,
+						conn:   conn,
+						server: s,
+					},
+					sslSession: createSslSession(ctx),
+				}
+				if err != nil {
+					panic(err.Error())
+				}
+				s.sessions[addr.String()] = ssn
+			}
+			ssn.Write(msgBuf)
+			go s.handleSession(ssn)
+		} else {
+			log.Println("Error occured reading UDP", err)
+		}
 	}
 }
 
@@ -345,7 +400,14 @@ func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
 
 			ssn := s.sessions[addr.String()]
 			if ssn == nil {
-				ssn = s.createSession(addr, conn, s)
+				ssn = &UDPServerSession{
+					addr:   addr,
+					conn:   conn,
+					server: s,
+				}
+				if err != nil {
+					panic(err.Error())
+				}
 				s.sessions[addr.String()] = ssn
 			}
 			ssn.Write(msgBuf)
@@ -353,12 +415,10 @@ func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
 		} else {
 			log.Println("Error occured reading UDP", err)
 		}
-
 	}
 }
 
 func (s *DefaultCoapServer) Stop() {
-	// s.localConn.Close()
 	close(s.stopChannel)
 }
 
@@ -428,14 +488,6 @@ func (s *DefaultCoapServer) handleSession(session Session) {
 
 func (s *DefaultCoapServer) closeSession(ssn Session) {
 	delete(s.sessions, ssn.GetAddress().String())
-}
-
-func (s *DefaultCoapServer) createSession(addr net.Addr, conn ServerConnection, server CoapServer) Session {
-	return &ServerSession{
-		addr:   addr,
-		conn:   conn,
-		server: server,
-	}
 }
 
 func (s *DefaultCoapServer) Get(path string, fn RouteHandler) Route {
@@ -693,6 +745,10 @@ func (s *DefaultCoapServer) handleRequestAcknowledge(msg Message, session Sessio
 	ack := NewMessageOfType(MessageAcknowledgment, msg.GetMessageId(), nil)
 
 	SendMessage(ack, session)
+}
+
+func (s *DefaultCoapServer) handleAcknowledgeObserveRequest(msg Message) {
+	s.GetEvents().Notify(msg.GetURIPath(), msg.GetPayload(), msg)
 }
 
 func NewResponseChannel() (ch chan *CoapResponseChannel) {

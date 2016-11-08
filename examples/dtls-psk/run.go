@@ -8,7 +8,7 @@ import (
 
 func main() {
 	go runClient()
-	// go runServer()
+	go runServer()
 
 	<-make(chan struct{})
 }

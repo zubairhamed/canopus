@@ -302,7 +302,7 @@ type ClientConnection interface {
 
 type Client interface {
 	Dial(address string) (conn ClientConnection, err error)
-	DialDTLS(address, secret string) (conn ClientConnection, err error)
+	DialDTLS(address, psk string) (conn ClientConnection, err error)
 }
 
 // Represents the payload/content of a CoAP Message
