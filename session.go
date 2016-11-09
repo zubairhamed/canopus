@@ -103,6 +103,7 @@ import "C"
 import (
 	"errors"
 	"net"
+	"sync/atomic"
 )
 
 func createSslContext() (ctx *DTLSContext, err error) {
@@ -115,17 +116,52 @@ func createSslContext() (ctx *DTLSContext, err error) {
 	}
 
 	ctx = &DTLSContext{
-		ctx: sslCtx,
+		sslCtx: sslCtx,
 	}
 
 	return
 }
 
 type DTLSContext struct {
-	ctx *C.SSL_CTX
+	sslCtx *C.SSL_CTX
+}
+
+var nextSessionId int32 = 0
+
+func createSslSession(addr net.Addr, ctx *DTLSContext, pskCallback FnHandlePsk) (sslSession *SslSession, err error) {
+	ssl := C.SSL_new(ctx.sslCtx)
+	id := atomic.AddInt32(&nextSessionId, 1)
+
+	if pskCallback != nil {
+		C.set_psk_callback(ssl)
+	}
+
+	bio := C.BIO_new(C.BIO_go_session())
+
+	if bio == nil {
+		err = errors.New("Error creating session: Bio is nil")
+		return
+	}
+
+	C.SSL_set_bio(ssl, bio, bio)
+	C.setGoSessionId(bio, C.uint(id))
+	C.set_cookie_option(ssl)
+	C.SSL_set_accept_state(ssl)
+	C.DTLSv1_listen
+
+	sslSession = &SslSession{
+		addr: addr,
+		ssl:  ssl,
+		bio:  bio,
+	}
+
+	return
 }
 
 type SslSession struct {
+	addr net.Addr
+	ssl  *C.SSL
+	bio  *C.BIO
 }
 
 type DTLSServerSession struct {

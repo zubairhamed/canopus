@@ -18,6 +18,7 @@ const (
 
 type ServerConfiguration struct {
 	EnableResourceDiscovery bool
+	HandlePsk               FnHandlePsk
 }
 
 func NewServer() CoapServer {
@@ -58,7 +59,8 @@ type DefaultCoapServer struct {
 
 	coapResponseChannelsMap map[uint16]chan *CoapResponseChannel
 
-	sessions map[string]Session
+	sessions     map[string]Session
+	serverConfig *ServerConfiguration
 }
 
 func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
@@ -360,13 +362,15 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *D
 
 			ssn := s.sessions[addr.String()]
 			if ssn == nil {
+
+				sslSession, err := createSslSession(addr, ctx, s.serverConfig.fnHandlePSK)
 				ssn = &DTLSServerSession{
 					UDPServerSession: UDPServerSession{
 						addr:   addr,
 						conn:   conn,
 						server: s,
 					},
-					sslSession: createSslSession(ctx),
+					sslSession: sslSession,
 				}
 				if err != nil {
 					panic(err.Error())

@@ -364,6 +364,8 @@ type FnEventObserveCancel func(string, Message)
 type FnEventMessage func(Message, bool)
 type FnEventBlockMessage func(Message, bool)
 
+type FnHandlePsk func(string) []byte
+
 type EventCode int
 
 const (

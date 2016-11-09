@@ -44,7 +44,11 @@ func runServer() {
 		return res
 	})
 
-	cfg := &canopus.ServerConfiguration{}
+	cfg := &canopus.ServerConfiguration{
+		HandlePsk: func(id string) []byte {
+			return nil
+		},
+	}
 
 	server.ListenAndServeDTLS(":5684", cfg)
 }
