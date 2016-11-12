@@ -46,7 +46,7 @@ func runServer() {
 		fmt.Println("[SERVER << ] Observe Requested for " + resource)
 	})
 
-	server.ListenAndServe(":5683", nil)
+	server.ListenAndServe(":5683")
 }
 
 func runClient() {

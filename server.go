@@ -7,18 +7,21 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"crypto/rand"
+
+	"github.com/satori/go.uuid"
 )
 
-type ProxyType int
-
-const (
-	ProxyHTTP ProxyType = 0
-	ProxyCOAP ProxyType = 1
-)
+var SERVER_INSTANCES map[string]CoapServer
 
 type ServerConfiguration struct {
 	EnableResourceDiscovery bool
 	HandlePsk               FnHandlePsk
+}
+
+func (s *ServerConfiguration) GetPskHandler() FnHandlePsk {
+	return s.HandlePsk
 }
 
 func NewServer() CoapServer {
@@ -26,7 +29,6 @@ func NewServer() CoapServer {
 }
 
 func createServer() CoapServer {
-
 	return &DefaultCoapServer{
 		events:                  NewEvents(),
 		observations:            make(map[string][]*Observation),
@@ -61,6 +63,14 @@ type DefaultCoapServer struct {
 
 	sessions     map[string]Session
 	serverConfig *ServerConfiguration
+
+	cookieSecret []byte
+
+	fnPskHandler FnHandlePsk
+}
+
+func (s *DefaultCoapServer) HandlePSK(fn FnHandlePsk) {
+	s.fnPskHandler = fn
 }
 
 func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
@@ -285,7 +295,7 @@ func (s *DefaultCoapServer) addDiscoveryRoute() {
 	s.NewRoute("/.well-known/core", Get, discoveryRoute)
 }
 
-func (s *DefaultCoapServer) ListenAndServeDTLS(addr string, cfg Configuration) {
+func (s *DefaultCoapServer) ListenAndServeDTLS(addr string) {
 	s.addDiscoveryRoute()
 
 	conn := s.createConn(addr)
@@ -298,14 +308,21 @@ func (s *DefaultCoapServer) ListenAndServeDTLS(addr string, cfg Configuration) {
 	if conn == nil {
 		log.Fatal("An error occured starting up CoAPS Server")
 	} else {
+		secret := make([]byte, 32)
+		if n, err := rand.Read(secret); n != 32 || err != nil {
+			panic(err)
+		}
+
+		s.cookieSecret = secret
 		log.Println("Started CoAPS Server ", conn.LocalAddr())
-		go s.handleIncomingDTLSData(conn, ctx)
+		id := registerServer(s)
+		go s.handleIncomingDTLSData(conn, ctx, id)
 		go s.events.Started(s)
 		go s.handleMessageIDPurge()
 	}
 }
 
-func (s *DefaultCoapServer) ListenAndServe(addr string, cfg Configuration) {
+func (s *DefaultCoapServer) ListenAndServe(addr string) {
 	s.addDiscoveryRoute()
 
 	conn := s.createConn(addr)
@@ -314,6 +331,7 @@ func (s *DefaultCoapServer) ListenAndServe(addr string, cfg Configuration) {
 		log.Fatal("An error occured starting up CoAP Server")
 	} else {
 		log.Println("Started CoAP Server ", conn.LocalAddr())
+		registerServer(s)
 		go s.handleIncomingData(conn)
 		go s.events.Started(s)
 		go s.handleMessageIDPurge()
@@ -341,9 +359,7 @@ func (s *DefaultCoapServer) createConn(addr string) ServerConnection {
 	}
 }
 
-func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *DTLSContext) {
-	// TODO: Create Session for DTLS
-	// Set Callback for PSK (read from cfg)
+func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *DTLSContext, id string) {
 	readBuf := make([]byte, MaxPacketSize)
 	for {
 		select {
@@ -356,33 +372,43 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *D
 
 		len, addr, err := conn.ReadFrom(readBuf)
 		if err == nil {
-			// msgBuf := readBuf[:len]
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf[:len])
 
 			ssn := s.sessions[addr.String()]
 			if ssn == nil {
-
-				sslSession, err := createSslSession(addr, ctx, s.serverConfig.fnHandlePSK)
 				ssn = &DTLSServerSession{
 					UDPServerSession: UDPServerSession{
 						addr:   addr,
 						conn:   conn,
 						server: s,
 					},
-					sslSession: sslSession,
 				}
+
+				ssn = &DTLSServerSession{
+					UDPServerSession: UDPServerSession{
+						addr:   addr,
+						conn:   conn,
+						server: s,
+					},
+				}
+				err := newSslSession(ssn.(*DTLSServerSession), ctx, s.fnPskHandler, id)
 				if err != nil {
 					panic(err.Error())
 				}
+
 				s.sessions[addr.String()] = ssn
 			}
-			ssn.Write(msgBuf)
+			ssn.Received(msgBuf)
 			go s.handleSession(ssn)
 		} else {
 			log.Println("Error occured reading UDP", err)
 		}
 	}
+}
+
+func (s *DefaultCoapServer) GetSession(addr string) Session {
+	return s.sessions[addr]
 }
 
 func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
@@ -398,7 +424,6 @@ func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
 
 		len, addr, err := conn.ReadFrom(readBuf)
 		if err == nil {
-			// msgBuf := readBuf[:len]
 			msgBuf := make([]byte, len)
 			copy(msgBuf, readBuf[:len])
 
@@ -475,7 +500,9 @@ func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 }
 
 func (s *DefaultCoapServer) handleSession(session Session) {
-	msgBuf := session.Read()
+	var msgBuf []byte
+	session.Read(msgBuf)
+
 	msg, err := BytesToMessage(msgBuf)
 	if err != nil {
 		panic(err.Error())
@@ -755,6 +782,22 @@ func (s *DefaultCoapServer) handleAcknowledgeObserveRequest(msg Message) {
 	s.GetEvents().Notify(msg.GetURIPath(), msg.GetPayload(), msg)
 }
 
+func (s *DefaultCoapServer) handleAcknowledgeObserveRequestGetSession(addr string) Session {
+	return s.sessions[addr]
+}
+
+func registerServer(server CoapServer) string {
+	u1 := uuid.NewV4().String()
+
+	SERVER_INSTANCES[u1] = server
+
+	return u1
+}
+
+func getServer(id string) CoapServer {
+	return SERVER_INSTANCES[id]
+}
+
 func NewResponseChannel() (ch chan *CoapResponseChannel) {
 	ch = make(chan *CoapResponseChannel)
 
@@ -805,11 +848,7 @@ func _doSendMessage(msg Message, session Session, ch chan *CoapResponseChannel) 
 		ch <- resp
 	}
 
-	conn := session.GetConnection()
-	addr := session.GetAddress()
-
-	_, err = conn.WriteTo(b, addr)
-	session.FlushBuffer()
+	_, err = session.Write(b)
 	if err != nil {
 		resp.Error = err
 		ch <- resp

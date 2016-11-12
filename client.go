@@ -1,10 +1,8 @@
 package canopus
 
 import (
+	"errors"
 	"net"
-
-	"github.com/jvermillard/nativedtls"
-	"github.com/wendal/errors"
 )
 
 func NewClient() Client {
@@ -28,7 +26,7 @@ func (c *CoapClient) Dial(address string) (conn ClientConnection, err error) {
 }
 
 func (c *CoapClient) DialDTLS(address, psk string) (conn ClientConnection, err error) {
-	ctx := nativedtls.NewDTLSContext()
+	ctx := NewDTLSContext()
 	if !ctx.SetCipherList("PSK-AES256-CCM8:PSK-AES128-CCM8") {
 		err = errors.New("impossible to set cipherlist")
 		return
@@ -39,7 +37,8 @@ func (c *CoapClient) DialDTLS(address, psk string) (conn ClientConnection, err e
 		return
 	}
 
-	dtlsClient := nativedtls.NewDTLSClient(ctx, udpConn)
+	// todo undo
+	dtlsClient := NewDTLSClient(ctx, udpConn)
 	dtlsClient.SetPSK("Client_identity", []byte(psk))
 
 	conn = &DTLSClientConnection{

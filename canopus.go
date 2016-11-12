@@ -200,9 +200,10 @@ var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long,
 
 // Interfaces
 type CoapServer interface {
-	ListenAndServe(addr string, cfg Configuration)
-	ListenAndServeDTLS(addr string, cfg Configuration)
+	ListenAndServe(addr string)
+	ListenAndServeDTLS(addr string)
 	Stop()
+
 	Get(path string, fn RouteHandler) Route
 	Delete(path string, fn RouteHandler) Route
 	Put(path string, fn RouteHandler) Route
@@ -236,6 +237,10 @@ type CoapServer interface {
 	AddObservation(resource, token string, session Session)
 	HasObservation(resource string, addr net.Addr) bool
 	RemoveObservation(resource string, addr net.Addr)
+
+	HandlePSK(FnHandlePsk)
+
+	GetSession(addr string) Session
 }
 
 type ServerConnection interface {
@@ -261,10 +266,10 @@ type Option interface {
 type Session interface {
 	GetConnection() ServerConnection
 	GetAddress() net.Addr
-	Write(b []byte)
-	FlushBuffer()
-	Read() []byte
+	Write([]byte) (int, error)
+	Read([]byte) (n int, err error)
 	GetServer() CoapServer
+	Received([]byte) int
 }
 
 type Request interface {
@@ -405,9 +410,6 @@ type Events interface {
 	ObserveCancelled(resource string, msg Message)
 	Message(msg Message, inbound bool)
 	BlockMessage(msg Message, inbound bool)
-}
-
-type Configuration interface {
 }
 
 type BlockMessage interface {

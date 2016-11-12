@@ -4,13 +4,11 @@ import (
 	"log"
 	"net"
 	"sync"
-
-	"github.com/jvermillard/nativedtls"
 )
 
 type DTLSClientConnection struct {
 	UDPClientConnection
-	dtlsClient *nativedtls.DTLSClient
+	dtlsClient *DTLSClient
 }
 
 func (c *DTLSClientConnection) Send(req Request) (resp Response, err error) {
