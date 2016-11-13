@@ -384,14 +384,6 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *D
 						server: s,
 					},
 				}
-
-				ssn = &DTLSServerSession{
-					UDPServerSession: UDPServerSession{
-						addr:   addr,
-						conn:   conn,
-						server: s,
-					},
-				}
 				err := newSslSession(ssn.(*DTLSServerSession), ctx, s.fnPskHandler, id)
 				if err != nil {
 					panic(err.Error())

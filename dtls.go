@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"reflect"
 	"strings"
@@ -29,7 +28,6 @@ import (
 )
 
 func init() {
-	log.Println("INIT!!!!!!!")
 	// low level init of OpenSSL
 	C.init_lib()
 
@@ -69,25 +67,32 @@ type DTLSContext struct {
 	sslCtx *C.SSL_CTX
 }
 
-func createSslContext() (ctx *DTLSContext, err error) {
+func createSslContext() (dtlsCtx *DTLSContext, err error) {
 	sslCtx := C.SSL_CTX_new(C.DTLSv1_2_server_method())
-	ret := int(C.SSL_CTX_set_cipher_list(sslCtx, C.CString("PSK-AES256-CCM8:PSK-AES128-CCM8")))
+	if sslCtx == nil {
+		err = errors.New("Error creating SSL context")
+		return
+	}
 
+	fmt.Println("call >> init_server_ctx")
+	C.init_server_ctx(sslCtx)
+
+	ret := int(C.SSL_CTX_set_cipher_list(sslCtx, C.CString("PSK-AES256-CCM8:PSK-AES128-CCM8")))
 	if ret != 1 {
 		err = errors.New("Unable to set CipherList")
 		return
 	}
 
-	ctx = &DTLSContext{
+	dtlsCtx = &DTLSContext{
 		sslCtx: sslCtx,
 	}
 
 	return
 }
 
-// DTLS
 //export go_session_bio_read
 func go_session_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
+	fmt.Println("cgo :-- go_session_bio_read")
 	biodata := *(*string)(C.BIO_get_data(bio))
 	// sess := sessions[*(*int32)(C.BIO_get_data(bio))]
 
@@ -110,6 +115,7 @@ func go_session_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
 
 //export go_session_bio_write
 func go_session_bio_write(bio *C.BIO, buf *C.char, num C.int) C.int {
+	fmt.Println("cgo :-- go_session_bio_write")
 	biodata := *(*string)(C.BIO_get_data(bio))
 	datas := strings.Split(biodata, ",")
 	serverId := datas[0]
@@ -137,13 +143,7 @@ func go_session_bio_write(bio *C.BIO, buf *C.char, num C.int) C.int {
 
 //export go_session_bio_free
 func go_session_bio_free(bio *C.BIO) C.int {
-	//data := C.GoString(C.BIO_get_data(bio))
-	//datas := strings.Split(data, ",")
-	//serverId := datas[0]
-	//addr := datas[1]
-	//server := getServer(serverId)
-	//session := server.GetSession(addr).(*DTLSServerSession)
-
+	fmt.Println("cgo :-- go_session_bio_free")
 	// some flags magic
 	if C.int(C.BIO_get_shutdown(bio)) != 0 {
 		C.BIO_set_data(bio, nil)
@@ -179,6 +179,7 @@ func go_server_psk_callback(ssl *C.SSL, identity *C.char, psk *C.char, max_psk_l
 
 //export generate_cookie_callback
 func generate_cookie_callback(ssl *C.SSL, cookie *C.uchar, cookie_len *C.uint) C.int {
+	fmt.Println("generate_cookie_callback")
 	bio := C.SSL_get_rbio(ssl)
 	biodata := *(*string)(C.BIO_get_data(bio))
 	datas := strings.Split(biodata, ",")
@@ -205,6 +206,7 @@ func generate_cookie_callback(ssl *C.SSL, cookie *C.uchar, cookie_len *C.uint) C
 
 //export verify_cookie_callback
 func verify_cookie_callback(ssl *C.SSL, cookie *C.uchar, cookie_len C.uint) C.int {
+	fmt.Println("verify_cookie_callback")
 	bio := C.SSL_get_rbio(ssl)
 	biodata := *(*string)(C.BIO_get_data(bio))
 	datas := strings.Split(biodata, ",")
@@ -454,8 +456,7 @@ func go_conn_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
 	client := clients[*(*int32)(C.BIO_get_data(bio))]
 	data := goSliceFromCString(buf, int(num))
 
-	log.Println("HAHAHAHAHAHA")
-	log.Println("CLIENT---", client)
+	fmt.Println("CLIENT---", client)
 	n, err := client.conn.Read(data)
 	if err == nil {
 		return C.int(n)

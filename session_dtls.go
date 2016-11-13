@@ -23,7 +23,7 @@ func newSslSession(session *DTLSServerSession, ctx *DTLSContext, pskCallback FnH
 		C.set_psk_callback(ssl)
 	}
 
-	log.Println("BIO GO SESSION", C.BIO_go_session())
+	log.Println("BIO GO SESSION ==", C.BIO_go_session())
 	bio := C.BIO_new(C.BIO_go_session())
 
 	if bio == nil {

@@ -14,7 +14,7 @@ extern int go_conn_bio_free(BIO* bio);
 extern unsigned int go_psk_callback(SSL *ssl, char *hint, char *identity, unsigned int max_identity_len, char *psk, unsigned int max_psk_len);
 
 // a BIO for a client conencted to our server
-static BIO_METHOD* go_session_bio_method;
+extern BIO_METHOD* go_session_bio_method;
 
 extern int go_session_bio_write(BIO* bio, char* buf, int num);
 extern int go_session_bio_read(BIO* bio, char* buf, int num);
@@ -25,6 +25,7 @@ extern int generate_cookie_callback(SSL* ssl, unsigned char* cookie, unsigned in
 extern int verify_cookie_callback(SSL* ssl, unsigned char* cookie, unsigned int cookie_len);
 
 static BIO_METHOD* BIO_go_session() {
+	printf("cgo: BIO_go_session returned\n");
 	return go_session_bio_method;
 }
 
@@ -69,6 +70,7 @@ static void init_ctx(SSL_CTX *ctx) {
 
 
 static void init_lib() {
+	setvbuf(stdout, NULL, _IOLBF, 0);
 	SSL_library_init();
 	ERR_load_BIO_strings();
 	SSL_load_error_strings();
@@ -81,10 +83,12 @@ static void set_proto_1_2(SSL_CTX *ctx) {
 }
 
 static int write_wrapper(BIO* bio,const char* data, int n) {
+	printf("cgo :-- write_wrapper\n");
 	return go_session_bio_write(bio,data,n);
 }
 
 static long go_session_bio_ctrl(BIO *bp,int cmd,long larg,void *parg) {
+	printf("cgo :-- go_session_bio_ctrl\n");
 	//always return operation not supported
 	//http://www.openssl.org/docs/crypto/BIO_ctrl.html
 	//printf("go_bio_ctrl %d\n", cmd);
@@ -92,6 +96,7 @@ static long go_session_bio_ctrl(BIO *bp,int cmd,long larg,void *parg) {
 }
 
 static int go_session_bio_create( BIO *b ) {
+	printf("cgo :-- go_session_bio_create\n");
 	BIO_set_init(b,1);
 	//BIO_set_num(b,-1);
 	//BIO_set_ptr(b,NULL);
@@ -101,6 +106,7 @@ static int go_session_bio_create( BIO *b ) {
 }
 
 static int init_session_bio_method() {
+	printf("cgo: init_session_bio_method\n");
 	go_session_bio_method = BIO_meth_new(BIO_TYPE_SOURCE_SINK,"go session dtls");
 	BIO_meth_set_write(go_session_bio_method,write_wrapper);
 	BIO_meth_set_read(go_session_bio_method,go_session_bio_read);
@@ -110,6 +116,7 @@ static int init_session_bio_method() {
 }
 
 static void init_server_ctx(SSL_CTX *ctx) {
+	printf("cgo: init_server_ctx\n");
 	SSL_CTX_set_min_proto_version(ctx, 0xFEFD); // 1.2
 	SSL_CTX_set_max_proto_version(ctx, 0xFEFD); // 1.2
 	SSL_CTX_set_read_ahead(ctx, 1);
