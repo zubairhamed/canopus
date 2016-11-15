@@ -10,6 +10,8 @@ import (
 
 	"crypto/rand"
 
+	"fmt"
+
 	"github.com/satori/go.uuid"
 )
 
@@ -385,13 +387,16 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *D
 					},
 				}
 				err := newSslSession(ssn.(*DTLSServerSession), ctx, s.fnPskHandler, id)
+				fmt.Println("created new ssl session")
 				if err != nil {
 					panic(err.Error())
 				}
 
 				s.sessions[addr.String()] = ssn
 			}
+			fmt.Println("calling ssn.Received", msgBuf)
 			ssn.Received(msgBuf)
+			fmt.Println("Handling Session")
 			go s.handleSession(ssn)
 		} else {
 			log.Println("Error occured reading UDP", err)
@@ -492,9 +497,11 @@ func (s *DefaultCoapServer) SetProxyFilter(fn ProxyFilter) {
 }
 
 func (s *DefaultCoapServer) handleSession(session Session) {
-	var msgBuf []byte
+	fmt.Println("handleSession")
+	msgBuf := make([]byte, 1500)
 	session.Read(msgBuf)
 
+	fmt.Println("Read Mesage Buf", msgBuf)
 	msg, err := BytesToMessage(msgBuf)
 	if err != nil {
 		panic(err.Error())

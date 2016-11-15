@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"syscall"
 	"unsafe"
 )
@@ -23,23 +22,24 @@ func newSslSession(session *DTLSServerSession, ctx *DTLSContext, pskCallback FnH
 		C.set_psk_callback(ssl)
 	}
 
-	log.Println("BIO GO SESSION ==", C.BIO_go_session())
+	fmt.Println("BIO GO SESSION ==", C.BIO_go_session())
 	bio := C.BIO_new(C.BIO_go_session())
 
 	if bio == nil {
 		err = errors.New("Error creating session: Bio is nil")
 		return
 	}
-
 	C.SSL_set_bio(ssl, bio, bio)
-	C.setGoData(bio, C.CString(id+","+session.addr.String()))
-	C.set_cookie_option(ssl)
-	C.SSL_set_accept_state(ssl)
-	C.DTLSv1_listen
 
 	session.ssl = ssl
 	session.bio = bio
 	session.rcvd = make(chan []byte)
+
+	C.setGoData(bio, C.CString(id+","+session.addr.String()))
+
+	C.set_cookie_option(ssl)
+	C.SSL_set_accept_state(ssl)
+	C.DTLSv1_listen
 
 	return
 }
@@ -52,20 +52,30 @@ type DTLSServerSession struct {
 }
 
 func (s *DTLSServerSession) GetConnection() ServerConnection {
-	return nil
+	return s.conn
 }
 
 func (s *DTLSServerSession) Received(b []byte) (n int) {
-	s.rcvd <- b
-	return len(b)
+	fmt.Println("DTLSServerSession:Received -- ")
+	l := len(b)
+	go func() {
+		fmt.Println("DTLSServerSession:Received PRE", s.rcvd)
+		s.rcvd <- b
+		fmt.Println("DTLSServerSession:Received POST")
+	}()
+	return l
 }
 
 func (s *DTLSServerSession) Read(b []byte) (n int, err error) {
 	// TODO test if closed?
 	length := len(b)
 
+	fmt.Println("DTLSServerSession:Read -- length", length)
+
 	ret := C.SSL_read(s.ssl, unsafe.Pointer(&b[0]), C.int(length))
-	fmt.Println("SSL READ done")
+	fmt.Println("SSL READ done", ret)
+	fmt.Println(ret)
+	fmt.Println(b)
 	if err := s.getError(ret); err != nil {
 		return 0, err
 	}

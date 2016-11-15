@@ -93,9 +93,8 @@ func createSslContext() (dtlsCtx *DTLSContext, err error) {
 //export go_session_bio_read
 func go_session_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
 	fmt.Println("cgo :-- go_session_bio_read")
-	biodata := *(*string)(C.BIO_get_data(bio))
-	// sess := sessions[*(*int32)(C.BIO_get_data(bio))]
 
+	biodata := C.GoString(C.getGoData(bio))
 	datas := strings.Split(biodata, ",")
 	serverId := datas[0]
 	addr := datas[1]
@@ -103,20 +102,32 @@ func go_session_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
 	session := server.GetSession(addr).(*DTLSServerSession)
 
 	socketData := <-session.rcvd
+	fmt.Println("go_session_bio_read ---")
+	fmt.Println(socketData)
+	fmt.Println(buf)
+	fmt.Println(int(num))
 
 	data := goSliceFromCString(buf, int(num))
+	fmt.Println(data)
+	fmt.Println("----------------")
+
 	if data == nil {
 		return 0
 	}
 
+	fmt.Println("goSLiceFromCString")
+	fmt.Println(buf)
+	fmt.Println(num)
+
 	wrote := copy(data, socketData)
+	fmt.Println("Wrote bytes", wrote)
 	return C.int(wrote)
 }
 
 //export go_session_bio_write
 func go_session_bio_write(bio *C.BIO, buf *C.char, num C.int) C.int {
 	fmt.Println("cgo :-- go_session_bio_write")
-	biodata := *(*string)(C.BIO_get_data(bio))
+	biodata := C.GoString(C.getGoData(bio))
 	datas := strings.Split(biodata, ",")
 	serverId := datas[0]
 	addr := datas[1]
@@ -124,6 +135,10 @@ func go_session_bio_write(bio *C.BIO, buf *C.char, num C.int) C.int {
 	session := server.GetSession(addr)
 	data := goSliceFromCString(buf, int(num))
 
+	fmt.Println("cgo :-- go_session_bio_write 1", data)
+	fmt.Println("cgo :-- go_session_bio_write 2", string(data))
+	fmt.Println("cgo :-- go_session_bio_write 3", buf)
+	fmt.Println("cgo :-- go_session_bio_write 4", num)
 	n, err := session.Write(data)
 	if err != nil && err != io.EOF {
 		//We expect either a syscall error
@@ -156,7 +171,7 @@ func go_session_bio_free(bio *C.BIO) C.int {
 //export go_server_psk_callback
 func go_server_psk_callback(ssl *C.SSL, identity *C.char, psk *C.char, max_psk_len C.uint) C.uint {
 	bio := C.SSL_get_rbio(ssl)
-	biodata := *(*string)(C.BIO_get_data(bio))
+	biodata := C.GoString(C.getGoData(bio))
 	datas := strings.Split(biodata, ",")
 	serverId := datas[0]
 
@@ -181,7 +196,9 @@ func go_server_psk_callback(ssl *C.SSL, identity *C.char, psk *C.char, max_psk_l
 func generate_cookie_callback(ssl *C.SSL, cookie *C.uchar, cookie_len *C.uint) C.int {
 	fmt.Println("generate_cookie_callback")
 	bio := C.SSL_get_rbio(ssl)
-	biodata := *(*string)(C.BIO_get_data(bio))
+	biodata := C.GoString(C.getGoData(bio))
+
+	fmt.Println("Got back BIO data", biodata)
 	datas := strings.Split(biodata, ",")
 	serverId := datas[0]
 	addr := datas[1]
@@ -208,7 +225,7 @@ func generate_cookie_callback(ssl *C.SSL, cookie *C.uchar, cookie_len *C.uint) C
 func verify_cookie_callback(ssl *C.SSL, cookie *C.uchar, cookie_len C.uint) C.int {
 	fmt.Println("verify_cookie_callback")
 	bio := C.SSL_get_rbio(ssl)
-	biodata := *(*string)(C.BIO_get_data(bio))
+	biodata := C.GoString(C.getGoData(bio))
 	datas := strings.Split(biodata, ",")
 	serverId := datas[0]
 	addr := datas[1]
@@ -454,6 +471,8 @@ func go_conn_bio_write(bio *C.BIO, buf *C.char, num C.int) C.int {
 //export go_conn_bio_read
 func go_conn_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
 	client := clients[*(*int32)(C.BIO_get_data(bio))]
+
+	fmt.Println("go_conn_bio_read", client)
 	data := goSliceFromCString(buf, int(num))
 
 	fmt.Println("CLIENT---", client)

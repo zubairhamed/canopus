@@ -40,8 +40,12 @@ static void set_errno(int e)
 }
 
 static void setGoData(BIO* bio, char *data) {
-	char *sId = malloc(sizeof(data));
+	// char *sData = malloc(sizeof(data));
 	BIO_set_data(bio, data);
+}
+
+static char *getGoData(BIO* bio) {
+	return BIO_get_data(bio);
 }
 
 static unsigned int server_psk_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len) {
