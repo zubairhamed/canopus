@@ -1,48 +1,29 @@
 package canopus
 
-import (
-	"errors"
-	"net"
-)
+import "net"
 
-func NewClient() Client {
-	return &CoapClient{}
-}
-
-type CoapClient struct {
-}
-
-func (c *CoapClient) Dial(address string) (conn ClientConnection, err error) {
+func Dial(address string) (conn Connection, err error) {
 	udpConn, err := net.Dial("udp", address)
 	if err != nil {
 		return
 	}
 
-	conn = &UDPClientConnection{
+	conn = &UDPConnection{
 		conn: udpConn,
 	}
 
 	return
 }
 
-func (c *CoapClient) DialDTLS(address, psk string) (conn ClientConnection, err error) {
-	ctx := NewDTLSContext()
-	if !ctx.SetCipherList("PSK-AES256-CCM8:PSK-AES128-CCM8") {
-		err = errors.New("impossible to set cipherlist")
-		return
-	}
-
+func DialDTLS(address, identity, psk string) (conn Connection, err error) {
 	udpConn, err := net.Dial("udp", address)
 	if err != nil {
 		return
 	}
 
-	// todo undo
-	dtlsClient := NewDTLSClient(ctx, udpConn)
-	dtlsClient.SetPSK("Client_identity", []byte(psk))
-
-	conn = &DTLSClientConnection{
-		dtlsClient: dtlsClient,
+	conn, err = NewDTLSConnection(udpConn, identity, psk)
+	if err != nil {
+		return
 	}
 
 	return

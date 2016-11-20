@@ -238,9 +238,11 @@ type CoapServer interface {
 	HasObservation(resource string, addr net.Addr) bool
 	RemoveObservation(resource string, addr net.Addr)
 
-	HandlePSK(FnHandlePsk)
+	HandlePSK(func(id string) []byte)
 
 	GetSession(addr string) Session
+
+	GetCookieSecret() []byte
 }
 
 type ServerConnection interface {
@@ -296,18 +298,15 @@ type Response interface {
 	GetURIQuery(q string) string
 }
 
-type ClientConnection interface {
+type Connection interface {
 	ObserveResource(resource string) (tok string, err error)
 	CancelObserveResource(resource string, token string) (err error)
 	StopObserve(ch chan ObserveMessage)
 	Observe(ch chan ObserveMessage)
 	Send(req Request) (resp Response, err error)
-	Close()
-}
-
-type Client interface {
-	Dial(address string) (conn ClientConnection, err error)
-	DialDTLS(address, psk string) (conn ClientConnection, err error)
+	Write(b []byte) (n int, err error)
+	Read(b []byte) (n int, err error)
+	Close() error
 }
 
 // Represents the payload/content of a CoAP Message
@@ -368,8 +367,6 @@ type FnEventObserve func(string, Message)
 type FnEventObserveCancel func(string, Message)
 type FnEventMessage func(Message, bool)
 type FnEventBlockMessage func(Message, bool)
-
-type FnHandlePsk func(string) []byte
 
 type EventCode int
 

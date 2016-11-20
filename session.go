@@ -1,12 +1,15 @@
 package canopus
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 type UDPServerSession struct {
-	buf    []byte
 	addr   net.Addr
 	conn   ServerConnection
 	server CoapServer
+	rcvd   chan []byte
 }
 
 func (s *UDPServerSession) GetConnection() ServerConnection {
@@ -18,27 +21,26 @@ func (s *UDPServerSession) GetAddress() net.Addr {
 }
 
 func (s *UDPServerSession) Received(b []byte) (n int) {
-	n = len(b)
-	s.buf = append(s.buf, b...)
-
-	return
+	l := len(b)
+	go func() {
+		s.rcvd <- b
+	}()
+	return l
 }
 
 func (s *UDPServerSession) Write(b []byte) (n int, err error) {
 	n, err = s.conn.WriteTo(b, s.GetAddress())
-	s.flushBuffer()
 
 	return
 }
 
-func (s *UDPServerSession) flushBuffer() {
-	s.buf = nil
-}
-
 func (s *UDPServerSession) Read(b []byte) (n int, err error) {
-	b = s.buf
-
-	return len(b), nil
+	fmt.Println("UDPServerSession:Read")
+	data := <-s.rcvd
+	fmt.Println("UDPServerSession:Read2")
+	copy(b, data)
+	fmt.Println("UDPServerSession:Read3")
+	return len(data), nil
 }
 
 func (s *UDPServerSession) GetServer() CoapServer {

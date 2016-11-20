@@ -7,31 +7,6 @@ import (
 )
 
 func main() {
-	go runClient()
-	go runServer()
-
-	<-make(chan struct{})
-}
-
-func runClient() {
-	conn, err := canopus.NewClient().Dial("localhost:5683")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID()).(*canopus.CoapRequest)
-	req.SetStringPayload("Hello, canopus")
-	req.SetRequestURI("/hello")
-
-	resp, err := conn.Send(req)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	log.Println("Got Response:" + resp.GetMessage().GetPayload().String())
-}
-
-func runServer() {
 	server := canopus.NewServer()
 
 	server.Get("/hello", func(req canopus.Request) canopus.Response {
@@ -77,5 +52,6 @@ func runServer() {
 		canopus.PrintMessage(msg)
 	})
 
-	server.ListenAndServe(":5683", nil)
+	server.ListenAndServe(":5683")
+	<-make(chan struct{})
 }

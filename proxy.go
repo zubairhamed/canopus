@@ -26,9 +26,7 @@ func COAPProxyHandler(c CoapServer, msg Message, session Session) {
 		SendMessage(BadGatewayMessage(msg.GetMessageId(), MessageAcknowledgment), session)
 		return
 	}
-
-	client := NewClient()
-	clientConn, err := client.Dial(parsedURL.Host)
+	clientConn, err := Dial(parsedURL.Host)
 
 	msg.RemoveOptions(OptionProxyURI)
 	req := NewRequestFromMessage(msg).(*CoapRequest)

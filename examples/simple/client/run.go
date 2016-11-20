@@ -7,12 +7,12 @@ import (
 )
 
 func main() {
-	conn, err := canopus.DialDTLS("localhost:5684", "canopus", "secretPSK")
+	conn, err := canopus.Dial("localhost:5683")
 	if err != nil {
 		panic(err.Error())
 	}
 
-	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID()).(*canopus.CoapRequest)
 	req.SetStringPayload("Hello, canopus")
 	req.SetRequestURI("/hello")
 

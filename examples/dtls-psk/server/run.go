@@ -19,7 +19,7 @@ func main() {
 	})
 
 	server.HandlePSK(func(id string) []byte {
-		return nil
+		return []byte("secretPSK")
 	})
 
 	server.ListenAndServeDTLS(":5684")
