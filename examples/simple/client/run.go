@@ -1,12 +1,13 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/zubairhamed/canopus"
 )
 
 func main() {
+	fmt.Println("Connecting to CoAP Server")
 	conn, err := canopus.Dial("localhost:5683")
 	if err != nil {
 		panic(err.Error())
@@ -16,10 +17,11 @@ func main() {
 	req.SetStringPayload("Hello, canopus")
 	req.SetRequestURI("/hello")
 
+	fmt.Println("Sending request..")
 	resp, err := conn.Send(req)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	log.Println("Got Response:" + resp.GetMessage().GetPayload().String())
+	fmt.Println("Got Response:" + resp.GetMessage().GetPayload().String())
 }

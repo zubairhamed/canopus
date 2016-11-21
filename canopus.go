@@ -304,6 +304,7 @@ type Connection interface {
 	StopObserve(ch chan ObserveMessage)
 	Observe(ch chan ObserveMessage)
 	Send(req Request) (resp Response, err error)
+
 	Write(b []byte) (n int, err error)
 	Read(b []byte) (n int, err error)
 	Close() error

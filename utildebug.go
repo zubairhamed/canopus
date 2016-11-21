@@ -1,6 +1,7 @@
 package canopus
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -10,25 +11,25 @@ func PrintOptions(msg Message) {
 	log.Println(" - - - OPTIONS - - - ")
 	if len(opts) > 0 {
 		for _, opts := range msg.GetAllOptions() {
-			log.Println("Code/Number: ", opts.GetCode(), ", Name: ", OptionNumberToString(opts.GetCode()), ", Value: ", opts.GetValue())
+			fmt.Println("Code/Number: ", opts.GetCode(), ", Name: ", OptionNumberToString(opts.GetCode()), ", Value: ", opts.GetValue())
 		}
 	} else {
-		log.Println("None")
+		fmt.Println("None")
 	}
 }
 
 // PrintMessage pretty prints out a given Message
 func PrintMessage(msg Message) {
-	log.Println("= = = = = = = = = = = = = = = = ")
-	log.Println("Code: ", msg.GetCode())
-	log.Println("Code String: ", CoapCodeToString(msg.GetCode()))
-	log.Println("MessageId: ", msg.GetMessageId())
-	log.Println("MessageType: ", msg.GetMessageType())
-	log.Println("Token: ", string(msg.GetToken()))
-	log.Println("Token Length: ", msg.GetTokenLength())
-	log.Println("Payload: ", PayloadAsString(msg.GetPayload()))
+	fmt.Println("= = = = = = = = = = = = = = = = ")
+	fmt.Println("Code: ", msg.GetCode())
+	fmt.Println("Code String: ", CoapCodeToString(msg.GetCode()))
+	fmt.Println("MessageId: ", msg.GetMessageId())
+	fmt.Println("MessageType: ", msg.GetMessageType())
+	fmt.Println("Token: ", string(msg.GetToken()))
+	fmt.Println("Token Length: ", msg.GetTokenLength())
+	fmt.Println("Payload: ", PayloadAsString(msg.GetPayload()))
 	PrintOptions(msg)
-	log.Println("= = = = = = = = = = = = = = = = ")
+	fmt.Println("= = = = = = = = = = = = = = = = ")
 
 }
 

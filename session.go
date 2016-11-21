@@ -29,17 +29,17 @@ func (s *UDPServerSession) Received(b []byte) (n int) {
 }
 
 func (s *UDPServerSession) Write(b []byte) (n int, err error) {
+	fmt.Println("UDPServerSession:Write", b)
 	n, err = s.conn.WriteTo(b, s.GetAddress())
+
+	fmt.Println("Written", n, "with error", err)
 
 	return
 }
 
 func (s *UDPServerSession) Read(b []byte) (n int, err error) {
-	fmt.Println("UDPServerSession:Read")
 	data := <-s.rcvd
-	fmt.Println("UDPServerSession:Read2")
 	copy(b, data)
-	fmt.Println("UDPServerSession:Read3")
 	return len(data), nil
 }
 

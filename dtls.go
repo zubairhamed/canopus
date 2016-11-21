@@ -438,6 +438,7 @@ func (s *DTLSServerSession) Read(b []byte) (n int, err error) {
 	length := len(b)
 
 	ret := C.SSL_read(s.ssl, unsafe.Pointer(&b[0]), C.int(length))
+	fmt.Println("Got off reading", b)
 	if err = s.getError(ret); err != nil {
 		n = 0
 		return

@@ -72,21 +72,13 @@ func (s *DefaultCoapServer) HandlePSK(fn func(id string) []byte) {
 }
 
 func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
-	fmt.Println("func (s *DefaultCoapServer) handleRequest(msg Message, session Session)")
+	fmt.Println("handleRequest", msg.GetMessageType())
 	if msg.GetMessageType() != MessageReset {
 		// Unsupported Method
 		if msg.GetCode() != Get && msg.GetCode() != Post && msg.GetCode() != Put && msg.GetCode() != Delete {
 			s.handleReqUnsupportedMethodRequest(msg, session)
 			return
 		}
-
-		//if err != nil {
-		//	s.GetEvents().Error(err)
-		//	if err == ErrUnknownCriticalOption {
-		//		handleReqUnknownCriticalOption(s, msg, conn, addr)
-		//		return
-		//	}
-		//}
 
 		// Proxy
 		if IsProxyRequest(msg) {
@@ -133,12 +125,9 @@ func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
 			}
 			req := NewClientRequestFromMessage(msg, attrs, session)
 
-			fmt.Println("Z1", msg.GetMessageType() == MessageConfirmable)
 			if msg.GetMessageType() == MessageConfirmable {
-				fmt.Println("Z2")
 				// Observation Request
 				obsOpt := msg.GetOption(OptionObserve)
-				fmt.Println("Z3", obsOpt)
 				if obsOpt != nil {
 					s.handleReqObserve(req, msg, session)
 				}
@@ -207,6 +196,7 @@ func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
 				err := ValidateMessage(respMsg)
 				if err == nil {
 					s.GetEvents().Message(respMsg, false)
+					fmt.Println("SENDING BACK MESSAGE", respMsg)
 					SendMessage(respMsg, session)
 				}
 			}
@@ -378,7 +368,6 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *S
 			if err == nil {
 				msgBuf := make([]byte, len)
 				copy(msgBuf, readBuf[:len])
-
 				ssn := s.sessions[addr.String()]
 				if ssn == nil {
 					ssn = &DTLSServerSession{
@@ -395,18 +384,18 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *S
 						panic(err.Error())
 					}
 					s.sessions[addr.String()] = ssn
-					s.createdSession <- ssn
 				}
 				fmt.Println("Incoming DTLS Data", msgBuf)
-				ssn.(*DTLSServerSession).rcvd <- msgBuf
+				go func() {
+					ssn.(*DTLSServerSession).rcvd <- msgBuf
+				}()
+				go s.handleSession(ssn)
 			} else {
 				log.Println("Error occured reading UDP", err)
 			}
 		}
 	}()
 
-	ssn := <-s.createdSession
-	go s.handleSession(ssn)
 }
 
 func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
@@ -424,34 +413,39 @@ func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
 			len, addr, err := conn.ReadFrom(readBuf)
 			fmt.Println("Read from Connection...")
 			if err == nil {
+				fmt.Println("X1")
 				msgBuf := make([]byte, len)
+				fmt.Println("X2")
 				copy(msgBuf, readBuf[:len])
-
+				fmt.Println("X3")
 				ssn := s.sessions[addr.String()]
+				fmt.Println("X4")
 				if ssn == nil {
+					fmt.Println("X5")
 					ssn = &UDPServerSession{
 						addr:   addr,
 						conn:   conn,
 						server: s,
 						rcvd:   make(chan []byte),
 					}
+					fmt.Println("X6")
 					if err != nil {
+						fmt.Println("X7")
 						panic(err.Error())
 					}
+					fmt.Println("X8")
 					s.sessions[addr.String()] = ssn
-					s.createdSession <- ssn
 				}
-				fmt.Println("Incoming:", msgBuf)
-				ssn.(*UDPServerSession).rcvd <- msgBuf
-				fmt.Println("Incoming POST!!")
+				go func() {
+					ssn.(*UDPServerSession).rcvd <- msgBuf
+				}()
+				go s.handleSession(ssn)
 			} else {
 				log.Println("Error occured reading UDP", err)
 			}
 		}
 	}()
 
-	ssn := <-s.createdSession
-	go s.handleSession(ssn)
 }
 
 func (s *DefaultCoapServer) GetSession(addr string) Session {
@@ -518,14 +512,17 @@ func (s *DefaultCoapServer) handleSession(session Session) {
 	defer s.closeSession(session)
 	fmt.Println("func (s *DefaultCoapServer) handleSession(session Session)")
 	msgBuf := make([]byte, 1500)
-	session.Read(msgBuf)
-	fmt.Println("POST SESSION READ")
+	n, _ := session.Read(msgBuf)
+	fmt.Println("POST SESSION READ", msgBuf)
 
-	msg, err := BytesToMessage(msgBuf)
+	msg, err := BytesToMessage(msgBuf[:n])
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(-1)
 	}
+
+	fmt.Println("INCOMING MESSAGE:")
+	PrintMessage(msg)
 
 	if msg.GetMessageType() == MessageAcknowledgment {
 		fmt.Println("PRE handleResponse")
@@ -821,15 +818,19 @@ func NewResponseChannel() (ch chan *CoapResponseChannel) {
 }
 
 func AddResponseChannel(c CoapServer, msgId uint16, ch chan *CoapResponseChannel) {
+	fmt.Println("AddResponseChannel1")
 	s := c.(*DefaultCoapServer)
-
+	fmt.Println("AddResponseChannel2")
 	s.coapResponseChannelsMap[msgId] = ch
+	fmt.Println("AddResponseChannel3")
 }
 
 func DeleteResponseChannel(c CoapServer, msgId uint16) {
+	fmt.Println("DeleteResponseChannel1")
 	s := c.(*DefaultCoapServer)
-
+	fmt.Println("DeleteResponseChannel2")
 	delete(s.coapResponseChannelsMap, msgId)
+	fmt.Println("DeleteResponseChannel3")
 }
 
 func GetResponseChannel(c CoapServer, msgId uint16) (ch chan *CoapResponseChannel) {
@@ -856,30 +857,38 @@ type Observation struct {
 }
 
 func _doSendMessage(msg Message, session Session, ch chan *CoapResponseChannel) {
+	fmt.Println("_doSendMessage")
 	resp := &CoapResponseChannel{}
 
 	b, err := MessageToBytes(msg)
+	fmt.Println("Message to Bytes", b)
 	if err != nil {
 		resp.Error = err
 		ch <- resp
 	}
 
+	fmt.Println("DBG1")
 	_, err = session.Write(b)
+	fmt.Println("DBG2")
 	if err != nil {
+		fmt.Println("DBG3")
 		resp.Error = err
 		ch <- resp
 	}
-
+	fmt.Println("DBG4")
 	if msg.GetMessageType() == MessageNonConfirmable {
+		fmt.Println("DBG5")
 		resp.Response = NewResponse(NewEmptyMessage(msg.GetMessageId()), nil)
+		fmt.Println("DBG6")
 		ch <- resp
+		fmt.Println("DBG7")
 	}
-
+	fmt.Println("DBG8")
 	AddResponseChannel(session.GetServer(), msg.GetMessageId(), ch)
+	fmt.Println("DBG9")
 }
 
 func SendMessage(msg Message, session Session) (Response, error) {
-	fmt.Println("SendMessage")
 	if session.GetConnection() == nil {
 		return nil, ErrNilConn
 	}
@@ -893,7 +902,6 @@ func SendMessage(msg Message, session Session) (Response, error) {
 	}
 
 	ch := NewResponseChannel()
-	fmt.Println("_doSendMessage")
 	go _doSendMessage(msg, session, ch)
 	respCh := <-ch
 
