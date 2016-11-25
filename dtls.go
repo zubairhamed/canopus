@@ -22,7 +22,7 @@ static long go_session_bio_ctrl(BIO *bp,int cmd,long larg,void *parg) {
 	return 1;
 }
 
-static int write_wrapper(BIO* bio,const char* data, int n) {
+static int write_wrapper(BIO* bio, char* data, int n) {
 	return go_session_bio_write(bio,data,n);
 }
 
@@ -47,7 +47,7 @@ static char *getGoData(BIO* bio) {
 	return BIO_get_data(bio);
 }
 
-static unsigned int server_psk_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len) {
+static unsigned int server_psk_callback(SSL *ssl, char *identity, unsigned char *psk, unsigned int max_psk_len) {
 	return go_server_psk_callback(ssl,identity,(char*)psk,max_psk_len);
 }
 
@@ -165,7 +165,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"reflect"
 	"sync"
@@ -216,14 +215,13 @@ type ServerDtlsContext struct {
 func go_session_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
 	session := DTLS_SERVER_SESSIONS[*(*int32)(C.BIO_get_data(bio))]
 	socketData := <-session.rcvd
-	data := goSliceFromCString(buf, int(num))
 
+	data := goSliceFromCString(buf, int(num))
 	if data == nil {
 		return 0
 	}
 
 	wrote := copy(data, socketData)
-
 	return C.int(wrote)
 }
 
@@ -294,7 +292,7 @@ func generate_cookie_callback(ssl *C.SSL, cookie *C.uchar, cookie_len *C.uint) C
 	cookieValue := mac.Sum(nil)
 
 	if len(cookieValue) >= int(*cookie_len) {
-		fmt.Println("no enough cookie space (should not happen..)")
+		logMsg("Not enough cookie space (should not happen..)")
 		return 0
 	}
 
@@ -400,7 +398,6 @@ func newSslSession(session *DTLSServerSession, ctx *ServerDtlsContext, pskCallba
 
 	session.ssl = ssl
 	session.bio = bio
-	session.rcvd = make(chan []byte)
 
 	DTLS_SERVER_SESSIONS[id] = session
 
@@ -436,9 +433,9 @@ func (s *DTLSServerSession) Write(b []byte) (int, error) {
 func (s *DTLSServerSession) Read(b []byte) (n int, err error) {
 	// TODO test if closed?
 	length := len(b)
+	// s.rcvd <- s.buf
 
 	ret := C.SSL_read(s.ssl, unsafe.Pointer(&b[0]), C.int(length))
-	fmt.Println("Got off reading", b)
 	if err = s.getError(ret); err != nil {
 		n = 0
 		return
@@ -568,11 +565,11 @@ func (c *DTLSConnection) Observe(ch chan ObserveMessage) {
 				ch <- NewObserveMessage(msg.GetURIPath(), msg.GetPayload(), msg)
 			}
 			if err != nil {
-				log.Println("Error occured reading UDP", err)
+				logMsg("Error occured reading UDP", err)
 				close(ch)
 			}
 		} else {
-			log.Println("Error occured reading UDP", err)
+			logMsg("Error occured reading UDP", err)
 			close(ch)
 		}
 	}
@@ -586,12 +583,14 @@ func (c *DTLSConnection) Send(req Request) (resp Response, err error) {
 		if MessageSizeAllowed(req) != true {
 			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
 		}
+
 	} else { // Block1 was set
-		// log.Println("Block 1 was set")
+		// fmt.Println("Block 1 was set")
 	}
 
 	if opt != nil {
 		blockOpt := Block1OptionFromOption(opt)
+
 		if blockOpt.Value == nil {
 			if MessageSizeAllowed(req) != true {
 				err = ErrMessageSizeTooLongBlockOptionValNotSet
@@ -651,12 +650,12 @@ func (c *DTLSConnection) Send(req Request) (resp Response, err error) {
 			}
 		}
 	}
-
 	resp, err = c.sendMessage(msg)
 	return
 }
 
 func (c *DTLSConnection) sendMessage(msg Message) (resp Response, err error) {
+
 	if msg == nil {
 		return nil, ErrNilMessage
 	}
@@ -666,19 +665,23 @@ func (c *DTLSConnection) sendMessage(msg Message) (resp Response, err error) {
 		return
 	}
 
+	if msg.GetMessageType() == MessageNonConfirmable {
+		go c.Write(b)
+		resp = NewResponse(NewEmptyMessage(msg.GetMessageId()), nil)
+		return
+	}
+
 	_, err = c.Write(b)
 	if err != nil {
 		return
 	}
 
-	if msg.GetMessageType() == MessageNonConfirmable {
+	msgBuf := make([]byte, 1500)
+	if msg.GetMessageType() == MessageAcknowledgment {
 		resp = NewResponse(NewEmptyMessage(msg.GetMessageId()), nil)
 		return
 	}
 
-	// c.conn.SetReadDeadline(time.Now().Add(2))
-
-	msgBuf := make([]byte, 1500)
 	n, err := c.Read(msgBuf)
 	if err != nil {
 		return
@@ -688,12 +691,14 @@ func (c *DTLSConnection) sendMessage(msg Message) (resp Response, err error) {
 	if err != nil {
 		return
 	}
+
 	resp = NewResponse(respMsg, nil)
 
 	if msg.GetMessageType() == MessageConfirmable {
-		ack := NewMessageOfType(MessageAcknowledgment, msg.GetMessageId(), nil)
+		// TODO: Send out message and wait for a confirm. If confirmation not retrieved,
+		// resend (taking into account timeouts and back-off transmissions
 
-		c.Send(NewRequestFromMessage(ack))
+		// c.Send(NewRequestFromMessage(msg))
 	}
 	return
 }
@@ -719,18 +724,20 @@ func (c *DTLSConnection) Read(b []byte) (int, error) {
 			return 0, err
 		}
 	}
+
 	length := len(b)
 	ret := C.SSL_read(c.ssl, unsafe.Pointer(&b[0]), C.int(length))
 	if err := c.getError(ret); err != nil {
 		return 0, err
 	}
+
 	// if there's no error, but a return value of 0
 	// let's say it's an EOF
 	if ret == 0 {
 		return 0, io.EOF
 	}
-	return int(ret), nil
 
+	return int(ret), nil
 }
 
 func (c *DTLSConnection) Close() error {
@@ -816,6 +823,7 @@ func go_conn_bio_read(bio *C.BIO, buf *C.char, num C.int) C.int {
 	if err == nil {
 		return C.int(n)
 	}
+
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
 		return 0
 	}
@@ -855,7 +863,7 @@ func go_psk_callback(ssl *C.SSL, hint *C.char, identity *C.char, max_identity_le
 	}
 
 	if len(*client.pskId) >= int(max_identity_len) || len(client.psk) >= int(max_psk_len) {
-		fmt.Println("PSKID or PSK too large")
+		logMsg("PSKID or PSK too large")
 		return 0
 	}
 	targetId := goSliceFromCString(identity, int(max_identity_len))

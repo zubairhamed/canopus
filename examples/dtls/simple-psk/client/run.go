@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/zubairhamed/canopus"
 )
@@ -21,5 +21,5 @@ func main() {
 		panic(err.Error())
 	}
 
-	log.Println("Got Response:" + resp.GetMessage().GetPayload().String())
+	fmt.Println("Got Response:" + resp.GetMessage().GetPayload().String())
 }

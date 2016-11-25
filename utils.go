@@ -1,6 +1,7 @@
 package canopus
 
 import (
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -166,4 +167,8 @@ func ValidCoapMediaTypeCode(mt MediaType) bool {
 	}
 
 	return false
+}
+
+func logMsg(a ...interface{}) (n int, err error) {
+	return fmt.Println(a)
 }

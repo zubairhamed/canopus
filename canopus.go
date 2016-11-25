@@ -241,6 +241,7 @@ type CoapServer interface {
 	HandlePSK(func(id string) []byte)
 
 	GetSession(addr string) Session
+	DeleteSession(ssn Session)
 
 	GetCookieSecret() []byte
 }
@@ -271,7 +272,7 @@ type Session interface {
 	Write([]byte) (int, error)
 	Read([]byte) (n int, err error)
 	GetServer() CoapServer
-	Received([]byte) int
+	WriteBuffer([]byte) int
 }
 
 type Request interface {

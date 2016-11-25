@@ -1,7 +1,6 @@
 package canopus
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -75,13 +74,11 @@ func (c *UDPConnection) Observe(ch chan ObserveMessage) {
 }
 
 func (c *UDPConnection) Send(req Request) (resp Response, err error) {
-	fmt.Println("UDPConnection:SendA")
+	log.Println("send")
 	msg := req.GetMessage()
 	opt := msg.GetOption(OptionBlock1)
 
-	fmt.Println("UDPConnection:SendB")
 	if opt == nil { // Block1 was not set
-		fmt.Println("UDPConnection:SendC")
 		if MessageSizeAllowed(req) != true {
 			return nil, ErrMessageSizeTooLongBlockOptionValNotSet
 		}
@@ -89,23 +86,17 @@ func (c *UDPConnection) Send(req Request) (resp Response, err error) {
 		// log.Println("Block 1 was set")
 	}
 
-	fmt.Println("UDPConnection:SendD")
 	if opt != nil {
-		fmt.Println("UDPConnection:SendE")
 		blockOpt := Block1OptionFromOption(opt)
-		fmt.Println("UDPConnection:SendF")
 		if blockOpt.Value == nil {
-			fmt.Println("UDPConnection:SendG")
 			if MessageSizeAllowed(req) != true {
 				err = ErrMessageSizeTooLongBlockOptionValNotSet
 				return
 			} else {
-				fmt.Println("UDPConnection:SendH")
 				// - Block # = one and only block (sz = unspecified), whereas 0 = 16bits
 				// - MOre bit = 0
 			}
 		} else { // BLock transfer request
-			fmt.Println("UDPConnection:SendI")
 			payload := msg.GetPayload().GetBytes()
 			payloadLen := uint32(len(payload))
 			blockSize := blockOpt.BlockSizeLength()
@@ -142,7 +133,7 @@ func (c *UDPConnection) Send(req Request) (resp Response, err error) {
 					modifiedMsg.SetPayload(NewBytesPayload(blockPayload))
 
 					// send message
-					_, err2 := c.sendMessage(msg)
+					_, err2 := c.SendMessage(msg)
 					if err2 != nil {
 						wg.Done()
 						return
@@ -156,80 +147,58 @@ func (c *UDPConnection) Send(req Request) (resp Response, err error) {
 			}
 		}
 	}
-	fmt.Println("UDPConnection:SendJ")
-	resp, err = c.sendMessage(msg)
-	fmt.Println("UDPConnection:SendK")
+	resp, err = c.SendMessage(msg)
 	return
 }
 
-func (c *UDPConnection) sendMessage(msg Message) (resp Response, err error) {
-	fmt.Println("UDPConnection:sendMessageA")
+func (c *UDPConnection) SendMessage(msg Message) (resp Response, err error) {
 	if msg == nil {
-		fmt.Println("UDPConnection:sendMessageB")
 		return nil, ErrNilMessage
 	}
-	fmt.Println("UDPConnection:sendMessageC")
 
-	fmt.Println("UDPConnection:sendMessageD")
 	b, err := MessageToBytes(msg)
-	fmt.Println("UDPConnection:sendMessageE")
 	if err != nil {
-		fmt.Println("UDPConnection:sendMessageF")
-		return
-	}
-	fmt.Println("UDPConnection:sendMessageG")
-
-	_, err = c.Write(b)
-	fmt.Println("UDPConnection:sendMessageH")
-	if err != nil {
-		fmt.Println("UDPConnection:sendMessageI")
 		return
 	}
 
-	fmt.Println("UDPConnection:sendMessageK")
 	if msg.GetMessageType() == MessageNonConfirmable {
-		fmt.Println("UDPConnection:sendMessageL")
+		go c.Write(b)
 		resp = NewResponse(NewEmptyMessage(msg.GetMessageId()), nil)
 		return
 	}
 
-	fmt.Println("UDPConnection:sendMessageM")
-	// c.conn.SetReadDeadline(time.Now().Add(2))
+	_, err = c.Write(b)
+	if err != nil {
+		return
+	}
 
 	msgBuf := make([]byte, 1500)
-	fmt.Println("UDPConnection:sendMessageN")
 	if msg.GetMessageType() == MessageAcknowledgment {
-		go c.Read(msgBuf)
+		resp = NewResponse(NewEmptyMessage(msg.GetMessageId()), nil)
 		return
 	}
+
 	n, err := c.Read(msgBuf)
-	fmt.Println("UDPConnection:sendMessageO")
 	if err != nil {
 		return
 	}
 
-	fmt.Println("UDPConnection:sendMessageP")
 	respMsg, err := BytesToMessage(msgBuf[:n])
-	fmt.Println("UDPConnection:sendMessageQ")
 	if err != nil {
 		return
 	}
-	fmt.Println("UDPConnection:sendMessageR")
 	resp = NewResponse(respMsg, nil)
 
-	fmt.Println("UDPConnection:sendMessageS")
 	if msg.GetMessageType() == MessageConfirmable {
-		fmt.Println("UDPConnection:sendMessageT")
-		ack := NewMessageOfType(MessageAcknowledgment, msg.GetMessageId(), nil)
+		// TODO: Send out message and wait for a confirm. If confirmation not retrieved,
+		// resend (taking into account timeouts and back-off transmissions
 
-		fmt.Println("UDPConnection:sendMessageU")
-		c.Send(NewRequestFromMessage(ack))
+		// c.Send(NewRequestFromMessage(msg))
 	}
 	return
 }
 
 func (c *UDPConnection) Write(b []byte) (int, error) {
-	fmt.Println("UDPConnection:Write")
 	return c.conn.Write(b)
 }
 

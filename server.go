@@ -3,7 +3,6 @@ package canopus
 import (
 	"bytes"
 	"crypto/rand"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -67,12 +66,15 @@ type DefaultCoapServer struct {
 	fnPskHandler func(id string) []byte
 }
 
+func (s *DefaultCoapServer) DeleteSession(ssn Session) {
+	s.closeSession(ssn)
+}
+
 func (s *DefaultCoapServer) HandlePSK(fn func(id string) []byte) {
 	s.fnPskHandler = fn
 }
 
 func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
-	fmt.Println("handleRequest", msg.GetMessageType())
 	if msg.GetMessageType() != MessageReset {
 		// Unsupported Method
 		if msg.GetCode() != Get && msg.GetCode() != Post && msg.GetCode() != Put && msg.GetCode() != Delete {
@@ -196,7 +198,6 @@ func (s *DefaultCoapServer) handleRequest(msg Message, session Session) {
 				err := ValidateMessage(respMsg)
 				if err == nil {
 					s.GetEvents().Message(respMsg, false)
-					fmt.Println("SENDING BACK MESSAGE", respMsg)
 					SendMessage(respMsg, session)
 				}
 			}
@@ -211,8 +212,6 @@ func (s *DefaultCoapServer) handleReqObserve(req Request, msg Message, session S
 	// TODO: Check if observation has been registered, if yes, remove it (observation == cancel)
 	resource := msg.GetURIPath()
 
-	fmt.Println("HasObservation CHeck..")
-	fmt.Println(s.HasObservation(resource, addr))
 	if s.HasObservation(resource, addr) {
 		// Remove observation of client
 		s.RemoveObservation(resource, addr)
@@ -231,6 +230,7 @@ func (s *DefaultCoapServer) handleReqObserve(req Request, msg Message, session S
 }
 
 func (s *DefaultCoapServer) handleResponse(msg Message, session Session) {
+	defer s.closeSession(session)
 	if msg.GetOption(OptionObserve) != nil {
 		s.handleAcknowledgeObserveRequest(msg)
 		return
@@ -364,7 +364,6 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *S
 			}
 
 			len, addr, err := conn.ReadFrom(readBuf)
-			fmt.Println("Read from Connection..")
 			if err == nil {
 				msgBuf := make([]byte, len)
 				copy(msgBuf, readBuf[:len])
@@ -375,24 +374,35 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *S
 							addr:   addr,
 							conn:   conn,
 							server: s,
-							rcvd:   make(chan []byte),
+							buf:    []byte{},
+							rcvd:   make(chan []byte, 1),
 						},
 					}
-
 					err := newSslSession(ssn.(*DTLSServerSession), ctx, s.fnPskHandler)
 					if err != nil {
 						panic(err.Error())
 					}
 					s.sessions[addr.String()] = ssn
+					s.createdSession <- ssn
 				}
-				fmt.Println("Incoming DTLS Data", msgBuf)
-				go func() {
-					ssn.(*DTLSServerSession).rcvd <- msgBuf
-				}()
-				go s.handleSession(ssn)
+
+				// ssn.WriteBuffer(msgBuf)
+				// s.handleSession(ssn)
+				//go func() {
+				//	fmt.Println("DTLS8")
+				ssn.(*DTLSServerSession).rcvd <- msgBuf
+				//	fmt.Println("DTLS8X")
+				//}()
 			} else {
-				log.Println("Error occured reading UDP", err)
+				logMsg("Error occured reading UDP", err)
 			}
+		}
+	}()
+
+	go func() {
+		for {
+			ssn := <-s.createdSession
+			go s.handleSession(ssn)
 		}
 	}()
 
@@ -411,29 +421,20 @@ func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
 			}
 
 			len, addr, err := conn.ReadFrom(readBuf)
-			fmt.Println("Read from Connection...")
 			if err == nil {
-				fmt.Println("X1")
 				msgBuf := make([]byte, len)
-				fmt.Println("X2")
 				copy(msgBuf, readBuf[:len])
-				fmt.Println("X3")
 				ssn := s.sessions[addr.String()]
-				fmt.Println("X4")
 				if ssn == nil {
-					fmt.Println("X5")
 					ssn = &UDPServerSession{
 						addr:   addr,
 						conn:   conn,
 						server: s,
 						rcvd:   make(chan []byte),
 					}
-					fmt.Println("X6")
 					if err != nil {
-						fmt.Println("X7")
 						panic(err.Error())
 					}
-					fmt.Println("X8")
 					s.sessions[addr.String()] = ssn
 				}
 				go func() {
@@ -441,7 +442,7 @@ func (s *DefaultCoapServer) handleIncomingData(conn ServerConnection) {
 				}()
 				go s.handleSession(ssn)
 			} else {
-				log.Println("Error occured reading UDP", err)
+				logMsg("Error occured reading UDP", err)
 			}
 		}
 	}()
@@ -509,29 +510,19 @@ func (s *DefaultCoapServer) GetCookieSecret() []byte {
 }
 
 func (s *DefaultCoapServer) handleSession(session Session) {
-	defer s.closeSession(session)
-	fmt.Println("func (s *DefaultCoapServer) handleSession(session Session)")
 	msgBuf := make([]byte, 1500)
 	n, _ := session.Read(msgBuf)
-	fmt.Println("POST SESSION READ", msgBuf)
 
 	msg, err := BytesToMessage(msgBuf[:n])
 	if err != nil {
-		fmt.Println(err.Error())
+		logMsg(err.Error())
 		os.Exit(-1)
 	}
 
-	fmt.Println("INCOMING MESSAGE:")
-	PrintMessage(msg)
-
 	if msg.GetMessageType() == MessageAcknowledgment {
-		fmt.Println("PRE handleResponse")
 		s.handleResponse(msg, session)
-		fmt.Println("POST handleResponse")
 	} else {
-		fmt.Println("PRE handleRequest")
 		s.handleRequest(msg, session)
-		fmt.Println("POST handleRequest")
 	}
 }
 
@@ -584,23 +575,17 @@ func (s *DefaultCoapServer) storeNewOutgoingBlockMessage(client string, payload 
 }
 
 func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
-	fmt.Println("NotifyChange")
 	t := s.observations[resource]
 
-	fmt.Println("NotifyChange A", s.observations)
 	if t != nil {
-		fmt.Println("NotifyChange B")
 		var req Request
 
 		if confirm {
-			fmt.Println("NotifyChange C")
 			req = NewRequest(MessageConfirmable, CoapCodeContent, GenerateMessageID())
 		} else {
-			fmt.Println("NotifyChange D")
 			req = NewRequest(MessageAcknowledgment, CoapCodeContent, GenerateMessageID())
 		}
 
-		fmt.Println("NotifyChange E", t)
 		for _, r := range t {
 			req.SetToken(r.Token)
 			req.SetStringPayload(value)
@@ -608,7 +593,6 @@ func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 			r.NotifyCount++
 			req.GetMessage().AddOption(OptionObserve, r.NotifyCount)
 
-			fmt.Println("go SedMessage")
 			go SendMessage(req.GetMessage(), r.Session)
 		}
 	}
@@ -818,19 +802,13 @@ func NewResponseChannel() (ch chan *CoapResponseChannel) {
 }
 
 func AddResponseChannel(c CoapServer, msgId uint16, ch chan *CoapResponseChannel) {
-	fmt.Println("AddResponseChannel1")
 	s := c.(*DefaultCoapServer)
-	fmt.Println("AddResponseChannel2")
 	s.coapResponseChannelsMap[msgId] = ch
-	fmt.Println("AddResponseChannel3")
 }
 
 func DeleteResponseChannel(c CoapServer, msgId uint16) {
-	fmt.Println("DeleteResponseChannel1")
 	s := c.(*DefaultCoapServer)
-	fmt.Println("DeleteResponseChannel2")
 	delete(s.coapResponseChannelsMap, msgId)
-	fmt.Println("DeleteResponseChannel3")
 }
 
 func GetResponseChannel(c CoapServer, msgId uint16) (ch chan *CoapResponseChannel) {
@@ -857,35 +835,25 @@ type Observation struct {
 }
 
 func _doSendMessage(msg Message, session Session, ch chan *CoapResponseChannel) {
-	fmt.Println("_doSendMessage")
 	resp := &CoapResponseChannel{}
 
 	b, err := MessageToBytes(msg)
-	fmt.Println("Message to Bytes", b)
 	if err != nil {
 		resp.Error = err
 		ch <- resp
 	}
 
-	fmt.Println("DBG1")
 	_, err = session.Write(b)
-	fmt.Println("DBG2")
 	if err != nil {
-		fmt.Println("DBG3")
 		resp.Error = err
 		ch <- resp
 	}
-	fmt.Println("DBG4")
+
 	if msg.GetMessageType() == MessageNonConfirmable {
-		fmt.Println("DBG5")
 		resp.Response = NewResponse(NewEmptyMessage(msg.GetMessageId()), nil)
-		fmt.Println("DBG6")
 		ch <- resp
-		fmt.Println("DBG7")
 	}
-	fmt.Println("DBG8")
 	AddResponseChannel(session.GetServer(), msg.GetMessageId(), ch)
-	fmt.Println("DBG9")
 }
 
 func SendMessage(msg Message, session Session) (Response, error) {
@@ -903,8 +871,9 @@ func SendMessage(msg Message, session Session) (Response, error) {
 
 	ch := NewResponseChannel()
 	go _doSendMessage(msg, session, ch)
-	respCh := <-ch
 
+	session.GetServer().DeleteSession(session)
+	respCh := <-ch
 	return respCh.Response, respCh.Error
 }
 
