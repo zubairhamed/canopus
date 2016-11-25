@@ -105,6 +105,7 @@ func BytesToMessage(data []byte) (Message, error) {
 	   \                               \
 	   +-------------------------------+
 	*/
+
 	tmp := data[DataTokenStart+msg.GetTokenLength():]
 
 	lastOptionID := 0

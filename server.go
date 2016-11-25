@@ -342,7 +342,6 @@ func (s *DefaultCoapServer) createConn(addr string) ServerConnection {
 
 	conn, err := net.ListenUDP(UDP, localAddr)
 	if err != nil {
-		// s.events.Error(err)
 		panic(err.Error())
 	}
 
@@ -386,13 +385,7 @@ func (s *DefaultCoapServer) handleIncomingDTLSData(conn ServerConnection, ctx *S
 					s.createdSession <- ssn
 				}
 
-				// ssn.WriteBuffer(msgBuf)
-				// s.handleSession(ssn)
-				//go func() {
-				//	fmt.Println("DTLS8")
 				ssn.(*DTLSServerSession).rcvd <- msgBuf
-				//	fmt.Println("DTLS8X")
-				//}()
 			} else {
 				logMsg("Error occured reading UDP", err)
 			}

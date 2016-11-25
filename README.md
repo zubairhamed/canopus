@@ -10,8 +10,10 @@
 
 ## Updates
 #### 25.11.2016
-I've added basic dTLS Support based on Julien Vermillard's implementation. Thanks Julien! It should now support PSK-based authentication.
+I've added basic dTLS Support based on [Julien Vermillard's][JVERMILLARD] [implementation][NATIVEDTLS]. Thanks Julien! It should now support PSK-based authentication.
 I've also gone ahead and refactored the APIs to make it that bit more Go idiomatic.
+[JVERMILLARD]: https://github.com/jvermillard
+[NATIVEDTLS]: https://github.com/jvermillard/nativedtls
 
 ## Installing and Getting
 

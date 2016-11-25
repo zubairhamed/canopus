@@ -12,7 +12,7 @@ func main() {
 	server.Get("/hello", func(req canopus.Request) canopus.Response {
 		log.Println("Hello Called")
 		msg := canopus.ContentMessage(req.GetMessage().GetMessageId(), canopus.MessageAcknowledgment)
-		msg.SetStringPayload("Acknowledged: " + req.GetMessage().GetPayload().String())
+		msg.SetStringPayload("Acknowledged with response : " + req.GetMessage().GetPayload().String())
 
 		res := canopus.NewResponse(msg, nil)
 		return res

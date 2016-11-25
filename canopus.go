@@ -198,6 +198,14 @@ var ErrNilConn = errors.New("Connection object is nil")
 var ErrNilAddr = errors.New("Address cannot be nil")
 var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long, block option or value not set")
 
+// Security Options
+const (
+	SecNoSec        = "NoSec"
+	SecPreSharedKey = "PreSharedKey"
+	SecRawPublicKey = "RawPublicKey"
+	SecCertificate  = "Certificate"
+)
+
 // Interfaces
 type CoapServer interface {
 	ListenAndServe(addr string)
