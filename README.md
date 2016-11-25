@@ -6,190 +6,225 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/zubairhamed/canopus)](https://goreportcard.com/report/github.com/zubairhamed/canopus)
 
 #### Canopus is a client/server implementation of the [Constrained Application Protocol (CoAP)][RFC7252]
-
 [RFC7252]: http://tools.ietf.org/html/rfc7252
 
-### Example
+## Updates
+#### 25.11.2016
+I've added basic dTLS Support based on Julien Vermillard's implementation. Thanks Julien! It should now support PSK-based authentication.
+I've also gone ahead and refactored the APIs to make it that bit more Go idiomatic.
+
+## Installing and Getting
+
+## How to use
+
+#### Simple Example
 ```go
-package main
+	// Server
+	// See /examples/simple/server/main.go
+	server := canopus.NewServer()
 
-import (
-	. "github.com/zubairhamed/canopus"
-	"log"
-)
+	server.Get("/hello", func(req canopus.Request) canopus.Response {
+		msg := canopus.ContentMessage(req.GetMessage().GetMessageId(), canopus.MessageAcknowledgment)
+		msg.SetStringPayload("Acknowledged: " + req.GetMessage().GetPayload().String())
 
-/*	To test this example, also run examples/test_server.go */
-func main() {
-	client := NewCoapServer(":0")
-
-	client.OnStart(func (server *CoapServer){
-		client.Dial("localhost:5683")
-
-		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
-		req.SetStringPayload("Hello, canopus")
-		req.SetRequestURI("/hello")
-
-		resp, err := client.Send(req)
-		if err != nil {
-			log.Println(err)
-		} else {
-			log.Println("Got Response:")
-			log.Println(resp.GetMessage().Payload.String())
-		}
+		res := canopus.NewResponse(msg, nil)
+		return res
 	})
 
-	client.OnMessage(func(msg *Message, inbound bool){
-		if inbound {
-			log.Println(">>>>> INBOUND <<<<<")
-		} else {
-			log.Println(">>>>> OUTBOUND <<<<<")
-		}
+	server.ListenAndServe(":5683")
 
-		PrintMessage(msg)
-	})
+	// Client
+	// See /examples/simple/client/main.go
+	conn, err := canopus.Dial("localhost:5683")
+	if err != nil {
+		panic(err.Error())
+	}
 
-	client.Start()
-}
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID()).(*canopus.CoapRequest)
+	req.SetStringPayload("Hello, canopus")
+	req.SetRequestURI("/hello")
+
+	resp, err := conn.Send(req)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println("Got Response:" + resp.GetMessage().GetPayload().String())
 ```
 
-### Server Example
+#### Observe / Notify
 ```go
-	server := NewLocalServer()
-
-	server.Get("/hello", func(req CoapRequest) CoapResponse{
-		msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-		msg.SetStringPayload("Acknowledged: " + req.GetMessage().Payload.String())
-		res := NewResponse(msg, nil)
+	// Server
+	// See /examples/observe/server/main.go
+	server := canopus.NewServer()
+	server.Get("/watch/this", func(req canopus.Request) canopus.Response {
+		msg := canopus.NewMessageOfType(canopus.MessageAcknowledgment, req.GetMessage().GetMessageId(), canopus.NewPlainTextPayload("Acknowledged"))
+		res := canopus.NewResponse(msg, nil)
 
 		return res
 	})
 
-	server.Start()
-```
-
-### Observe / Notify
-
-#### Server
-```go
-package main
-import (
-	. "github.com/zubairhamed/canopus"
-	"time"
-	"log"
-	"math/rand"
-	"strconv"
-)
-
-func main() {
-	server := NewLocalServer()
-	server.Get("/watch/this", routeHandler)
-
-	GenerateRandomChangeNotifications(server)
-
-	server.OnMessage(func (msg *Message, inbound bool){
-		// PrintMessage(msg)
-	})
-
-	server.OnObserve(func(resource string, msg *Message){
-		log.Println("Observe Requested for " + resource)
-	})
-
-	server.Start()
-}
-
-func GenerateRandomChangeNotifications(server *CoapServer) {
 	ticker := time.NewTicker(3 * time.Second)
-
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				changeVal := strconv.Itoa(rand.Int())
-				log.Println("Notify Change..", changeVal)
+				fmt.Println("[SERVER << ] Change of value -->", changeVal)
 
 				server.NotifyChange("/watch/this", changeVal, false)
 			}
 		}
 	}()
-}
 
-func routeHandler(req CoapRequest) CoapResponse {
-	msg := NewMessageOfType(TYPE_ACKNOWLEDGEMENT, req.GetMessage().MessageId)
-	msg.SetStringPayload("Acknowledged")
-	res := NewResponse(msg, nil)
-
-	return res
-}
-```
-
-#### Client
-```go
-package main
-
-import (
-	. "github.com/zubairhamed/canopus"
-	"log"
-)
-
-func main() {
-	client := NewCoapServer(":0")
-
-	client.OnStart(func (server *CoapServer){
-		client.Dial("localhost:5683")
-		req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
-		req.SetRequestURI("/watch/this")
-		req.GetMessage().AddOption(OPTION_OBSERVE, 0)
-
-		_, err := client.Send(req)
-		if err != nil {
-			log.Println(err)
-		}
+	server.OnObserve(func(resource string, msg canopus.Message) {
+		fmt.Println("[SERVER << ] Observe Requested for " + resource)
 	})
 
-	var notifyCount int = 0
-	client.OnNotify(func (resource string, value interface{}, msg *Message) {
-		if notifyCount < 4 {
-			notifyCount++
-			log.Println("Got Change Notification for resource and value: ", notifyCount, resource, value)
-		} else {
-			log.Println("Cancelling Observation after 4 notifications")
-			req := NewRequest(TYPE_CONFIRMABLE, GET, GenerateMessageId())
-			req.SetRequestURI("watch/this")
-			req.GetMessage().AddOption(OPTION_OBSERVE, 0)
+	server.ListenAndServe(":5683")
 
-			_, err := client.Send(req)
-			if err != nil {
-				log.Println(err)
+	// Client
+	// See /examples/observe/client/main.go
+	conn, err := canopus.Dial("localhost:5683")
+
+	tok, err := conn.ObserveResource("/watch/this")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	obsChannel := make(chan canopus.ObserveMessage)
+	done := make(chan bool)
+	go conn.Observe(obsChannel)
+
+	notifyCount := 0
+	for {
+		select {
+		case obsMsg, _ := <-obsChannel:
+			if notifyCount == 5 {
+				fmt.Println("[CLIENT >> ] Canceling observe after 5 notifications..")
+				go conn.CancelObserveResource("watch/this", tok)
+				go conn.StopObserve(obsChannel)
+				return
+			} else {
+				notifyCount++
+				// msg := obsMsg.Msg\
+				resource := obsMsg.GetResource()
+				val := obsMsg.GetValue()
+
+				fmt.Println("[CLIENT >> ] Got Change Notification for resource and value: ", notifyCount, resource, val)
 			}
 		}
-	})
-
-	client.Start()
-}
+	}
 ```
 
-#### Forward Proxies
+### dTLS with PSK
 ```go
-package main
+	// Server
+	// See /examples/dtls/simple-psk/server/main.go
+	server := canopus.NewServer()
 
-import (
-	. "github.com/zubairhamed/canopus"
-)
+	server.Get("/hello", func(req canopus.Request) canopus.Response {
+		msg := canopus.ContentMessage(req.GetMessage().GetMessageId(), canopus.MessageAcknowledgment)
+		msg.SetStringPayload("Acknowledged: " + req.GetMessage().GetPayload().String())
+		res := canopus.NewResponse(msg, nil)
 
-func main() {
-	server := NewLocalServer()
-	server.ProxyCoap(true)  // Forward CoAP Requests
-	server.ProxyHttp(true) // Forward HTTP Requests
-
-    // Defaults to NullProxyFilter, if not set.
-    // NullProxyFilter allows all requests through (return = true)
-	server.SetProxyFilter(func(*Message, *net.UDPAddr) (bool) {
-	    // do some checks, e.g. whitelisting etc
-
-	    // allow forwarding, or false to deny
-	    return true
+		return res
 	})
 
-	server.Start()
-}
+	server.HandlePSK(func(id string) []byte {
+		return []byte("secretPSK")
+	})
+
+	server.ListenAndServeDTLS(":5684")
+
+	// Client
+	// See /examples/dtls/simple-psk/client/main.go
+	conn, err := canopus.DialDTLS("localhost:5684", "canopus", "secretPSK")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
+	req.SetStringPayload("Hello, canopus")
+	req.SetRequestURI("/hello")
+
+	resp, err := conn.Send(req)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println("Got Response:" + resp.GetMessage().GetPayload().String())
+```
+
+#### CoAP-CoAP Proxy
+```go
+	// Server
+	// See /examples/proxy/coap/server/main.go
+	server := canopus.NewServer()
+
+	server.Get("/proxycall", func(req canopus.Request) canopus.Response {
+		msg := canopus.ContentMessage(req.GetMessage().GetMessageId(), canopus.MessageAcknowledgment)
+		msg.SetStringPayload("Data from :5685 -- " + req.GetMessage().GetPayload().String())
+		res := canopus.NewResponse(msg, nil)
+
+		return res
+	})
+	server.ListenAndServe(":5685")
+
+	// Proxy Server
+	// See /examples/proxy/coap/proxy/main.go
+	server := canopus.NewServer()
+	server.ProxyOverCoap(true)
+
+	server.Get("/proxycall", func(req canopus.Request) canopus.Response {
+		canopus.PrintMessage(req.GetMessage())
+		msg := canopus.ContentMessage(req.GetMessage().GetMessageId(), canopus.MessageAcknowledgment)
+		msg.SetStringPayload("Acknowledged: " + req.GetMessage().GetPayload().String())
+		res := canopus.NewResponse(msg, nil)
+
+		return res
+	})
+	server.ListenAndServe(":5683")
+
+	// Client
+	// See /examples/proxy/coap/client/main.go
+	conn, err := canopus.Dial("localhost:5683")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
+	req.SetProxyURI("coap://localhost:5685/proxycall")
+
+	resp, err := conn.Send(req)
+	if err != nil {
+		println("err", err)
+	}
+	canopus.PrintMessage(resp.GetMessage())
+```
+
+#### CoAP-HTTP Proxy
+```go
+	// Server
+	// See /examples/proxy/http/server/main.go
+	server := canopus.NewServer()
+	server.ProxyOverHttp(true)
+
+	server.ListenAndServe(":5683")
+
+	// Client
+	// See /examples/proxy/http/client/main.go
+	conn, err := canopus.Dial("localhost:5683")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Get, canopus.GenerateMessageID())
+	req.SetProxyURI("https://httpbin.org/get")
+
+	resp, err := conn.Send(req)
+	if err != nil {
+		println("err", err)
+	}
+	canopus.PrintMessage(resp.GetMessage())
 ```
