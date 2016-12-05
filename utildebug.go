@@ -1,35 +1,30 @@
 package canopus
 
-import (
-	"log"
-)
-
 // PrintOptions pretty prints out a given Message's options
-func PrintOptions(msg *Message) {
-	opts := msg.Options
-	log.Println(" - - - OPTIONS - - - ")
+func PrintOptions(msg Message) {
+	opts := msg.GetAllOptions()
+	logMsg(" - - - OPTIONS - - - ")
 	if len(opts) > 0 {
-		for _, opts := range msg.Options {
-			log.Println("Code/Number: ", opts.GetCode(), ", Name: ", OptionNumberToString(opts.GetCode()), ", Value: ", opts.GetValue())
+		for _, opts := range msg.GetAllOptions() {
+			logMsg("Code/Number: ", opts.GetCode(), ", Name: ", OptionNumberToString(opts.GetCode()), ", Value: ", opts.GetValue())
 		}
 	} else {
-		log.Println("None")
+		logMsg("None")
 	}
 }
 
 // PrintMessage pretty prints out a given Message
-func PrintMessage(msg *Message) {
-	log.Println("= = = = = = = = = = = = = = = = ")
-	log.Println("Code: ", msg.Code)
-	log.Println("Code String: ", CoapCodeToString(msg.Code))
-	log.Println("MessageId: ", msg.MessageID)
-	log.Println("MessageType: ", msg.MessageType)
-	log.Println("Token: ", string(msg.Token))
-	log.Println("Token Length: ", msg.GetTokenLength())
-	log.Println("Payload: ", PayloadAsString(msg.Payload))
+func PrintMessage(msg Message) {
+	logMsg("= = = = = = = = = = = = = = = = ")
+	logMsg("Code: ", msg.GetCode())
+	logMsg("Code String: ", CoapCodeToString(msg.GetCode()))
+	logMsg("MessageId: ", msg.GetMessageId())
+	logMsg("MessageType: ", msg.GetMessageType())
+	logMsg("Token: ", string(msg.GetToken()))
+	logMsg("Token Length: ", msg.GetTokenLength())
+	logMsg("Payload: ", PayloadAsString(msg.GetPayload()))
 	PrintOptions(msg)
-	log.Println("= = = = = = = = = = = = = = = = ")
-
+	logMsg("= = = = = = = = = = = = = = = = ")
 }
 
 // OptionNumberToString returns the string representation of a given Option Code

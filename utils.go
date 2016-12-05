@@ -1,11 +1,20 @@
 package canopus
 
 import (
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
 	"time"
 )
+
+// Returns the string value for a Message Payload
+func PayloadAsString(p MessagePayload) string {
+	if p == nil {
+		return ""
+	}
+	return p.String()
+}
 
 // GenerateMessageId generate a uint16 Message ID
 func GenerateMessageID() uint16 {
@@ -158,4 +167,8 @@ func ValidCoapMediaTypeCode(mt MediaType) bool {
 	}
 
 	return false
+}
+
+func logMsg(a ...interface{}) (n int, err error) {
+	return fmt.Println(a)
 }

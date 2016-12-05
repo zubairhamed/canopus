@@ -123,7 +123,11 @@ const MaxPacketSize = 1500
 // MessageIDPurgeDuration defines the number of seconds before a MessageID Purge is initiated
 const MessageIDPurgeDuration = 60
 
-type RouteHandler func(CoapRequest) CoapResponse
+type RouteHandler func(Request) Response
+
+// Proxy Filter
+type ProxyFilter func(Message, net.Addr) bool
+type ProxyHandler func(c CoapServer, msg Message, session Session)
 
 type MediaType int
 
@@ -194,24 +198,29 @@ var ErrNilConn = errors.New("Connection object is nil")
 var ErrNilAddr = errors.New("Address cannot be nil")
 var ErrMessageSizeTooLongBlockOptionValNotSet = errors.New("Message is too long, block option or value not set")
 
+// Security Options
+const (
+	SecNoSec        = "NoSec"
+	SecPreSharedKey = "PreSharedKey"
+	SecRawPublicKey = "RawPublicKey"
+	SecCertificate  = "Certificate"
+)
+
 // Interfaces
 type CoapServer interface {
-	GetName() string
-	Start()
+	ListenAndServe(addr string)
+	ListenAndServeDTLS(addr string)
 	Stop()
-	SetProxyFilter(fn ProxyFilter)
-	Get(path string, fn RouteHandler) *Route
-	Delete(path string, fn RouteHandler) *Route
-	Put(path string, fn RouteHandler) *Route
-	Post(path string, fn RouteHandler) *Route
-	Options(path string, fn RouteHandler) *Route
-	Patch(path string, fn RouteHandler) *Route
-	NewRoute(path string, method CoapCode, fn RouteHandler) *Route
-	Send(req CoapRequest) (CoapResponse, error)
-	SendTo(req CoapRequest, addr *net.UDPAddr) (CoapResponse, error)
+
+	Get(path string, fn RouteHandler) Route
+	Delete(path string, fn RouteHandler) Route
+	Put(path string, fn RouteHandler) Route
+	Post(path string, fn RouteHandler) Route
+	Options(path string, fn RouteHandler) Route
+	Patch(path string, fn RouteHandler) Route
+
+	NewRoute(path string, method CoapCode, fn RouteHandler) Route
 	NotifyChange(resource, value string, confirm bool)
-	Dial(host string)
-	Dial6(host string)
 
 	OnNotify(fn FnEventNotify)
 	OnStart(fn FnEventStart)
@@ -223,34 +232,192 @@ type CoapServer interface {
 	OnMessage(fn FnEventMessage)
 	OnBlockMessage(fn FnEventBlockMessage)
 
-	ProxyHTTP(enabled bool)
-	ProxyCoap(enabled bool)
-	GetEvents() *Events
-	GetLocalAddress() *net.UDPAddr
+	ProxyOverHttp(enabled bool)
+	ProxyOverCoap(enabled bool)
 
-	AllowProxyForwarding(*Message, *net.UDPAddr) bool
-	GetRoutes() []*Route
-	ForwardCoap(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
-	ForwardHTTP(msg *Message, conn *net.UDPConn, addr *net.UDPAddr)
+	GetEvents() Events
 
-	AddObservation(resource, token string, addr *net.UDPAddr)
-	HasObservation(resource string, addr *net.UDPAddr) bool
-	RemoveObservation(resource string, addr *net.UDPAddr)
+	AllowProxyForwarding(Message, net.Addr) bool
+	GetRoutes() []Route
+	ForwardCoap(msg Message, session Session)
+	ForwardHTTP(msg Message, session Session)
 
-	IsDuplicateMessage(msg *Message) bool
-	UpdateMessageTS(msg *Message)
+	AddObservation(resource, token string, session Session)
+	HasObservation(resource string, addr net.Addr) bool
+	RemoveObservation(resource string, addr net.Addr)
 
-	UpdateBlockMessageFragment(string, *Message, uint32)
-	FlushBlockMessagePayload(string) MessagePayload
+	HandlePSK(func(id string) []byte)
+
+	GetSession(addr string) Session
+	DeleteSession(ssn Session)
+
+	GetCookieSecret() []byte
 }
 
-// Connection is a simple wrapper interface around a connection
-// This was primarily conceived so that mocks could be
-// created to unit test connection code
-type Connection interface {
-	GetConnection() net.Conn
-	Write(b []byte) (int, error)
+type ServerConnection interface {
+	ReadFrom(b []byte) (n int, addr net.Addr, err error)
+	WriteTo(b []byte, addr net.Addr) (n int, err error)
+	Close() error
+	LocalAddr() net.Addr
+	SetDeadline(t time.Time) error
 	SetReadDeadline(t time.Time) error
-	Read() (buf []byte, n int, err error)
-	WriteTo(b []byte, addr net.Addr) (int, error)
+	SetWriteDeadline(t time.Time) error
+}
+
+type Option interface {
+	Name() string
+	IsElective() bool
+	IsCritical() bool
+	StringValue() string
+	IntValue() int
+	GetCode() OptionCode
+	GetValue() interface{}
+}
+
+type Session interface {
+	GetConnection() ServerConnection
+	GetAddress() net.Addr
+	Write([]byte) (int, error)
+	Read([]byte) (n int, err error)
+	GetServer() CoapServer
+	WriteBuffer([]byte) int
+}
+
+type Request interface {
+	GetAttributes() map[string]string
+	GetAttribute(o string) string
+	GetAttributeAsInt(o string) int
+	GetMessage() Message
+	GetURIQuery(q string) string
+
+	SetProxyURI(uri string)
+	SetMediaType(mt MediaType)
+	SetPayload([]byte)
+	SetStringPayload(s string)
+	SetRequestURI(uri string)
+	SetConfirmable(con bool)
+	SetToken(t string)
+	SetURIQuery(k string, v string)
+}
+
+type Response interface {
+	GetMessage() Message
+	GetError() error
+	GetPayload() []byte
+	GetURIQuery(q string) string
+}
+
+type Connection interface {
+	ObserveResource(resource string) (tok string, err error)
+	CancelObserveResource(resource string, token string) (err error)
+	StopObserve(ch chan ObserveMessage)
+	Observe(ch chan ObserveMessage)
+	Send(req Request) (resp Response, err error)
+
+	Write(b []byte) (n int, err error)
+	Read(b []byte) (n int, err error)
+	Close() error
+}
+
+// Represents the payload/content of a CoAP Message
+type MessagePayload interface {
+	GetBytes() []byte
+	Length() int
+	String() string
+}
+
+type Message interface {
+	GetToken() []byte
+	GetMessageId() uint16
+	GetMessageType() uint8
+	GetAcceptedContent() MediaType
+	GetCodeString() string
+	GetCode() CoapCode
+	GetMethod() uint8
+	GetTokenLength() uint8
+	GetTokenString() string
+	GetOptions(id OptionCode) []Option
+	GetOption(id OptionCode) Option
+	GetAllOptions() []Option
+	GetOptionsAsString(id OptionCode) []string
+	GetLocationPath() string
+	GetURIPath() string
+	GetPayload() MessagePayload
+
+	SetToken([]byte)
+	SetMessageId(uint16)
+	SetMessageType(uint8)
+	SetBlock1Option(opt Option)
+	SetStringPayload(s string)
+	SetPayload(MessagePayload)
+
+	AddOption(code OptionCode, value interface{})
+	AddOptions(opts []Option)
+	CloneOptions(cm Message, opts ...OptionCode)
+	ReplaceOptions(code OptionCode, opts []Option)
+	RemoveOptions(id OptionCode)
+}
+
+type Route interface {
+	GetMethod() string
+	GetMediaTypes() []MediaType
+	GetConfiguredPath() string
+
+	Matches(path string) (bool, map[string]string)
+	AutoAcknowledge() bool
+	Handle(req Request) Response
+}
+
+type FnEventNotify func(string, interface{}, Message)
+type FnEventStart func(CoapServer)
+type FnEventClose func(CoapServer)
+type FnEventDiscover func()
+type FnEventError func(error)
+type FnEventObserve func(string, Message)
+type FnEventObserveCancel func(string, Message)
+type FnEventMessage func(Message, bool)
+type FnEventBlockMessage func(Message, bool)
+
+type EventCode int
+
+const (
+	EventStart         EventCode = 0
+	EventClose         EventCode = 1
+	EventDiscover      EventCode = 2
+	EventMessage       EventCode = 3
+	EventError         EventCode = 4
+	EventObserve       EventCode = 5
+	EventObserveCancel EventCode = 6
+	EventNotify        EventCode = 7
+)
+
+type ObserveMessage interface {
+	GetResource() string
+	GetValue() interface{}
+	GetMessage() Message
+}
+
+type Events interface {
+	OnNotify(fn FnEventNotify)
+	OnStart(fn FnEventStart)
+	OnClose(fn FnEventClose)
+	OnDiscover(fn FnEventDiscover)
+	OnError(fn FnEventError)
+	OnObserve(fn FnEventObserve)
+	OnObserveCancel(fn FnEventObserveCancel)
+	OnMessage(fn FnEventMessage)
+	OnBlockMessage(fn FnEventBlockMessage)
+
+	Notify(resource string, value interface{}, msg Message)
+	Started(server CoapServer)
+	Closed(server CoapServer)
+	Discover()
+	Error(err error)
+	Observe(resource string, msg Message)
+	ObserveCancelled(resource string, msg Message)
+	Message(msg Message, inbound bool)
+	BlockMessage(msg Message, inbound bool)
+}
+
+type BlockMessage interface {
 }

@@ -5,16 +5,6 @@ import (
 	"strings"
 )
 
-type Option interface {
-	Name() string
-	IsElective() bool
-	IsCritical() bool
-	StringValue() string
-	IntValue() int
-	GetCode() OptionCode
-	GetValue() interface{}
-}
-
 // Represents an Option for a CoAP Message
 type CoapOption struct {
 	Code  OptionCode

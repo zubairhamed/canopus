@@ -1,13 +1,14 @@
 package canopus
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequest(t *testing.T) {
-	var req CoapRequest
+	var req Request
 	assert.NotNil(t, NewRequest(MessageConfirmable, Get, 12345))
 
 	msg := NewMessage(MessageConfirmable, Get, 12345)
