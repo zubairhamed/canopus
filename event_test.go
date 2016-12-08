@@ -15,7 +15,7 @@ func TestEvents(t *testing.T) {
 
 	// OnNotify
 	evtOnNotifyCalled := false
-	events.OnNotify(func(string, interface{}, *Message) {
+	events.OnNotify(func(string, interface{}, Message) {
 		evtOnNotifyCalled = true
 	})
 	events.Notify("/test", "", nil)
@@ -50,21 +50,21 @@ func TestEvents(t *testing.T) {
 
 	// OnObserve
 	evtOnObserveCalled := false
-	events.OnObserve(func(string, *Message) {
+	events.OnObserve(func(string, Message) {
 		evtOnObserveCalled = true
 	})
 	events.Observe("/test", nil)
 
 	// OnObserveCancelled
 	evtOnObserveCancelledCalled := false
-	events.OnObserveCancel(func(string, *Message) {
+	events.OnObserveCancel(func(string, Message) {
 		evtOnObserveCancelledCalled = true
 	})
 	events.ObserveCancelled("/test", nil)
 
 	// OnMessage
 	evtOnMessageCalled := false
-	events.OnMessage(func(*Message, bool) {
+	events.OnMessage(func(Message, bool) {
 		evtOnMessageCalled = true
 	})
 	events.Message(nil, true)

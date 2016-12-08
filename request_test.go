@@ -1,7 +1,6 @@
 package canopus
 
 import (
-	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,12 +15,13 @@ func TestRequest(t *testing.T) {
 	req = NewRequestFromMessage(msg)
 	assert.NotNil(t, req)
 
-	assert.Equal(t, Get, req.GetMessage().Code)
-	assert.NotNil(t, NewClientRequestFromMessage(msg, make(map[string]string), &net.UDPConn{}, &net.UDPAddr{}))
+	assert.Equal(t, Get, req.GetMessage().GetCode())
+	// &net.UDPConn{}, &net.UDPAddr{}
+	assert.NotNil(t, NewClientRequestFromMessage(msg, make(map[string]string), nil))
 
 	req = NewRequest(MessageConfirmable, Get, 12345)
-	assert.Equal(t, uint8(0), req.GetMessage().MessageType)
+	assert.Equal(t, uint8(0), req.GetMessage().GetMessageType())
 
 	req.SetConfirmable(false)
-	assert.Equal(t, uint8(1), req.GetMessage().MessageType)
+	assert.Equal(t, uint8(1), req.GetMessage().GetMessageType())
 }

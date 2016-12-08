@@ -666,8 +666,11 @@ func ForbiddenMessage(messageID uint16, messageType uint8) Message {
 }
 
 // Creates a Non-Confirmable with CoAP Code 404 - Not Found
-func NotFoundMessage(messageID uint16, messageType uint8, token []byte) Message {
-	return NewMessage(messageType, CoapCodeNotFound, messageID)
+func NotFoundMessage(messageID uint16, messageType uint8, token []byte) (m Message) {
+	m = NewMessage(messageType, CoapCodeNotFound, messageID)
+	m.SetToken(token)
+
+	return
 }
 
 // Creates a Non-Confirmable with CoAP Code 405 - Method Not Allowed

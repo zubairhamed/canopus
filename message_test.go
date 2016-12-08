@@ -28,6 +28,8 @@ func TestMessagValidation(t *testing.T) {
 func TestMessageConversion(t *testing.T) {
 
 	msg := NewBasicConfirmableMessage()
+	msgId := msg.GetMessageId()
+
 	// Byte 1
 	msg.AddOption(OptionContentFormat, MediaTypeApplicationLinkFormat)
 
@@ -38,10 +40,10 @@ func TestMessageConversion(t *testing.T) {
 	newMsg, err := BytesToMessage(b)
 	assert.Nil(t, err, "An error occured converting bytes to message")
 
-	assert.Equal(t, 0, int(newMsg.MessageType)) // 0x0: Type Confirmable
-	assert.Equal(t, "abcd1234", bytes.NewBuffer(newMsg.Token).String(), "Token String not the same after reconversion")
-	assert.Equal(t, 61680, int(newMsg.MessageID), "Message ID not the same after reconversion")
-	assert.NotEqual(t, 0, len(newMsg.Options), "Options should not be 0")
+	assert.Equal(t, 0, int(newMsg.GetMessageType())) // 0x0: Type Confirmable
+	assert.Equal(t, "abcd1234", bytes.NewBuffer(newMsg.GetToken()).String(), "Token String not the same after reconversion")
+	assert.Equal(t, int(msgId), int(newMsg.GetMessageId()), "Message ID not the same after reconversion")
+	assert.NotEqual(t, 0, len(newMsg.GetAllOptions()), "Options should not be 0")
 }
 
 func TestMessageBadOptions(t *testing.T) {
@@ -56,7 +58,7 @@ func TestMessageBadOptions(t *testing.T) {
 }
 
 func TestMessageObject(t *testing.T) {
-	msg := &Message{}
+	msg := &CoapMessage{}
 
 	assert.Equal(t, 0, len(msg.Options))
 	msg.AddOptions(NewPathOptions("/example"))
@@ -97,7 +99,7 @@ func TestNewMessageHelpers(t *testing.T) {
 	var messageID uint16 = 12345
 
 	testData := []struct {
-		msg  *Message
+		msg  Message
 		code CoapCode
 	}{
 		{EmptyMessage(messageID, MessageAcknowledgment), CoapCodeEmpty},
@@ -110,7 +112,7 @@ func TestNewMessageHelpers(t *testing.T) {
 		{UnauthorizedMessage(messageID, MessageAcknowledgment), CoapCodeUnauthorized},
 		{BadOptionMessage(messageID, MessageAcknowledgment), CoapCodeBadOption},
 		{ForbiddenMessage(messageID, MessageAcknowledgment), CoapCodeForbidden},
-		{NotFoundMessage(messageID, MessageAcknowledgment), CoapCodeNotFound},
+		{NotFoundMessage(messageID, MessageAcknowledgment, nil), CoapCodeNotFound},
 		{MethodNotAllowedMessage(messageID, MessageAcknowledgment), CoapCodeMethodNotAllowed},
 		{NotAcceptableMessage(messageID, MessageAcknowledgment), CoapCodeNotAcceptable},
 		{ConflictMessage(messageID, MessageAcknowledgment), CoapCodeConflict},
@@ -127,12 +129,12 @@ func TestNewMessageHelpers(t *testing.T) {
 
 	for _, td := range testData {
 		assert.NotNil(t, td.msg)
-		assert.Equal(t, td.code, td.msg.Code)
+		assert.Equal(t, td.code, td.msg.GetCode())
 	}
 }
 
-func NewBasicConfirmableMessage() *Message {
-	msg := NewMessageOfType(MessageConfirmable, 0xf0f0)
+func NewBasicConfirmableMessage() *CoapMessage {
+	msg := NewMessageOfType(MessageConfirmable, GenerateMessageID(), nil).(*CoapMessage)
 	msg.Code = Get
 	msg.Token = []byte("abcd1234")
 	msg.SetStringPayload("xxxxx")

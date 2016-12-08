@@ -13,7 +13,7 @@ func TestResponse(t *testing.T) {
 
 	response := NewResponse(msg, ErrUnknownCriticalOption)
 	assert.NotNil(t, response)
-	assert.Equal(t, uint16(12345), response.GetMessage().MessageID)
+	assert.Equal(t, uint16(12345), response.GetMessage().GetMessageId())
 	assert.Equal(t, ErrUnknownCriticalOption, response.GetError())
 
 }
