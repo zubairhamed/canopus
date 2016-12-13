@@ -15,9 +15,11 @@ I've also gone ahead and refactored the APIs to make it that bit more Go idiomat
 [JVERMILLARD]: https://github.com/jvermillard
 [NATIVEDTLS]: https://github.com/jvermillard/nativedtls
 
-## Installing and Getting
-
-## How to use
+## Building and running
+1. git submodule update --init --recursive
+2. cd openssl
+3. ./config && make
+4. You should then be able to run the examples in the /examples folder
 
 #### Simple Example
 ```go
