@@ -22,7 +22,7 @@ type UDPConnection struct {
 }
 
 func (c *UDPConnection) ObserveResource(resource string) (tok string, err error) {
-	req := NewRequest(MessageConfirmable, Get, GenerateMessageID())
+	req := NewRequest(MessageConfirmable, Get)
 	req.SetRequestURI(resource)
 	req.GetMessage().AddOption(OptionObserve, 0)
 
@@ -33,7 +33,7 @@ func (c *UDPConnection) ObserveResource(resource string) (tok string, err error)
 }
 
 func (c *UDPConnection) CancelObserveResource(resource string, token string) (err error) {
-	req := NewRequest(MessageConfirmable, Get, GenerateMessageID())
+	req := NewRequest(MessageConfirmable, Get)
 	req.SetRequestURI(resource)
 	req.GetMessage().AddOption(OptionObserve, 1)
 

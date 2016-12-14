@@ -528,7 +528,7 @@ type DTLSConnection struct {
 }
 
 func (c *DTLSConnection) ObserveResource(resource string) (tok string, err error) {
-	req := NewRequest(MessageConfirmable, Get, GenerateMessageID())
+	req := NewRequest(MessageConfirmable, Get)
 	req.SetRequestURI(resource)
 	req.GetMessage().AddOption(OptionObserve, 0)
 
@@ -539,7 +539,7 @@ func (c *DTLSConnection) ObserveResource(resource string) (tok string, err error
 }
 
 func (c *DTLSConnection) CancelObserveResource(resource string, token string) (err error) {
-	req := NewRequest(MessageConfirmable, Get, GenerateMessageID())
+	req := NewRequest(MessageConfirmable, Get)
 	req.SetRequestURI(resource)
 	req.GetMessage().AddOption(OptionObserve, 1)
 

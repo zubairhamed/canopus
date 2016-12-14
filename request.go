@@ -6,7 +6,11 @@ import (
 )
 
 // Creates a New Request Instance
-func NewRequest(messageType uint8, messageMethod CoapCode, messageID uint16) Request {
+func NewRequest(messageType uint8, messageMethod CoapCode) Request {
+	return NewRequestWithMessageId(messageType, messageMethod, GenerateMessageID())
+}
+
+func NewRequestWithMessageId(messageType uint8, messageMethod CoapCode, messageID uint16) Request {
 	msg := NewMessage(messageType, messageMethod, messageID)
 	return &CoapRequest{
 		msg: msg,

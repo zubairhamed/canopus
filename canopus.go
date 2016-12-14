@@ -4,17 +4,23 @@ import (
 	"errors"
 	"math/rand"
 	"net"
+	"sync"
 	"time"
 )
 
 // CurrentMessageID stores the current message id used/generated for messages
 var CurrentMessageID = 0
+var MESSAGEID_MUTEX *sync.Mutex
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	CurrentMessageID = rand.Intn(65535)
+
+	MESSAGEID_MUTEX = &sync.Mutex{}
 }
+
+var GENERATE_ID uint16 = 0
 
 const UDP = "udp"
 

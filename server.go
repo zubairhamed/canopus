@@ -573,9 +573,9 @@ func (s *DefaultCoapServer) NotifyChange(resource, value string, confirm bool) {
 		var req Request
 
 		if confirm {
-			req = NewRequest(MessageConfirmable, CoapCodeContent, GenerateMessageID())
+			req = NewRequest(MessageConfirmable, CoapCodeContent)
 		} else {
-			req = NewRequest(MessageAcknowledgment, CoapCodeContent, GenerateMessageID())
+			req = NewRequest(MessageAcknowledgment, CoapCodeContent)
 		}
 
 		for _, r := range t {
