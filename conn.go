@@ -123,7 +123,7 @@ func (c *UDPConnection) Send(req Request) (resp Response, err error) {
 						blockPayloadEnd = blockPayloadStart + uint32(blockSize)
 					}
 
-					blockPayload = payload[blockPayloadStart:blockPayloadEnd]
+					blockPayload = payload[blockPayloadStart : blockPayloadEnd+1]
 
 					blockOpt = NewBlock1Option(blockOpt.Size(), more, currSeq)
 					msg.ReplaceOptions(blockOpt.Code, []Option{blockOpt})

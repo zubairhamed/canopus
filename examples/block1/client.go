@@ -15,7 +15,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Post, canopus.GenerateMessageID())
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Post)
 	blockOpt := canopus.NewBlock1Option(canopus.BlockSize16, true, 0)
 
 	req.GetMessage().SetBlock1Option(blockOpt)

@@ -10,7 +10,7 @@ import (
 func main() {
 	server := canopus.NewServer()
 
-	server.Get("/blockinfo", func(req canopus.CoapRequest) canopus.Response {
+	server.Get("/blockinfo", func(req canopus.Request) canopus.Response {
 		msg := canopus.ContentMessage(req.GetMessage().GetMessageId(), canopus.MessageAcknowledgment)
 		msg.SetStringPayload("Acknowledged: " + req.GetMessage().GetPayload().String())
 
@@ -35,7 +35,7 @@ func main() {
 		return res
 	})
 
-	server.OnBlockMessage(func(msg *canopus.Message, inbound bool) {
+	server.OnBlockMessage(func(msg canopus.Message, inbound bool) {
 		// log.Println("Incoming Block Message:")
 		// canopus.PrintMessage(msg)
 	})
