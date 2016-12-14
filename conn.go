@@ -74,7 +74,6 @@ func (c *UDPConnection) Observe(ch chan ObserveMessage) {
 }
 
 func (c *UDPConnection) Send(req Request) (resp Response, err error) {
-	log.Println("send")
 	msg := req.GetMessage()
 	opt := msg.GetOption(OptionBlock1)
 

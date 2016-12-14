@@ -2,7 +2,7 @@ package canopus
 
 /*
 #cgo LDFLAGS: -L${SRCDIR}/openssl -lssl -lcrypto -ldl
-#cgo CFLAGS: -g -Wno-deprecated -Wno-error -I${SRCDIR}/openssl/include
+#cgo CFLAGS: -g -Wno-deprecated -Wno-error -I${SRCDIR}/openssl/include -Wno-incompatible-pointer-types -Wno-return-type
 
 #include <stdlib.h>
 #include <string.h>
