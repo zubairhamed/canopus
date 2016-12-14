@@ -18,11 +18,14 @@ func PayloadAsString(p MessagePayload) string {
 
 // GenerateMessageId generate a uint16 Message ID
 func GenerateMessageID() uint16 {
+	MESSAGEID_MUTEX.Lock()
 	if CurrentMessageID != 65535 {
 		CurrentMessageID++
 	} else {
 		CurrentMessageID = 1
 	}
+	MESSAGEID_MUTEX.Unlock()
+
 	return uint16(CurrentMessageID)
 }
 
