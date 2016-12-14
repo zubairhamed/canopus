@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -108,27 +107,27 @@ func BytesToMessage(data []byte) (Message, error) {
 
 	tmp := data[DataTokenStart+msg.GetTokenLength():]
 
-	lastOptionID := 0
+	lastOptionID := uint(0)
 	for len(tmp) > 0 {
 		if tmp[0] == PayloadMarker {
 			tmp = tmp[1:]
 			break
 		}
 
-		optionDelta := int(tmp[0] >> 4)
-		optionLength := int(tmp[0] & 0x0f)
+		optionDelta := uint(tmp[0] >> 4)
+		optionLength := uint(tmp[0] & 0x0f)
 
 		tmp = tmp[1:]
 		switch optionDelta {
 		case 13:
-			optionDeltaExtended := int(tmp[0])
+			optionDeltaExtended := uint(tmp[0])
 			optionDelta += optionDeltaExtended
 			tmp = tmp[1:]
 			break
 
 		case 14:
-			optionDeltaExtended := decodeInt(tmp[:1])
-			optionDelta += int(optionDeltaExtended - uint32(269))
+			optionDeltaExtended := uint(decodeInt(tmp[:2]))
+			optionDelta = uint(optionDeltaExtended + 269)
 			tmp = tmp[2:]
 			break
 
@@ -139,14 +138,14 @@ func BytesToMessage(data []byte) (Message, error) {
 
 		switch optionLength {
 		case 13:
-			optionLengthExtended := int(tmp[0])
+			optionLengthExtended := uint(tmp[0])
 			optionLength += optionLengthExtended
 			tmp = tmp[1:]
 			break
 
 		case 14:
-			optionLengthExtended := decodeInt(tmp[:1])
-			optionLength += int(optionLengthExtended - uint32(269))
+			optionLengthExtended := uint(decodeInt(tmp[:1]))
+			optionLength += uint(optionLengthExtended - uint(269))
 			tmp = tmp[2:]
 			break
 
@@ -171,10 +170,11 @@ func BytesToMessage(data []byte) (Message, error) {
 
 			default:
 				if lastOptionID&0x01 == 1 {
-					log.Println("Unknown Critical Option id " + strconv.Itoa(lastOptionID))
+					log.Println("Unknown Critical Option id ", lastOptionID)
 					return msg, ErrUnknownCriticalOption
 				}
-				log.Println("Unknown Option id " + strconv.Itoa(lastOptionID))
+				log.Println("Warning: Unknown Option id ", optionDelta)
+				msg.Options = append(msg.Options, NewOption(optCode, optionValue))
 				break
 			}
 			tmp = tmp[optionLength:]
@@ -238,6 +238,8 @@ func MessageToBytes(msg Message) ([]byte, error) {
 			binary.Write(tmpBuf, binary.BigEndian, uint16(optDelta-269))
 			buf.Write(tmpBuf.Bytes())
 		}
+
+		// TODO: If optDeltaValue == 15, throw error
 
 		if optLengthValue == 13 {
 			buf.Write([]byte{byte(optLength - 13)})

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"log"
 	"net"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -509,7 +508,7 @@ func (s *DefaultCoapServer) handleSession(session Session) {
 	msg, err := BytesToMessage(msgBuf[:n])
 	if err != nil {
 		logMsg(err.Error())
-		os.Exit(-1)
+		s.handleReqBadRequest(msg, session)
 	}
 
 	if msg.GetMessageType() == MessageAcknowledgment {
