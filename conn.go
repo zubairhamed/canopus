@@ -113,7 +113,7 @@ func (c *UDPConnection) Send(req Request) (resp Response, err error) {
 					var blockPayloadEnd uint32
 					var blockPayload []byte
 
-					blockPayloadStart = currSeq*uint32(blockSize) + (currSeq * 1)
+					blockPayloadStart = currSeq * uint32(blockSize)
 
 					more := true
 					if currSeq == totalBlocks {
