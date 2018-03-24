@@ -160,6 +160,7 @@ const (
 	MediaTypeApplicationSoapFastInfoSet MediaType = 49
 	MediaTypeApplicationJSON            MediaType = 50
 	MediaTypeApplicationXObitBinary     MediaType = 51
+	MediaTypeApplicationCBOR            MediaType = 60
 	MediaTypeTextPlainVndOmaLwm2m       MediaType = 1541
 	MediaTypeTlvVndOmaLwm2m             MediaType = 1542
 	MediaTypeJSONVndOmaLwm2m            MediaType = 1543
